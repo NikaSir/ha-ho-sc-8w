@@ -1,0 +1,53 @@
+name: Repository checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate JSON files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          for path in Path('.').rglob('*.json'):
+              if '.git' in path.parts:
+                  continue
+              with path.open(encoding='utf-8') as handle:
+                  json.load(handle)
+              print(f'OK {path}')
+          PY
+
+      - name: Compile Python sources when present
+        run: |
+          if [ -d custom_components ]; then
+            python -m compileall -q custom_components
+          fi
+
+      - name: Reject tracked credential/key files
+        shell: bash
+        run: |
+          forbidden="$(git ls-files | grep -E '(^|/)(secrets\.yaml|\.env($|\.)|.*\.(pem|key|p12)$)' | grep -v -E '(^|/)\.env\.example$' || true)"
+          if [ -n "$forbidden" ]; then
+            echo 'Forbidden credential/key-like files are tracked:'
+            echo "$forbidden"
+            exit 1
+          fi
