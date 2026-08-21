@@ -1,6 +1,6 @@
 # Native INKBIRD / HiOazo HO-SC-8W app UI model
 
-This document records the functional model observed in user-provided screenshots of the native HO-SC-8W mobile application. The screenshots themselves are not stored in this public repository because they contain user-specific zone names and property photos.
+This document records the functional model observed in user-provided screenshots of the native HO-SC-8W mobile application and cross-checked against official INKBIRD application instructions. The user screenshots themselves are not stored in this public repository because they contain user-specific zone names and property photos.
 
 ## Top-level watering UI
 
@@ -31,6 +31,15 @@ Each zone card in the native app exposes or implies the following fields:
 
 The screenshots confirm that the native UI deliberately separates **base program duration** from **seasonal adjustment** instead of presenting only one final duration value.
 
+### Observed card states
+
+User screenshots show both compact and expanded scheduled-zone cards:
+
+- inactive/unused zones can appear as grey compact rows while still exposing an edit action;
+- configured zones appear as expanded white cards with enable toggle, rain behavior icon and schedule detail;
+- a running zone can show a large **remaining time** value in addition to the configured base duration and seasonal-adjustment contribution;
+- zone descriptions and photos are presentation data and must not yet be assumed to be local DP fields.
+
 ## Schedule cycle presentation
 
 Observed interval-style schedules are presented in the form:
@@ -41,13 +50,31 @@ Observed interval-style schedules are presented in the form:
 
 with a separate anchor/start date.
 
-This aligns with the DP38 interval model already recovered from the production controller.
+Official INKBIRD documentation confirms four schedule-cycle choices:
+
+- odd days;
+- even days;
+- selected weekdays/custom days;
+- intervals every N days.
+
+This aligns with the DP38 calendar-mode model already recovered from the production controller.
 
 ## Per-zone rain behavior
 
-The scheduled-watering cards show both a normal rain-related icon and a crossed-out variant on different zones. This strongly indicates that rain behavior is configurable per zone, in addition to the global rain-sensor master switch.
+The scheduled-watering cards show both a normal rain-related icon and a crossed-out variant on different zones.
 
-The exact DP38 flag semantics must still be verified before writing this field. In particular, byte 19 must not be reduced to a guessed boolean until controlled Zone 8 tests confirm the mapping.
+The production screenshots provide a particularly strong controlled correlation:
+
+- zones 1-5 show the normal rain-behavior icon;
+- zone 6 shows the crossed-out rain icon and is known to ignore the rain sensor;
+- DP38 byte 19 is `0x11` for zones 1-5 and `0x10` for zone 6.
+
+This strongly suggests that **bit 0 of DP38 byte 19 encodes per-zone rain obey/ignore**:
+
+- bit 0 = 1: obey/use rain sensor;
+- bit 0 = 0: ignore rain sensor.
+
+This is still marked as **strongly inferred**, not fully write-verified, until the unused Zone 8 controlled test changes only the rain option and confirms the expected `0x11 ↔ 0x10` transition with read-back.
 
 ## Settings screen
 
@@ -60,16 +87,48 @@ The native settings screen exposes at least:
 - reset parameters;
 - device power control.
 
+Official product documentation confirms the same -90% to +100% seasonal-adjustment range.
+
 The Home Assistant integration has already confirmed that the seasonal-adjustment entity is writable and that a value written from HA is reflected on the physical controller display.
+
+### Seasonal-adjustment presentation
+
+The scheduled-zone UI shows the adjustment as a **minute contribution** next to the base program duration (for example a base duration plus an additional number of minutes), while the settings screen edits the global value as a percentage.
+
+Therefore the Home Assistant UI should preserve all three concepts separately:
+
+- base program duration;
+- global seasonal-adjustment percentage;
+- calculated/effective duration or minute contribution.
+
+Exact controller rounding must be determined from runtime DP45 rather than inferred solely from screenshots.
 
 ## Bottom actions in scheduled watering
 
 The scheduled-watering view exposes actions equivalent to:
 
-- multi-zone plans;
-- next zone / next step.
+- **Multi-zone plans**;
+- **Next** / advance to the next zone or step.
 
-These functions should be treated separately from editing the persistent DP38 program until their exact device behavior and write DPs are confirmed.
+Official INKBIRD instructions describe multi-zone scheduling and sequential execution. These functions should remain separate from persistent single-zone DP38 editing until their exact local write semantics are verified.
+
+## Official INKBIRD UI correspondence
+
+Official INKBIRD application instructions show the same overall structure as the user screenshots:
+
+- Scheduled Mode / Manual Mode / Schedules & History tabs;
+- per-zone edit action;
+- four watering-period modes;
+- per-zone Obey/Ignore rain-sensor choice;
+- up to six start times per day;
+- multi-zone scheduling;
+- manual single- and multi-zone watering;
+- seasonal adjustment;
+- schedule/history views.
+
+This means a full native-app information model can be reconstructed without re-pairing the production controller to INKBIRD Cloud solely for UI discovery.
+
+Re-pairing may still be useful later as a separate cloud-behavior experiment, but it is no longer required just to understand the application interface.
 
 ## Consequences for the Home Assistant UI
 
@@ -83,7 +142,7 @@ The standalone integration should mirror the native application's functional sep
 - elapsed / remaining / progress;
 - seasonal adjustment;
 - persistent per-zone DP38 schedule editor;
-- per-zone rain-follow behavior once verified.
+- per-zone rain-follow behavior once write-verified.
 
 ### Manual
 
@@ -115,12 +174,13 @@ Therefore the standalone integration must not assume that zone names/photos are 
 
 ## Important open questions for Zone 8 testing
 
-1. Exact DP38 encoding of the per-zone rain behavior icon.
+1. Write-confirm DP38 byte 19 bit 0 as the per-zone rain obey/ignore flag.
 2. Exact enable/disable representation for a zone beyond the observed duration/start-slot pattern.
 3. Whether the controller normalizes DP38 after a write.
 4. Whether next-watering timestamps are device-calculated, app-calculated, or cloud-calculated.
 5. Exact semantics of multi-zone plans and the native **Next** action.
 6. Exact rounding rule for seasonal adjustment; UI screenshots should not be used to infer this without runtime DP45 confirmation.
+7. Whether zone names/photos are stored in controller-local data, Tuya/INKBIRD cloud metadata, or app-only metadata.
 
 ## Safety rule
 
