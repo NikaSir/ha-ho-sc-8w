@@ -1,4 +1,4 @@
-# Inkbird Irrigation for Home Assistant
+# HO-SC-8W for Home Assistant
 
 Custom Home Assistant integration project for the **INKBIRD / HiOazo HO-SC-8W (IIC-800)** irrigation controller.
 
@@ -27,5 +27,7 @@ docs/
 .github/workflows/
 hacs.json
 ```
+
+The repository name is `ha-ho-sc-8w`. The existing Home Assistant integration domain is intentionally not renamed as part of the repository rename; any domain migration must be handled separately and compatibility-tested.
 
 The integration implementation will be introduced during the controlled migration phase rather than generated as fake production code.
