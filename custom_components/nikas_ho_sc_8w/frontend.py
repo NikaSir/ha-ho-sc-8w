@@ -14,6 +14,7 @@ from .const import (
     PANEL_ELEMENT_NAME,
     PANEL_ICON,
     PANEL_JS_URL,
+    PANEL_PARENT_PATH,
     PANEL_TITLE,
     PANEL_URL_PATH,
     PANEL_VERSION,
@@ -24,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_panel(hass: HomeAssistant) -> None:
     """Serve and register the integration-owned irrigation panel."""
-    js_file = Path(__file__).parent / "frontend" / "irrigation-panel.js"
+    js_file = Path(__file__).parent / "frontend" / Path(PANEL_JS_URL).name
     if not js_file.is_file():
         _LOGGER.warning("HO-SC-8W panel asset is missing: %s", js_file)
         return
@@ -55,6 +56,9 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "version": PANEL_VERSION,
             "owner": "ha-ho-sc-8w",
             "preferred_view": "overview",
+            "parent_path": PANEL_PARENT_PATH,
+            "navigation": "bottom",
+            "primary_device": "iphone_pro_max_portrait",
         },
         config_panel_domain=DOMAIN,
     )
