@@ -8,12 +8,17 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "0.4.3",
+    "dashboard_version": "0.4.4",
     "navigation": {
       "header_back": "explicit_parent_route",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "browser_history_back": false,
-      "views": ["overview", "manual", "settings", "diagnostics"]
+      "views": [
+        "overview",
+        "manual",
+        "settings",
+        "diagnostics"
+      ]
     },
     "frontend": {
       "bundle": "self_contained",
@@ -31,5 +36,9 @@
     "direct_tuya_dp_writes_from_ui": false,
     "unverified_control_actions": false,
     "unknown_unavailable_are_healthy": false
+  },
+  "standards": {
+    "integration_panel_template": "NikaS Integration Panel Template v1.0",
+    "header": "icon_only_back_symmetric_52px"
   }
 }

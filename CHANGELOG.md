@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.7` / panel `0.4.4`: align the irrigation shell with NikaS Integration Panel Template v1.0 — icon-only Back, symmetric 52/52 px Header slots (48/48 narrow), centered title and unchanged fixed Bottom Tab Bar.
+- `1.0.0-b005.7` / panel `0.4.4`: UI-only standardization; controller logic, DP handling and write safety are unchanged.
 - `1.0.0-b005.6` / panel `0.4.3`: expand the iPhone Pro Max Overview vertically to use the full field above the fixed Bottom Tab Bar while keeping zones 1–6 visible without first-screen scrolling.
 - `1.0.0-b005.6` / panel `0.4.3`: enlarge Overview hero/status/next-watering and zone cards proportionally; controller behavior, DP handling and write safety are unchanged.
 - `1.0.0-b005.5` / panel `0.4.2`: harden specialized-panel loading to the mandatory NikaS frontend release standard. Home Assistant now registers one stable `irrigation-panel.js` production bundle with query-string cache busting; the bundle contains the complete panel implementation and has no runtime imports of previous UI versions.
