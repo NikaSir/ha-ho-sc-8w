@@ -1,0 +1,540 @@
+title: Полив
+views:
+  - title: Обзор
+    path: overview
+    icon: mdi:sprinkler-variant
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Полив сейчас
+            icon: mdi:sprinkler
+          - type: markdown
+            content: >-
+              {% set conn = states('sensor.kontroller_poliva_ho_sc_8w_connection_mode') %}
+              {% set op = states('sensor.kontroller_poliva_ho_sc_8w_operation_mode') %}
+              {% set active = states('sensor.kontroller_poliva_ho_sc_8w_active_zones') %}
+              {% set queued = states('sensor.kontroller_poliva_ho_sc_8w_queued_zones') %}
+              {% if conn in ['unknown', 'unavailable'] %}
+              ## ⚠️ Контроллер недоступен
+              Данные о поливе сейчас недостоверны.
+              {% elif active in ['unknown', 'unavailable'] %}
+              ## ⚠️ Состояние полива неизвестно
+              Связь: **{{ conn }}** · Режим: **{{ op }}**
+              {% elif active == 'None' %}
+              ## Полив не идёт
+              Контроллер доступен · **{{ conn }}** · **{{ op }}**
+              {% else %}
+              {% set z = active.split(',')[0] | trim %}
+              ## 💧 Полив идёт · зона {{ z }}
+              **Осталось:** {{ states('sensor.kontroller_poliva_ho_sc_8w_zone_' ~ z ~ '_time_remaining') }} мин  
+              **Прошло:** {{ states('sensor.kontroller_poliva_ho_sc_8w_zone_' ~ z ~ '_time_elapsed') }} мин  
+              {% if queued not in ['None', 'unknown', 'unavailable'] %}**Далее:** {{ queued }}{% endif %}
+              {% endif %}
+            entity_id:
+              - sensor.kontroller_poliva_ho_sc_8w_connection_mode
+              - sensor.kontroller_poliva_ho_sc_8w_operation_mode
+              - sensor.kontroller_poliva_ho_sc_8w_active_zones
+              - sensor.kontroller_poliva_ho_sc_8w_queued_zones
+              - sensor.kontroller_poliva_ho_sc_8w_zone_1_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_1_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_2_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_2_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_3_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_3_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_4_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_4_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_5_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_5_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_6_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_6_time_elapsed
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_connection_mode
+            name: Связь
+            icon: mdi:lan-connect
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_operation_mode
+            name: Режим
+            icon: mdi:water-pump
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_rain_sensor
+            name: Датчик дождя
+            icon: mdi:weather-rainy
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_seasonal_adjustment
+            name: Сезонная коррекция
+            icon: mdi:percent-outline
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 6
+          - type: markdown
+            content: >-
+              **Главный клапан:** —  
+              Интеграция пока не предоставляет подтверждённую сущность состояния главного клапана. Панель намеренно не подменяет её косвенными признаками.
+            grid_options:
+              columns: 12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Очередь и состояние
+            icon: mdi:playlist-play
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_active_zones
+            name: Активная зона
+            icon: mdi:sprinkler-variant
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_queued_zones
+            name: Очередь
+            icon: mdi:playlist-play
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_timer_error_alarm
+            name: Ошибка таймера
+            icon: mdi:alarm-light-outline
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+            grid_options:
+              columns: 12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зоны 1–6
+            icon: mdi:view-grid-outline
+          - type: markdown
+            content: >-
+              {% set active = states('sensor.kontroller_poliva_ho_sc_8w_active_zones') %}
+              {% set queued = states('sensor.kontroller_poliva_ho_sc_8w_queued_zones') %}
+              {% for z in range(1, 7) %}
+              {% set zs = z|string %}
+              {% set rem = states('sensor.kontroller_poliva_ho_sc_8w_zone_' ~ zs ~ '_time_remaining') %}
+              {% set is_active = zs in active.split(', ') if active not in ['None','unknown','unavailable'] else false %}
+              {% set is_queued = zs in queued.split(', ') if queued not in ['None','unknown','unavailable'] else false %}
+              **{{ '💧' if is_active else ('⏭️' if is_queued else '○') }} Зона {{ z }}**{% if is_active %} · осталось {{ rem }} мин{% elif is_queued %} · в очереди{% else %} · готова{% endif %}  
+              {% endfor %}
+            entity_id:
+              - sensor.kontroller_poliva_ho_sc_8w_active_zones
+              - sensor.kontroller_poliva_ho_sc_8w_queued_zones
+              - sensor.kontroller_poliva_ho_sc_8w_zone_1_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_1_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_2_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_2_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_3_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_3_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_4_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_4_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_5_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_5_time_elapsed
+              - sensor.kontroller_poliva_ho_sc_8w_zone_6_time_remaining
+              - sensor.kontroller_poliva_ho_sc_8w_zone_6_time_elapsed
+            grid_options:
+              columns: 12
+          - type: button
+            name: Все зоны
+            icon: mdi:sprinkler-variant
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-irrigation/zones
+            grid_options:
+              columns: 6
+          - type: button
+            name: Программы
+            icon: mdi:calendar-clock
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-irrigation/programs
+            grid_options:
+              columns: 6
+          - type: button
+            name: Диагностика
+            icon: mdi:stethoscope
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-irrigation/diagnostics
+            grid_options:
+              columns: 12
+
+  - title: Зоны
+    path: zones
+    icon: mdi:sprinkler-variant
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 1
+            icon: mdi:numeric-1-circle-outline
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_1
+            name: Программа
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_1_time_remaining
+            name: Осталось
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_1_time_elapsed
+            name: Прошло
+            grid_options: {columns: 6}
+          - type: markdown
+            content: "**Ручное управление:** пока недоступно — интеграция не предоставляет безопасный пользовательский Action для зон 1–6."
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 2
+            icon: mdi:numeric-2-circle-outline
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_2
+            name: Программа
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_2_time_remaining
+            name: Осталось
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_2_time_elapsed
+            name: Прошло
+            grid_options: {columns: 6}
+          - type: markdown
+            content: "**Ручное управление:** пока недоступно — интеграция не предоставляет безопасный пользовательский Action для зон 1–6."
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 3
+            icon: mdi:numeric-3-circle-outline
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_3
+            name: Программа
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_3_time_remaining
+            name: Осталось
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_3_time_elapsed
+            name: Прошло
+            grid_options: {columns: 6}
+          - type: markdown
+            content: "**Ручное управление:** пока недоступно — интеграция не предоставляет безопасный пользовательский Action для зон 1–6."
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 4
+            icon: mdi:numeric-4-circle-outline
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_4
+            name: Программа
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_4_time_remaining
+            name: Осталось
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_4_time_elapsed
+            name: Прошло
+            grid_options: {columns: 6}
+          - type: markdown
+            content: "**Ручное управление:** пока недоступно — интеграция не предоставляет безопасный пользовательский Action для зон 1–6."
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 5
+            icon: mdi:numeric-5-circle-outline
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_5
+            name: Программа
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_5_time_remaining
+            name: Осталось
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_5_time_elapsed
+            name: Прошло
+            grid_options: {columns: 6}
+          - type: markdown
+            content: "**Ручное управление:** пока недоступно — интеграция не предоставляет безопасный пользовательский Action для зон 1–6."
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 6
+            icon: mdi:numeric-6-circle-outline
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_6
+            name: Программа
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_6_time_remaining
+            name: Осталось
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_zone_6_time_elapsed
+            name: Прошло
+            grid_options: {columns: 6}
+          - type: markdown
+            content: "**Ручное управление:** пока недоступно — интеграция не предоставляет безопасный пользовательский Action для зон 1–6."
+            grid_options: {columns: 12}
+
+  - title: Программы
+    path: programs
+    icon: mdi:calendar-clock
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Расписание
+            icon: mdi:calendar-clock
+          - type: markdown
+            content: >-
+              Расписание читается из **DP38 `normal_time`** и на этом этапе является **только для просмотра**. Панель не формирует raw Tuya-команды.
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 1
+            icon: mdi:numeric-1-circle-outline
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_schedule_zone_1' %}
+              **{{ 'Включена' if states(e) == 'configured' else ('Выключена' if states(e) == 'disabled' else '⚠️ Нет достоверных данных') }}**  
+              Старт: **{{ (state_attr(e,'start_times') or []) | join(', ') or '—' }}**  
+              Базовая длительность: **{{ state_attr(e,'duration_min') if state_attr(e,'duration_min') is not none else '—' }} мин**  
+              {% set m=state_attr(e,'calendar_mode') %}{% if m == 'interval' %}Цикл: **каждые {{ state_attr(e,'interval_days') }} дн.**, от {{ state_attr(e,'interval_start') }}{% elif m == 'odd' %}Цикл: **нечётные дни**{% elif m == 'even' %}Цикл: **чётные дни**{% elif m == 'weekly' %}Цикл: **по выбранным дням**{% else %}Цикл: **{{ m or '—' }}**{% endif %}  
+              Дождь по зоне: **{{ 'учитывается*' if state_attr(e,'rain_sensor_follow') else 'игнорируется*' }}**  
+              \* флаг декодирован и подтверждён наблюдением, но write-верификация ещё не завершена.
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_1
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 2
+            icon: mdi:numeric-2-circle-outline
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_schedule_zone_2' %}
+              **{{ 'Включена' if states(e) == 'configured' else ('Выключена' if states(e) == 'disabled' else '⚠️ Нет достоверных данных') }}**  
+              Старт: **{{ (state_attr(e,'start_times') or []) | join(', ') or '—' }}**  
+              Базовая длительность: **{{ state_attr(e,'duration_min') if state_attr(e,'duration_min') is not none else '—' }} мин**  
+              {% set m=state_attr(e,'calendar_mode') %}{% if m == 'interval' %}Цикл: **каждые {{ state_attr(e,'interval_days') }} дн.**, от {{ state_attr(e,'interval_start') }}{% elif m == 'odd' %}Цикл: **нечётные дни**{% elif m == 'even' %}Цикл: **чётные дни**{% elif m == 'weekly' %}Цикл: **по выбранным дням**{% else %}Цикл: **{{ m or '—' }}**{% endif %}  
+              Дождь по зоне: **{{ 'учитывается*' if state_attr(e,'rain_sensor_follow') else 'игнорируется*' }}**
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_2
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 3
+            icon: mdi:numeric-3-circle-outline
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_schedule_zone_3' %}
+              **{{ 'Включена' if states(e) == 'configured' else ('Выключена' if states(e) == 'disabled' else '⚠️ Нет достоверных данных') }}**  
+              Старт: **{{ (state_attr(e,'start_times') or []) | join(', ') or '—' }}**  
+              Базовая длительность: **{{ state_attr(e,'duration_min') if state_attr(e,'duration_min') is not none else '—' }} мин**  
+              {% set m=state_attr(e,'calendar_mode') %}{% if m == 'interval' %}Цикл: **каждые {{ state_attr(e,'interval_days') }} дн.**, от {{ state_attr(e,'interval_start') }}{% elif m == 'odd' %}Цикл: **нечётные дни**{% elif m == 'even' %}Цикл: **чётные дни**{% elif m == 'weekly' %}Цикл: **по выбранным дням**{% else %}Цикл: **{{ m or '—' }}**{% endif %}  
+              Дождь по зоне: **{{ 'учитывается*' if state_attr(e,'rain_sensor_follow') else 'игнорируется*' }}**
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_3
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 4
+            icon: mdi:numeric-4-circle-outline
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_schedule_zone_4' %}
+              **{{ 'Включена' if states(e) == 'configured' else ('Выключена' if states(e) == 'disabled' else '⚠️ Нет достоверных данных') }}**  
+              Старт: **{{ (state_attr(e,'start_times') or []) | join(', ') or '—' }}**  
+              Базовая длительность: **{{ state_attr(e,'duration_min') if state_attr(e,'duration_min') is not none else '—' }} мин**  
+              {% set m=state_attr(e,'calendar_mode') %}{% if m == 'interval' %}Цикл: **каждые {{ state_attr(e,'interval_days') }} дн.**, от {{ state_attr(e,'interval_start') }}{% elif m == 'odd' %}Цикл: **нечётные дни**{% elif m == 'even' %}Цикл: **чётные дни**{% elif m == 'weekly' %}Цикл: **по выбранным дням**{% else %}Цикл: **{{ m or '—' }}**{% endif %}  
+              Дождь по зоне: **{{ 'учитывается*' if state_attr(e,'rain_sensor_follow') else 'игнорируется*' }}**
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_4
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 5
+            icon: mdi:numeric-5-circle-outline
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_schedule_zone_5' %}
+              **{{ 'Включена' if states(e) == 'configured' else ('Выключена' if states(e) == 'disabled' else '⚠️ Нет достоверных данных') }}**  
+              Старт: **{{ (state_attr(e,'start_times') or []) | join(', ') or '—' }}**  
+              Базовая длительность: **{{ state_attr(e,'duration_min') if state_attr(e,'duration_min') is not none else '—' }} мин**  
+              {% set m=state_attr(e,'calendar_mode') %}{% if m == 'interval' %}Цикл: **каждые {{ state_attr(e,'interval_days') }} дн.**, от {{ state_attr(e,'interval_start') }}{% elif m == 'odd' %}Цикл: **нечётные дни**{% elif m == 'even' %}Цикл: **чётные дни**{% elif m == 'weekly' %}Цикл: **по выбранным дням**{% else %}Цикл: **{{ m or '—' }}**{% endif %}  
+              Дождь по зоне: **{{ 'учитывается*' if state_attr(e,'rain_sensor_follow') else 'игнорируется*' }}**
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_5
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Зона 6
+            icon: mdi:numeric-6-circle-outline
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_schedule_zone_6' %}
+              **{{ 'Включена' if states(e) == 'configured' else ('Выключена' if states(e) == 'disabled' else '⚠️ Нет достоверных данных') }}**  
+              Старт: **{{ (state_attr(e,'start_times') or []) | join(', ') or '—' }}**  
+              Базовая длительность: **{{ state_attr(e,'duration_min') if state_attr(e,'duration_min') is not none else '—' }} мин**  
+              {% set m=state_attr(e,'calendar_mode') %}{% if m == 'interval' %}Цикл: **каждые {{ state_attr(e,'interval_days') }} дн.**, от {{ state_attr(e,'interval_start') }}{% elif m == 'odd' %}Цикл: **нечётные дни**{% elif m == 'even' %}Цикл: **чётные дни**{% elif m == 'weekly' %}Цикл: **по выбранным дням**{% else %}Цикл: **{{ m or '—' }}**{% endif %}  
+              Дождь по зоне: **{{ 'учитывается*' if state_attr(e,'rain_sensor_follow') else 'игнорируется*' }}**
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_6
+            grid_options: {columns: 12}
+
+  - title: Диагностика
+    path: diagnostics
+    icon: mdi:stethoscope
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Соединение
+            icon: mdi:lan-connect
+          - type: markdown
+            content: >-
+              {% set e='sensor.kontroller_poliva_ho_sc_8w_connection_mode' %}
+              **Активный транспорт:** {{ states(e) }}  
+              **Предпочтение:** {{ state_attr(e,'selected_preference') or '—' }}  
+              **Cloud доступен:** {{ state_attr(e,'cloud_available') }}  
+              **Ошибок подряд:** {{ state_attr(e,'fail_count') }}  
+              **Модель:** {{ state_attr(e,'device_model') }} · Tuya {{ state_attr(e,'tuya_protocol') }}
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_connection_mode
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_irrigation_mode
+            name: Режим очереди
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_operation_mode
+            name: Operation mode
+            grid_options: {columns: 6}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Runtime
+            icon: mdi:chart-timeline-variant
+          - type: markdown
+            content: >-
+              **Active mask:** {{ state_attr('sensor.kontroller_poliva_ho_sc_8w_active_zones','bitmask') }}  
+              **Queued mask:** {{ state_attr('sensor.kontroller_poliva_ho_sc_8w_queued_zones','bitmask') }}  
+              **Active zones:** {{ states('sensor.kontroller_poliva_ho_sc_8w_active_zones') }}  
+              **Queued zones:** {{ states('sensor.kontroller_poliva_ho_sc_8w_queued_zones') }}
+            entity_id:
+              - sensor.kontroller_poliva_ho_sc_8w_active_zones
+              - sensor.kontroller_poliva_ho_sc_8w_queued_zones
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_schedule_cache
+            name: Cache расписания
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Служебная зона 8
+            icon: mdi:test-tube
+          - type: markdown
+            content: >-
+              Зона 8 исключена из пользовательских экранов и используется только для контролируемых лабораторных проверок интеграции.
+            grid_options: {columns: 12}
+          - type: tile
+            entity: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_8
+            name: Schedule zone 8
+            tap_action: {action: more-info}
+            hold_action: {action: more-info}
+            grid_options: {columns: 12}
+          - type: markdown
+            content: >-
+              **RAW:** `{{ state_attr('sensor.kontroller_poliva_ho_sc_8w_schedule_zone_8','raw_hex') or '—' }}`  
+              **Источник:** {{ state_attr('sensor.kontroller_poliva_ho_sc_8w_schedule_zone_8','cache_source') or '—' }}  
+              **Cache полный:** {{ state_attr('sensor.kontroller_poliva_ho_sc_8w_schedule_zone_8','complete_zone_cache') }}
+            entity_id: sensor.kontroller_poliva_ho_sc_8w_schedule_zone_8
+            grid_options: {columns: 12}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Предупреждения
+            icon: mdi:alert-outline
+          - type: tile
+            entity: sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_timer_error_alarm
+            name: Ошибка таймера
+            grid_options: {columns: 6}
+          - type: tile
+            entity: sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_alarm_voice_cancel
+            name: Alarm voice
+            grid_options: {columns: 6}
+          - type: markdown
+            content: >-
+              {% set c=states('sensor.kontroller_poliva_ho_sc_8w_connection_mode') %}
+              {% set cache=states('sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_schedule_cache') %}
+              {% if c in ['unknown','unavailable'] or cache in ['unknown','unavailable','partial'] %}
+              ## ⚠️ Требуется внимание
+              {% if c in ['unknown','unavailable'] %}- Нет достоверной связи с контроллером.  
+              {% endif %}{% if cache in ['unknown','unavailable','partial'] %}- Cache расписания: **{{ cache }}**.  
+              {% endif %}
+              {% else %}
+              **Диагностических предупреждений по связи/cache нет.**
+              {% endif %}
+            entity_id:
+              - sensor.kontroller_poliva_ho_sc_8w_connection_mode
+              - sensor.09_kotelnaia_kontroller_poliva_ho_sc_8w_schedule_cache
+            grid_options: {columns: 12}
