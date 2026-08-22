@@ -1,0 +1,20 @@
+panel:
+  id: irrigation
+  title: Полив
+  path: /dashboard-irrigation
+  icon: mdi:sprinkler
+  owner: ha-ho-sc-8w
+  integration_domain: nikas_ho_sc_8w
+  expose_in_generated_ui: true
+  preferred_view: overview
+  primary_device_class: iphone_pro_max
+  primary_orientation: portrait
+  views:
+    - id: overview
+      title: Обзор
+    - id: zones
+      title: Зоны
+    - id: programs
+      title: Программы
+    - id: diagnostics
+      title: Диагностика
