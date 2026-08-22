@@ -4,6 +4,9 @@
   "config_flow": true,
   "documentation": "https://github.com/NikaSir/ha-ho-sc-8w",
   "issue_tracker": "https://github.com/NikaSir/ha-ho-sc-8w/issues",
+  "codeowners": [
+    "@NikaSir"
+  ],
   "requirements": [
     "tinytuya>=1.13.0"
   ],
