@@ -1,7 +1,20 @@
-import "./irrigation-panel-v031.js";
+import "./irrigation-panel-v03.js";
 
 const UI_VERSION = "0.3.2";
+const PARENT_ROUTE = "/dashboard-actions";
 const Panel = customElements.get("nikas-ho-sc-8w-panel");
+
+function explicitNavigate(path) {
+  const from = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.history.pushState({ from }, "", path);
+  window.dispatchEvent(
+    new CustomEvent("location-changed", {
+      bubbles: true,
+      composed: true,
+      detail: { replace: false },
+    }),
+  );
+}
 
 function applyTabBarContract(root) {
   if (!root || root.querySelector("style[data-nikas-tabbar-v032]")) return;
@@ -69,8 +82,8 @@ function replaceUiVersion(root) {
   let node;
   while ((node = walker.nextNode())) nodes.push(node);
   for (const textNode of nodes) {
-    if (textNode.nodeValue?.includes("v0.3.1")) {
-      textNode.nodeValue = textNode.nodeValue.replaceAll("v0.3.1", `v${UI_VERSION}`);
+    if (textNode.nodeValue?.includes("v0.3.0")) {
+      textNode.nodeValue = textNode.nodeValue.replaceAll("v0.3.0", `v${UI_VERSION}`);
     }
   }
 }
@@ -79,9 +92,15 @@ if (Panel && !Panel.prototype.__nikasTabBarV032) {
   Panel.prototype.__nikasTabBarV032 = true;
   const previousRender = Panel.prototype.render;
 
+  Panel.prototype.goBack = function () {
+    explicitNavigate(this._panel?.config?.parent_path || PARENT_ROUTE);
+  };
+
   Panel.prototype.render = function (...args) {
     previousRender.apply(this, args);
     applyTabBarContract(this.shadowRoot);
     replaceUiVersion(this.shadowRoot);
+    const nav = this.shadowRoot?.querySelector(".bottomNav");
+    if (nav) nav.setAttribute("aria-label", "Разделы Полив");
   };
 }
