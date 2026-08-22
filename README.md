@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.4.2**.
+Current panel version: **0.4.3**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -61,18 +61,26 @@ The primary Bottom Tab Bar is:
 
 `Программы` is not a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
 
-### Compact Overview
+### Full-field Overview v0.4.3
 
-The Overview density is tuned specifically for **iPhone Pro Max portrait**. The target is that zones **1–6 are visible on the initial Overview without vertical scrolling** while preserving practical touch targets and the fixed Bottom Tab Bar.
+The Overview is tuned specifically for **iPhone Pro Max portrait** and now uses the previously unused vertical field above the fixed Bottom Tab Bar. The hero, global status row, next-watering card and especially zones 1–6 are enlarged proportionally.
 
-### Self-contained production frontend v0.4.2
+Acceptance target:
+
+- zones **1–6 remain visible on the initial Overview without vertical scrolling**;
+- the large dead area before the Bottom Tab Bar is removed;
+- touch targets become larger rather than compressing content;
+- no horizontal clipping is introduced;
+- Bottom Tab Bar remains fixed and iOS-safe.
+
+### Self-contained production frontend v0.4.3
 
 The production panel follows the mandatory NikaS specialized-panel frontend release standard:
 
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.4.2
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.4.3
       ↓
 <nikas-ho-sc-8w-panel>
 ```
