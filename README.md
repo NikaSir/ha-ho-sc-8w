@@ -4,7 +4,7 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
-The repository now contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and the first integration-owned irrigation panel.
+The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
 The current runtime baseline is deliberately conservative and read-only for normal irrigation control. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no Lovelace/frontend code writes raw Tuya DPs.
 
@@ -33,14 +33,26 @@ The integration ships its own panel frontend and registers the stable route:
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max, portrait orientation**.
 
+Current panel version: **0.2.0**.
+
 The panel information architecture is:
 
-- Overview — current watering and essential state;
-- Zones — working user zones 1–6;
+- Overview — current watering, essential controller state and next scheduled watering;
+- Zones — working user zones 1–6 with compact runtime/program information;
 - Programs — human-readable DP38 schedule, currently read-only;
-- Diagnostics — transport, masks, schedule cache and service information including Zone 8.
+- Diagnostics — transport, masks, schedule cache, unverified main-valve source and service information including Zone 8.
 
 The panel is deployed with the integration itself. No separate Lovelace YAML copy or manual `configuration.yaml` dashboard registration is required.
+
+### Panel v0.2 UX changes
+
+- moves the unverified main-valve explanation out of Overview and into Diagnostics;
+- removes duplicate Overview navigation cards;
+- adds a computed **Next watering** card based on decoded schedule data;
+- makes Overview zone rows more informative without increasing card height;
+- removes the repeated manual-control warning from every zone card;
+- localizes user-facing program and diagnostic values;
+- keeps Zone 8 diagnostics-only and keeps the frontend free of raw-DP write logic.
 
 ## Safety boundary
 
