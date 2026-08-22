@@ -5,11 +5,12 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from homeassistant.components import frontend
+from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    DOMAIN,
     PANEL_ELEMENT_NAME,
     PANEL_ICON,
     PANEL_JS_URL,
@@ -42,24 +43,20 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         )
         return
 
-    frontend.async_register_built_in_panel(
+    await panel_custom.async_register_panel(
         hass,
-        component_name="custom",
+        frontend_url_path=PANEL_URL_PATH,
+        webcomponent_name=PANEL_ELEMENT_NAME,
+        module_url=f"{PANEL_JS_URL}?v={PANEL_VERSION}",
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        frontend_url_path=PANEL_URL_PATH,
+        require_admin=False,
         config={
-            "_panel_custom": {
-                "name": PANEL_ELEMENT_NAME,
-                "embed_iframe": False,
-                "trust_external": False,
-                "js_url": f"{PANEL_JS_URL}?v={PANEL_VERSION}",
-            },
             "version": PANEL_VERSION,
             "owner": "ha-ho-sc-8w",
             "preferred_view": "overview",
         },
-        require_admin=False,
+        config_panel_domain=DOMAIN,
     )
     _LOGGER.info(
         "Registered HO-SC-8W irrigation panel at /%s (v%s)",
