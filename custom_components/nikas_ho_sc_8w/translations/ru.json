@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HO-SC-8W Irrigation",
+        "description": "Подключение контроллера INKBIRD / HiOazo HO-SC-8W. Основной транспорт — локальный Tuya v3.3. Перед настройкой отключи другие интеграции, удерживающие постоянное локальное соединение с этим контроллером.",
+        "data": {
+          "device_name": "Имя устройства",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "device_ip": "IP-адрес контроллера",
+          "cloud_api_key": "Tuya Cloud API Key (необязательно)",
+          "cloud_api_secret": "Tuya Cloud API Secret (необязательно)",
+          "cloud_api_region": "Регион Tuya Cloud (необязательно)"
+        }
+      },
+      "reconfigure": {
+        "title": "Изменить подключение HO-SC-8W",
+        "menu_options": {
+          "reconfigure_local": "Локальное подключение",
+          "reconfigure_cloud": "Учётные данные Tuya Cloud"
+        }
+      },
+      "reconfigure_local": {
+        "title": "Изменить локальное подключение",
+        "description": "Новые Local Key и IP проверяются read-only запросом до сохранения.",
+        "data": {
+          "local_key": "Local Key",
+          "device_ip": "IP-адрес контроллера"
+        }
+      },
+      "reconfigure_cloud": {
+        "title": "Изменить Tuya Cloud",
+        "description": "Учётные данные проверяются read-only запросом облачного статуса до сохранения.",
+        "data": {
+          "cloud_api_key": "Tuya Cloud API Key",
+          "cloud_api_secret": "Tuya Cloud API Secret",
+          "cloud_api_region": "Регион Tuya Cloud"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Не удалось подключиться к HO-SC-8W. Проверь IP, Device ID и Local Key. Убедись, что другая интеграция не удерживает локальное Tuya-соединение.",
+      "cannot_connect_local": "Не удалось проверить локальное подключение HO-SC-8W. Текущая конфигурация не изменена.",
+      "cannot_prepare_local": "Не удалось безопасно остановить текущий локальный listener для проверки. Конфигурация не изменена."
+    },
+    "abort": {
+      "already_configured": "Этот HO-SC-8W уже настроен.",
+      "reconfigure_successful": "Параметры подключения проверены, сохранены и перезагружены."
+    }
+  }
+}

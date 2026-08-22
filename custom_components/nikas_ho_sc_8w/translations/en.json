@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HO-SC-8W Irrigation",
+        "description": "Connect an INKBIRD / HiOazo HO-SC-8W. Local Tuya v3.3 is the primary transport. Remove any other integration that keeps a persistent local connection to this controller before setup.",
+        "data": {
+          "device_name": "Device name",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "device_ip": "Device IP address",
+          "cloud_api_key": "Tuya Cloud API Key (optional)",
+          "cloud_api_secret": "Tuya Cloud API Secret (optional)",
+          "cloud_api_region": "Tuya Cloud region (optional)"
+        }
+      },
+      "reconfigure": {
+        "title": "Update HO-SC-8W connection",
+        "menu_options": {
+          "reconfigure_local": "Local connection",
+          "reconfigure_cloud": "Tuya Cloud credentials"
+        }
+      },
+      "reconfigure_local": {
+        "title": "Update local connection",
+        "description": "The new Local Key and IP are verified with a read-only status request before they are saved.",
+        "data": {
+          "local_key": "Local Key",
+          "device_ip": "Device IP address"
+        }
+      },
+      "reconfigure_cloud": {
+        "title": "Update Tuya Cloud credentials",
+        "description": "Credentials are verified by a read-only cloud status request before they are saved.",
+        "data": {
+          "cloud_api_key": "Tuya Cloud API Key",
+          "cloud_api_secret": "Tuya Cloud API Secret",
+          "cloud_api_region": "Tuya Cloud region"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to HO-SC-8W. Check IP, Device ID and Local Key. Ensure no other integration holds the device's local Tuya connection.",
+      "cannot_connect_local": "Cannot verify the HO-SC-8W local connection. Existing configuration was not changed.",
+      "cannot_prepare_local": "Cannot safely stop the active local listener for verification. Existing configuration was not changed."
+    },
+    "abort": {
+      "already_configured": "This HO-SC-8W is already configured.",
+      "reconfigure_successful": "Connection details were verified, saved and reloaded."
+    }
+  }
+}

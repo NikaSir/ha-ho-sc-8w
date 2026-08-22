@@ -1,33 +1,90 @@
 # HO-SC-8W for Home Assistant
 
-Custom Home Assistant integration project for the **INKBIRD / HiOazo HO-SC-8W (IIC-800)** irrigation controller.
+Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigation controller.
 
 ## Status
 
-Repository bootstrap and migration to GitHub are in progress. Existing verified implementation knowledge and working code will be migrated deliberately; placeholder scaffolding is not treated as a release.
+The repository now contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and the first integration-owned irrigation panel.
 
-## Scope
+The current runtime baseline is deliberately conservative and read-only for normal irrigation control. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no Lovelace/frontend code writes raw Tuya DPs.
 
-This repository is for the Home Assistant integration layer: device communication, entities, diagnostics, program decoding/editing, tests, documentation, HACS packaging, and releases.
+## Installation with HACS
 
-The **IIC-600-WIFI is out of scope** for this project.
+Add this repository as a custom **Integration** repository in HACS:
+
+`NikaSir/ha-ho-sc-8w`
+
+HACS installs:
+
+```text
+custom_components/nikas_ho_sc_8w/
+```
+
+Restart Home Assistant after installation or update.
+
+## Integration-owned dashboard
+
+The integration ships its own panel frontend and registers the stable route:
+
+```text
+/dashboard-irrigation
+```
+
+Sidebar title: **Полив**  
+Primary UX target: **iPhone Pro Max, portrait orientation**.
+
+The panel information architecture is:
+
+- Overview — current watering and essential state;
+- Zones — working user zones 1–6;
+- Programs — human-readable DP38 schedule, currently read-only;
+- Diagnostics — transport, masks, schedule cache and service information including Zone 8.
+
+The panel is deployed with the integration itself. No separate Lovelace YAML copy or manual `configuration.yaml` dashboard registration is required.
+
+## Safety boundary
+
+- Zones 1–6 are production irrigation zones.
+- Zone 8 is reserved for controlled development/diagnostic tests and is not exposed as a normal user zone.
+- `unknown` and `unavailable` are treated as unreliable states, not as normal/off.
+- The frontend must never construct or send raw Tuya DP payloads.
+- Write operations may be exposed only through stable, tested integration APIs.
+- The current HACS baseline does not add general write controls.
+
+## Device scope
+
+This repository is dedicated to **HO-SC-8W**. Other INKBIRD/IIC controller models are not part of this integration unless explicitly added and independently verified in the future.
+
+## Repository layout
+
+```text
+custom_components/
+  nikas_ho_sc_8w/
+    __init__.py
+    manifest.json
+    config_flow.py
+    api.py
+    coordinator.py
+    schedule_cache.py
+    sensor.py
+    frontend.py
+    frontend/
+      irrigation-panel.js
+    translations/
+      en.json
+      ru.json
+docs/
+hacs.json
+```
 
 ## Repository policy
 
 - Default branch: `main`.
-- Secrets, local keys, tokens, account credentials, and private device data must never be committed.
+- Secrets, Local Keys, tokens, account credentials and private device data must never be committed.
 - Releases must be traceable to source commits.
+- Production write behavior must be explicitly tested before promotion.
 - Shared contribution/security defaults are inherited from `NikaSir/.github` unless overridden here.
 
-## Target layout
+## License and third-party attribution
 
-```text
-custom_components/inkbird_irrigation/
-docs/
-.github/workflows/
-hacs.json
-```
-
-The repository name is `ha-ho-sc-8w`. The existing Home Assistant integration domain is intentionally not renamed as part of the repository rename; any domain migration must be handled separately and compatibility-tested.
-
-The integration implementation will be introduced during the controlled migration phase rather than generated as fake production code.
+Repository code is distributed under the MIT license. Third-party attribution inherited from earlier MIT-licensed work is preserved in `THIRD_PARTY_NOTICES.md` where applicable.
