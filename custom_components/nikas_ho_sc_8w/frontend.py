@@ -22,35 +22,22 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-_PANEL_PREREQUISITES = (
-    ("/nikas-ho-sc-8w/irrigation-panel-v03.js", "irrigation-panel-v03.js"),
-    ("/nikas-ho-sc-8w/irrigation-panel-v032.js", "irrigation-panel-v032.js"),
-    ("/nikas-ho-sc-8w/irrigation-panel-v033.js", "irrigation-panel-v033.js"),
-    ("/nikas-ho-sc-8w/irrigation-panel-v040.js", "irrigation-panel-v040.js"),
-)
-
 
 async def async_setup_panel(hass: HomeAssistant) -> None:
-    """Serve and register the integration-owned irrigation panel."""
+    """Serve and register the self-contained integration-owned irrigation panel."""
     frontend_dir = Path(__file__).parent / "frontend"
-    current_file = frontend_dir / Path(PANEL_JS_URL).name
-    prerequisite_files = [frontend_dir / name for _, name in _PANEL_PREREQUISITES]
+    bundle_file = frontend_dir / Path(PANEL_JS_URL).name
 
-    missing = [path for path in [*prerequisite_files, current_file] if not path.is_file()]
-    if missing:
-        _LOGGER.warning("HO-SC-8W panel asset(s) missing: %s", ", ".join(map(str, missing)))
+    if not bundle_file.is_file():
+        _LOGGER.warning("HO-SC-8W panel bundle is missing: %s", bundle_file)
         return
 
-    static_paths = [
-        StaticPathConfig(url, str(frontend_dir / name), False)
-        for url, name in _PANEL_PREREQUISITES
-    ]
-    static_paths.append(StaticPathConfig(PANEL_JS_URL, str(current_file), False))
-
     try:
-        await hass.http.async_register_static_paths(static_paths)
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(PANEL_JS_URL, str(bundle_file), False)]
+        )
     except RuntimeError:
-        _LOGGER.debug("HO-SC-8W panel static paths already registered")
+        _LOGGER.debug("HO-SC-8W panel static path already registered")
 
     if frontend.async_panel_exists(hass, PANEL_URL_PATH):
         _LOGGER.warning(
@@ -93,6 +80,11 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "diagnostics": "integration_health_and_program_audit",
                 "program_audit": "diagnostics_drilldown_read_only",
             },
+            "frontend_bundle": {
+                "mode": "self_contained",
+                "runtime_historical_imports": False,
+                "cache_busting": "query_string",
+            },
             "overview_density": {
                 "target": "all_zones_1_6_visible_without_scroll",
                 "viewport": "iphone_pro_max_portrait",
@@ -102,7 +94,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         config_panel_domain=DOMAIN,
     )
     _LOGGER.info(
-        "Registered HO-SC-8W irrigation panel at /%s (v%s)",
+        "Registered HO-SC-8W irrigation panel at /%s (v%s, self-contained bundle)",
         PANEL_URL_PATH,
         PANEL_VERSION,
     )

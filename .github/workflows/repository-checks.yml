@@ -22,6 +22,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Validate JSON files
         run: |
           python - <<'PY'
@@ -41,6 +46,32 @@ jobs:
           if [ -d custom_components ]; then
             python -m compileall -q custom_components
           fi
+
+      - name: Validate self-contained production panel bundle
+        shell: bash
+        run: |
+          bundle="custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js"
+          test -f "$bundle"
+          node --check "$bundle"
+
+          count="$(find custom_components/nikas_ho_sc_8w/frontend -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
+          if [ "$count" != "1" ]; then
+            echo "Expected exactly one production JavaScript bundle, found $count"
+            find custom_components/nikas_ho_sc_8w/frontend -maxdepth 1 -type f -name '*.js' -print
+            exit 1
+          fi
+
+          if grep -Eq '(^|[[:space:]])import[[:space:]].*irrigation-panel-v[0-9]+' "$bundle"; then
+            echo 'Historical frontend runtime import detected in production bundle.'
+            exit 1
+          fi
+
+          if grep -Eq 'irrigation-panel-v0(3|4)[0-9]*\.js' "$bundle"; then
+            echo 'Historical frontend filename reference detected in production bundle.'
+            exit 1
+          fi
+
+          echo 'OK self-contained frontend bundle'
 
       - name: Reject tracked credential/key files
         shell: bash
