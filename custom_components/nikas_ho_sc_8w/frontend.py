@@ -22,30 +22,31 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-_BASE_JS_URL = "/nikas-ho-sc-8w/irrigation-panel-v03.js"
-_BASE_JS_NAME = "irrigation-panel-v03.js"
+_PANEL_PREREQUISITES = (
+    ("/nikas-ho-sc-8w/irrigation-panel-v03.js", "irrigation-panel-v03.js"),
+    ("/nikas-ho-sc-8w/irrigation-panel-v032.js", "irrigation-panel-v032.js"),
+)
 
 
 async def async_setup_panel(hass: HomeAssistant) -> None:
     """Serve and register the integration-owned irrigation panel."""
     frontend_dir = Path(__file__).parent / "frontend"
-    js_file = frontend_dir / Path(PANEL_JS_URL).name
-    base_js_file = frontend_dir / _BASE_JS_NAME
-    if not js_file.is_file() or not base_js_file.is_file():
-        _LOGGER.warning(
-            "HO-SC-8W panel asset is missing: module=%s base=%s",
-            js_file,
-            base_js_file,
-        )
+    current_file = frontend_dir / Path(PANEL_JS_URL).name
+    prerequisite_files = [frontend_dir / name for _, name in _PANEL_PREREQUISITES]
+
+    missing = [path for path in [*prerequisite_files, current_file] if not path.is_file()]
+    if missing:
+        _LOGGER.warning("HO-SC-8W panel asset(s) missing: %s", ", ".join(map(str, missing)))
         return
 
+    static_paths = [
+        StaticPathConfig(url, str(frontend_dir / name), False)
+        for url, name in _PANEL_PREREQUISITES
+    ]
+    static_paths.append(StaticPathConfig(PANEL_JS_URL, str(current_file), False))
+
     try:
-        await hass.http.async_register_static_paths(
-            [
-                StaticPathConfig(_BASE_JS_URL, str(base_js_file), False),
-                StaticPathConfig(PANEL_JS_URL, str(js_file), False),
-            ]
-        )
+        await hass.http.async_register_static_paths(static_paths)
     except RuntimeError:
         _LOGGER.debug("HO-SC-8W panel static paths already registered")
 
@@ -70,9 +71,18 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "owner": "ha-ho-sc-8w",
             "preferred_view": "overview",
             "parent_path": PANEL_PARENT_PATH,
-            "navigation": "full_width_fixed_tab_bar",
-            "tab_bar_style": "docked_non_floating",
-            "header_back": "explicit_parent_route",
+            "header": {
+                "title_alignment": "viewport_center",
+                "show_brand_icon": False,
+                "back": {
+                    "icon": "mdi:arrow-left",
+                    "parent_path": PANEL_PARENT_PATH,
+                },
+            },
+            "navigation": {
+                "primary": "full_width_fixed_bottom_tab_bar",
+                "floating": False,
+            },
             "primary_device": "iphone_pro_max_portrait",
         },
         config_panel_domain=DOMAIN,
