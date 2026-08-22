@@ -32,11 +32,13 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.4.3**.
+Current panel version: **0.4.4**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
-- compact Header with explicit `← Назад`;
+It also conforms to **NikaS Integration Panel Template v1.0**.
+
+- compact symmetric Header with icon-only `←` Back;
 - viewport-centered title without decorative Header icon;
 - irrigation parent route: `/dashboard-actions`;
 - full-width fixed non-floating Bottom Tab Bar;
