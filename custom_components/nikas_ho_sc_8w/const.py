@@ -1,0 +1,45 @@
+"""Constants for the standalone HO-SC-8W irrigation integration."""
+
+DOMAIN = "nikas_ho_sc_8w"
+
+INTEGRATION_NAME = "HO-SC-8W Irrigation"
+MANUFACTURER = "INKBIRD / HiOazo"
+MODEL = "HO-SC-8W"
+NUM_ZONES = 8
+TUYA_VERSION = 3.3
+
+DP_NORMAL_TIME = 38
+DP_IRRIGATION_MODE = 44
+DP_IRRIGATION_TIME_ALL = 45
+DP_OPERATION_MODE = 101
+DP_RAIN_SENSOR = 102
+DP_SEASONAL_ADJUST = 103
+DP_MERGE_HISTORY = 104
+DP_RESET_DEVICE = 105
+DP_TIMEERROR_ALARM = 106
+DP_ACTIVE_ZONE = 107
+DP_QUEUED_ZONE = 108
+DP_CANCEL_ALARM_VOICE = 109
+
+CONF_DEVICE_ID = "device_id"
+CONF_LOCAL_KEY = "local_key"
+CONF_DEVICE_IP = "device_ip"
+CONF_DEVICE_NAME = "device_name"
+CONF_CONNECTION_MODE = "connection_mode"
+CONF_CLOUD_API_KEY = "cloud_api_key"
+CONF_CLOUD_API_SECRET = "cloud_api_secret"
+CONF_CLOUD_API_REGION = "cloud_api_region"
+
+CONNECTION_MODE_AUTO = "auto"
+CONNECTION_MODE_LOCAL = "local"
+CONNECTION_MODE_CLOUD = "cloud"
+CONNECTION_MODES = frozenset(
+    {CONNECTION_MODE_AUTO, CONNECTION_MODE_LOCAL, CONNECTION_MODE_CLOUD}
+)
+
+PANEL_TITLE = "Полив"
+PANEL_ICON = "mdi:sprinkler"
+PANEL_URL_PATH = "dashboard-irrigation"
+PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
+PANEL_VERSION = "0.1.0"
+PANEL_JS_URL = "/nikas-ho-sc-8w/irrigation-panel.js"
