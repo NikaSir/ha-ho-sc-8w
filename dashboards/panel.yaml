@@ -5,16 +5,23 @@ panel:
   icon: mdi:sprinkler
   owner: ha-ho-sc-8w
   integration_domain: nikas_ho_sc_8w
+  dashboard_version: 0.1.0
   expose_in_generated_ui: true
   preferred_view: overview
   primary_device_class: iphone_pro_max
   primary_orientation: portrait
+  implementation: dashboards/dashboard-irrigation.yaml
+  design_target: native_app_or_better
   views:
     - id: overview
       title: Обзор
+      path: overview
     - id: zones
       title: Зоны
+      path: zones
     - id: programs
       title: Программы
+      path: programs
     - id: diagnostics
       title: Диагностика
+      path: diagnostics
