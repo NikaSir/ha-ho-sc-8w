@@ -25,6 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 _PANEL_PREREQUISITES = (
     ("/nikas-ho-sc-8w/irrigation-panel-v03.js", "irrigation-panel-v03.js"),
     ("/nikas-ho-sc-8w/irrigation-panel-v032.js", "irrigation-panel-v032.js"),
+    ("/nikas-ho-sc-8w/irrigation-panel-v033.js", "irrigation-panel-v033.js"),
 )
 
 
@@ -82,6 +83,14 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "navigation": {
                 "primary": "full_width_fixed_bottom_tab_bar",
                 "floating": False,
+                "tabs": ["overview", "manual", "settings", "diagnostics"],
+            },
+            "information_architecture": {
+                "overview": "program_status_and_zone_drilldown",
+                "manual": "zone_then_duration_then_start",
+                "settings": "controller_global_parameters",
+                "diagnostics": "integration_health_and_program_audit",
+                "program_audit": "diagnostics_drilldown_read_only",
             },
             "primary_device": "iphone_pro_max_portrait",
         },

@@ -32,28 +32,34 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.3.2**.
+Current panel version: **0.4.0**.
 
-The panel follows the common Home Assistant NikaS application shell:
+The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
-- compact fixed logical Header with explicit `← Назад`;
+- compact Header with explicit `← Назад`;
+- viewport-centered title without decorative Header icon;
 - irrigation parent route: `/dashboard-actions`;
-- device identity in compact secondary text;
-- subject state immediately below the Header;
-- full-width docked Bottom Tab Bar for the panel's internal sections;
-- active tab highlighted inside the common bar without floating-card elevation;
-- iOS safe-area handling at both ends of the screen;
-- enough page-bottom padding for the final card to scroll fully above the Tab Bar;
+- full-width fixed non-floating Bottom Tab Bar;
+- iOS Safe Area handling and bottom clearance;
 - no top-tab navigation for primary sections.
 
-Internal sections:
+### Information architecture v0.4
 
-- **Обзор** — current watering, controller state, next watering and zones 1–6;
-- **Зоны** — runtime and decoded program information for working zones 1–6;
-- **Программы** — human-readable DP38 schedule, currently read-only;
-- **Диагностика** — transport, masks, cache, unverified main-valve source and laboratory Zone 8.
+The user-facing application model is now domain-oriented rather than protocol-oriented:
 
-The panel is deployed with the integration itself. No separate Lovelace YAML copy or manual `configuration.yaml` dashboard registration is required.
+- **Обзор** — automatic-program status, current watering, next watering and zones 1–6;
+- **Зона N** — drill-down from Overview with the factual schedule/settings of that zone;
+- **Ручной** — select zone, set duration, then start; the start action remains intentionally disabled until a safe public Actions API is published;
+- **Настройки** — controller-wide parameters such as operation mode, seasonal adjustment, rain sensor and irrigation order;
+- **Диагн.** — integration health, transport/cache/errors and a read-only **Проверка программы** drill-down for confirming the complete decoded DP38 configuration.
+
+The primary Bottom Tab Bar is:
+
+```text
+Обзор · Ручной · Настройки · Диагн.
+```
+
+`Программы` is no longer a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
 
 ## Safety boundary
 
@@ -64,6 +70,7 @@ The panel is deployed with the integration itself. No separate Lovelace YAML cop
 - Write operations may be exposed only through stable, tested integration APIs.
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
+- Manual selection and duration controls in UI v0.4 are local UI state only; the controller is not written until the integration publishes a verified Action.
 
 ## Device scope
 
@@ -84,8 +91,9 @@ custom_components/
     frontend.py
     frontend/
       irrigation-panel-v03.js
-      irrigation-panel-v031.js
       irrigation-panel-v032.js
+      irrigation-panel-v033.js
+      irrigation-panel-v040.js
     translations/
       en.json
       ru.json
