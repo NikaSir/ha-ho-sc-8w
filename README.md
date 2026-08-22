@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.4.0**.
+Current panel version: **0.4.1**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -45,7 +45,7 @@ The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1
 
 ### Information architecture v0.4
 
-The user-facing application model is now domain-oriented rather than protocol-oriented:
+The user-facing application model is domain-oriented rather than protocol-oriented:
 
 - **Обзор** — automatic-program status, current watering, next watering and zones 1–6;
 - **Зона N** — drill-down from Overview with the factual schedule/settings of that zone;
@@ -60,6 +60,20 @@ The primary Bottom Tab Bar is:
 ```
 
 `Программы` is no longer a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
+
+### Compact Overview v0.4.1
+
+The Overview density is tuned specifically for **iPhone Pro Max portrait**. The acceptance target is that zones **1–6 are visible on the initial Overview without vertical scrolling** while preserving normal touch targets and the fixed Bottom Tab Bar.
+
+To achieve that without dropping factual information:
+
+- Header vertical padding is reduced;
+- the current-watering hero is compacted;
+- Connection / Mode / Rain / Seasonal state use one four-column status row on the primary viewport;
+- Next watering is a compact status strip;
+- zone rows are reduced in height while remaining tappable and retaining long-press Home Assistant more-info.
+
+Smaller phone widths may fall back to a less dense layout rather than forcing clipped labels.
 
 ## Safety boundary
 
@@ -94,6 +108,7 @@ custom_components/
       irrigation-panel-v032.js
       irrigation-panel-v033.js
       irrigation-panel-v040.js
+      irrigation-panel-v041.js
     translations/
       en.json
       ru.json
