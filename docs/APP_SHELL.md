@@ -1,6 +1,6 @@
 # Home Assistant NikaS specialized-panel app shell
 
-This integration implements the shared NikaS navigation shell for specialized Home Assistant panels.
+This integration implements **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** for the HO-SC-8W specialized panel.
 
 ## Primary device
 
@@ -8,75 +8,65 @@ This integration implements the shared NikaS navigation shell for specialized Ho
 - portrait orientation
 - one-handed operation
 
-Tablet and desktop layouts are secondary adaptations.
+Tablet and desktop layouts are secondary adaptations of the accepted mobile hierarchy.
 
 ## Shell contract
 
-Every main view uses the same three-level application structure:
+HO-SC-8W is a single-device application and therefore uses three persistent levels:
 
-1. **Header** — exit from the integration application and optional global panel actions.
-2. **Content** — device-specific status, controls, telemetry and workflows.
-3. **Bottom Tab Bar** — switch only between the panel's own main sections.
+1. **Header** — exit from the irrigation application.
+2. **Content** — irrigation status, zones, programs and diagnostics.
+3. **Bottom Tab Bar** — switch only between the application's main sections.
+
+A Device Selector is intentionally absent: irrigation zones are channels of one controller, not peer physical devices.
 
 ### Header
 
-HO-SC-8W uses:
+Canonical HO-SC-8W Header:
 
 ```text
-← Назад        Полив        [integration mark]
-               INKBIRD / HiOazo · HO-SC-8W
+← Назад             Полив             [reserved]
+                    HO-SC-8W · UI v0.3.3
 ```
 
-The Back action is an explicit Home Assistant navigation to:
+Requirements implemented by the panel:
 
-```text
-/dashboard-actions
-```
-
-It must not use browser-history semantics as the navigation contract. Header buttons never execute device actions and have no hold/double-tap device behavior.
+- `mdi:arrow-left` Back control on the left;
+- explicit parent route `/dashboard-actions`;
+- no browser-history dependency as the navigation contract;
+- `Полив` geometrically centered relative to the viewport;
+- symmetric left/right Header zones so controls do not shift the title;
+- no decorative integration/device icon beside the title;
+- model/UI version kept as secondary subtitle;
+- Header controls never execute irrigation actions and have no hold/double-tap device behavior.
 
 ### Bottom Tab Bar
 
-HO-SC-8W uses four persistent sections:
+Persistent sections:
 
 ```text
 Обзор · Зоны · Программы · Диагн.
 ```
 
-The Tab Bar is a **full-width docked part of the application shell**. It is fixed to the lower viewport edge and must never be rendered as a floating navigation card over content.
+The Tab Bar is a **full-width docked part of the application shell**:
 
-Required geometry and behavior:
-
-- occupies the full useful width of the viewport;
-- fixed to the bottom during vertical scrolling;
-- includes the iOS bottom safe area;
-- page content has enough bottom padding for the last card to scroll fully above the Tab Bar;
-- same shell height and touch-target geometry as other NikaS specialized panels;
-- each tab uses an icon plus a short label;
-- the active tab is indicated **inside the common bar** using accent color and a light local background;
-- the active tab must not use elevation, detached-card shadow or vertical offset that makes it appear to float above the bar;
-- primary-section tabs must never be duplicated at the top of the panel.
-
-## Navigation levels
-
-The meanings are fixed across the NikaS ecosystem:
-
-- **Header Back** exits the specialized application to its declared parent route.
-- **Bottom Tab Bar** switches between main sections of the current specialized application.
-
-Switching `Обзор → Зоны → Программы → Диагн.` never changes the meaning of Back.
+- fixed to the lower viewport edge;
+- no floating/pill-card outer gaps;
+- includes iOS bottom Safe Area;
+- remains visible during vertical scrolling;
+- page content has sufficient bottom clearance;
+- icon + short label for every section;
+- active tab is indicated inside the shared bar;
+- no detached elevation, shadow or vertical lift for the active tab;
+- primary-section tabs are never duplicated at the top.
 
 ## First-screen rule
 
-Immediately after the Header, Overview starts with the factual current irrigation state. A second navigation layer must not occupy the valuable first-content position.
-
-## Version placement
-
-UI/version information is secondary metadata and belongs in Diagnostics or similarly low-priority metadata, not in a second large title below the Header.
+Immediately after the Header, Overview starts with factual irrigation state. The Header answers *where am I?*; the hero card answers *what is happening now?*.
 
 ## Entity interaction
 
-Long press on factual Home Assistant entity-backed UI opens Home Assistant more-info. Header and Bottom Tab Bar controls are navigation-only and never invoke entity-specific actions.
+Long press on factual Home Assistant entity-backed UI opens Home Assistant more-info where applicable. Header and Bottom Tab Bar are navigation-only.
 
 ## Reliability and safety
 
@@ -88,13 +78,14 @@ Long press on factual Home Assistant entity-backed UI opens Home Assistant more-
 
 ## Acceptance
 
-A specialized panel is compliant only when:
+The HO-SC-8W panel is compliant only when, on iPhone Pro Max portrait:
 
-- an explicit Back control is always available in the compact top Header;
-- primary sections are switched only through the full-width fixed Bottom Tab Bar;
-- the bar does not float over content and does not disappear while scrolling;
-- iOS safe-area handling is preserved;
-- no horizontal scrolling is present on iPhone Pro Max portrait;
-- the last content card can be fully scrolled above the Tab Bar.
-
-This shell is intentionally compatible with the wider NikaS specialized-panel standard used by S8 OMNI, Keenetic and UPS panels; only the domain-specific content changes.
+- Back is explicit and targets `/dashboard-actions`;
+- title is geometrically centered and remains one line;
+- Header contains no decorative device/brand icon;
+- current irrigation state is the first major content block;
+- Bottom Tab Bar is full-width, fixed and non-floating;
+- active tab remains visually inside the common bar;
+- no horizontal scrolling exists;
+- the final content card can fully scroll above the Tab Bar;
+- light and dark themes remain readable.
