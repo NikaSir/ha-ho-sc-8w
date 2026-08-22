@@ -1,0 +1,24 @@
+{
+  "panel": {
+    "id": "irrigation",
+    "title": "Полив",
+    "path": "/dashboard-irrigation",
+    "parent_path": "/dashboard-actions",
+    "icon": "mdi:sprinkler",
+    "owner": "ha-ho-sc-8w",
+    "expose_in_generated_ui": true,
+    "preferred_view": "overview",
+    "dashboard_version": "0.3.1",
+    "navigation": {
+      "header_back": "explicit_parent_route",
+      "primary_navigation": "fixed_bottom_bar",
+      "browser_history_back": false,
+      "views": ["overview", "zones", "programs", "diagnostics"]
+    }
+  },
+  "ownership": {
+    "direct_tuya_dp_writes_from_ui": false,
+    "unverified_control_actions": false,
+    "unknown_unavailable_are_healthy": false
+  }
+}
