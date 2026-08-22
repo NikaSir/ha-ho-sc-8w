@@ -32,16 +32,18 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.3.0**.
+Current panel version: **0.3.2**.
 
 The panel follows the common Home Assistant NikaS application shell:
 
-- fixed logical header with explicit `← Назад`;
+- compact fixed logical Header with explicit `← Назад`;
 - irrigation parent route: `/dashboard-actions`;
 - device identity in compact secondary text;
-- subject state immediately below the header;
-- fixed bottom navigation for the panel's internal sections;
+- subject state immediately below the Header;
+- full-width docked Bottom Tab Bar for the panel's internal sections;
+- active tab highlighted inside the common bar without floating-card elevation;
 - iOS safe-area handling at both ends of the screen;
+- enough page-bottom padding for the final card to scroll fully above the Tab Bar;
 - no top-tab navigation for primary sections.
 
 Internal sections:
@@ -60,7 +62,7 @@ The panel is deployed with the integration itself. No separate Lovelace YAML cop
 - `unknown` and `unavailable` are unreliable states, never normal/off.
 - The frontend must never construct or send raw Tuya DP payloads.
 - Write operations may be exposed only through stable, tested integration APIs.
-- Header and bottom-navigation elements never execute device actions.
+- Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
 
 ## Device scope
@@ -82,6 +84,8 @@ custom_components/
     frontend.py
     frontend/
       irrigation-panel-v03.js
+      irrigation-panel-v031.js
+      irrigation-panel-v032.js
     translations/
       en.json
       ru.json
