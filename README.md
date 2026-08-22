@@ -6,7 +6,7 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
-The current runtime baseline is deliberately conservative and read-only for normal irrigation control. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no Lovelace/frontend code writes raw Tuya DPs.
+The current runtime baseline is deliberately conservative and read-only for normal irrigation control. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
 ## Installation with HACS
 
@@ -22,46 +22,46 @@ custom_components/nikas_ho_sc_8w/
 
 Restart Home Assistant after installation or update.
 
-## Integration-owned dashboard
+## Integration-owned panel
 
-The integration ships its own panel frontend and registers the stable route:
+Stable route:
 
 ```text
 /dashboard-irrigation
 ```
 
 Sidebar title: **Полив**  
-Primary UX target: **iPhone Pro Max, portrait orientation**.
+Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
+Current panel version: **0.3.0**.
 
-Current panel version: **0.2.0**.
+The panel follows the common Home Assistant NikaS application shell:
 
-The panel information architecture is:
+- fixed logical header with explicit `← Назад`;
+- irrigation parent route: `/dashboard-actions`;
+- device identity in compact secondary text;
+- subject state immediately below the header;
+- fixed bottom navigation for the panel's internal sections;
+- iOS safe-area handling at both ends of the screen;
+- no top-tab navigation for primary sections.
 
-- Overview — current watering, essential controller state and next scheduled watering;
-- Zones — working user zones 1–6 with compact runtime/program information;
-- Programs — human-readable DP38 schedule, currently read-only;
-- Diagnostics — transport, masks, schedule cache, unverified main-valve source and service information including Zone 8.
+Internal sections:
+
+- **Обзор** — current watering, controller state, next watering and zones 1–6;
+- **Зоны** — runtime and decoded program information for working zones 1–6;
+- **Программы** — human-readable DP38 schedule, currently read-only;
+- **Диагностика** — transport, masks, cache, unverified main-valve source and laboratory Zone 8.
 
 The panel is deployed with the integration itself. No separate Lovelace YAML copy or manual `configuration.yaml` dashboard registration is required.
-
-### Panel v0.2 UX changes
-
-- moves the unverified main-valve explanation out of Overview and into Diagnostics;
-- removes duplicate Overview navigation cards;
-- adds a computed **Next watering** card based on decoded schedule data;
-- makes Overview zone rows more informative without increasing card height;
-- removes the repeated manual-control warning from every zone card;
-- localizes user-facing program and diagnostic values;
-- keeps Zone 8 diagnostics-only and keeps the frontend free of raw-DP write logic.
 
 ## Safety boundary
 
 - Zones 1–6 are production irrigation zones.
 - Zone 8 is reserved for controlled development/diagnostic tests and is not exposed as a normal user zone.
-- `unknown` and `unavailable` are treated as unreliable states, not as normal/off.
+- `unknown` and `unavailable` are unreliable states, never normal/off.
 - The frontend must never construct or send raw Tuya DP payloads.
 - Write operations may be exposed only through stable, tested integration APIs.
-- The current HACS baseline does not add general write controls.
+- Header and bottom-navigation elements never execute device actions.
+- Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
 
 ## Device scope
 
@@ -81,7 +81,7 @@ custom_components/
     sensor.py
     frontend.py
     frontend/
-      irrigation-panel.js
+      irrigation-panel-v03.js
     translations/
       en.json
       ru.json
