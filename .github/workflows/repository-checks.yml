@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
@@ -16,9 +16,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: overview-fill-v0.4.3
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,83 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
-      - name: Generate Overview v0.4.3 release once
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json
-
-          root = Path('.')
-          bundle = root / 'custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js'
-          text = bundle.read_text(encoding='utf-8')
-          if 'const UI_VERSION = "0.4.2";' in text:
-              text = text.replace('const UI_VERSION = "0.4.2";', 'const UI_VERSION = "0.4.3";', 1)
-              marker = '        @media(min-width:720px){.app{padding-right:22px;padding-left:22px}.auditList{grid-template-columns:repeat(2,minmax(0,1fr))}}'
-              if marker not in text:
-                  raise SystemExit('Overview CSS insertion marker not found')
-              overrides = '''        /* v0.4.3 — use the full Overview field on iPhone Pro Max without introducing first-screen scrolling. */
-        .overviewCompact .hero{padding:13px 15px;border-radius:19px}.overviewCompact .heroRow{gap:11px}.overviewCompact .orb{width:42px;height:42px}.overviewCompact .orb ha-icon{--mdc-icon-size:23px}.overviewCompact .hero small{font-size:8px}.overviewCompact .hero h1{font-size:21.5px}.overviewCompact .hero p{font-size:11.5px}
-        .overviewCompact .chips{gap:6px;margin-top:7px}.overviewCompact .chip{min-height:52px;padding:8px;border-radius:15px}.overviewCompact .chip small{font-size:7.5px}.overviewCompact .chip strong{font-size:12.5px}
-        .overviewCompact .next{min-height:60px;margin-top:7px;padding:9px 13px;border-radius:16px}.overviewCompact .next h2{font-size:16.5px}.overviewCompact .next p{font-size:10px}.overviewCompact .next>ha-icon{--mdc-icon-size:23px}
-        .overviewCompact .sectionHead{margin:13px 3px 6px}.overviewCompact .sectionHead h2{font-size:22px}.overviewCompact .zoneList{gap:6px}.overviewCompact .zoneLine{grid-template-columns:42px minmax(0,1fr) 21px;gap:10px;min-height:67px;padding:7px 11px;border-radius:17px}.overviewCompact .zoneLine .num{width:42px;height:42px;font-size:17px}.overviewCompact .zoneLine b{font-size:14.5px}.overviewCompact .zoneLine small{font-size:10px;line-height:1.08}.overviewCompact .zoneLine>ha-icon{--mdc-icon-size:21px}
-'''
-              text = text.replace(marker, overrides + marker, 1)
-              bundle.write_text(text, encoding='utf-8')
-
-              const_path = root / 'custom_components/nikas_ho_sc_8w/const.py'
-              const = const_path.read_text(encoding='utf-8')
-              const_path.write_text(const.replace('PANEL_VERSION = "0.4.2"', 'PANEL_VERSION = "0.4.3"', 1), encoding='utf-8')
-
-              manifest_path = root / 'custom_components/nikas_ho_sc_8w/manifest.json'
-              manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
-              if manifest.get('version') != '1.0.0-b005.5':
-                  raise SystemExit(f"Unexpected integration version: {manifest.get('version')}")
-              manifest['version'] = '1.0.0-b005.6'
-              manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-
-              panel_path = root / 'panel.json'
-              panel = json.loads(panel_path.read_text(encoding='utf-8'))
-              panel['panel']['dashboard_version'] = '0.4.3'
-              panel.setdefault('release', {})['frontend_bundle'] = 'self_contained'
-              panel['release']['overview_layout'] = 'full_field_no_first_screen_scroll'
-              panel_path.write_text(json.dumps(panel, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-
-              readme_path = root / 'README.md'
-              readme = readme_path.read_text(encoding='utf-8')
-              readme = readme.replace('Current panel version: **0.4.2**.', 'Current panel version: **0.4.3**.', 1)
-              note = '''\n### Full-field Overview v0.4.3\n\nOn the primary **iPhone Pro Max portrait** viewport, Overview uses the previously unused vertical space above the fixed Bottom Tab Bar. The hero, global-status row, next-watering card and especially zones 1–6 are enlarged proportionally while keeping all six production zones visible on the first screen without vertical scrolling.\n'''
-              anchor = '\n## Safety boundary\n'
-              if note.strip() not in readme:
-                  if anchor not in readme:
-                      raise SystemExit('README Safety boundary anchor not found')
-                  readme = readme.replace(anchor, note + anchor, 1)
-              readme_path.write_text(readme, encoding='utf-8')
-
-              changelog_path = root / 'CHANGELOG.md'
-              changelog = changelog_path.read_text(encoding='utf-8')
-              entry = '- `1.0.0-b005.6` / panel `0.4.3`: expand the iPhone Pro Max Overview vertically to use the full field above the fixed Bottom Tab Bar while keeping zones 1–6 visible without first-screen scrolling.\n- `1.0.0-b005.6` / panel `0.4.3`: enlarge Overview hero/status/next-watering and zone cards proportionally; controller behavior and write safety are unchanged.\n'
-              changed = '### Changed\n\n'
-              if entry.splitlines()[0] not in changelog:
-                  if changed not in changelog:
-                      raise SystemExit('CHANGELOG Changed section not found')
-                  changelog = changelog.replace(changed, changed + entry, 1)
-              changelog_path.write_text(changelog, encoding='utf-8')
-          PY
-
-          if git diff --quiet; then
-            echo 'Release already generated.'
-          else
-            git checkout origin/main -- .github/workflows/repository-checks.yml
-            rm -f .github/workflows/patch-overview-v043.yml
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "ui: fill Overview field v0.4.3 [overview-v043-done]"
-            git push origin HEAD:overview-fill-v0.4.3
-          fi
 
       - name: Validate JSON files
         run: |
