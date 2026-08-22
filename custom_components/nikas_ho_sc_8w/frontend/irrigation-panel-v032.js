@@ -56,7 +56,7 @@ function applyTabBarContract(root) {
 
     .bottomNav button {
       min-width: 0 !important;
-      min-height: 54px !important;
+      min-height: 56px !important;
       margin: 0 !important;
       border: 0 !important;
       border-radius: 12px !important;

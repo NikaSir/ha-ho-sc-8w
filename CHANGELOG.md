@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.1` / panel `0.3.2`: align the irrigation application shell with Home Assistant NikaS specialized-panel UI standard v1.1 — the primary Tab Bar is full-width, edge-attached to the viewport bottom, non-floating, iOS-safe, and uses 56 px primary navigation targets.
+- `1.0.0-b005.1` / panel `0.3.2`: keep active-tab emphasis inside the shared bottom bar and preserve enough content bottom clearance for the last card to scroll fully above navigation.
 - `1.0.0-b005` / panel `0.3.1`: finalize the Home Assistant NikaS specialized-panel application shell. Header Back explicitly navigates to `/dashboard-actions`, primary section switching remains in the fixed iOS-safe bottom bar, and Home Assistant panel registration opts into safe-area handling.
 - `1.0.0-b005` / panel `0.3.1`: preserve the existing mobile-first irrigation content and safety model; no raw Tuya writes or new device actions are introduced.
 - Renamed the GitHub repository from `ha-inkbird-irrigation` to `ha-ho-sc-8w` to match the supported HO-SC-8W (IIC-800) scope.
