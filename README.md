@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.4.1**.
+Current panel version: **0.4.2**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -59,21 +59,27 @@ The primary Bottom Tab Bar is:
 Обзор · Ручной · Настройки · Диагн.
 ```
 
-`Программы` is no longer a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
+`Программы` is not a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
 
-### Compact Overview v0.4.1
+### Compact Overview
 
-The Overview density is tuned specifically for **iPhone Pro Max portrait**. The acceptance target is that zones **1–6 are visible on the initial Overview without vertical scrolling** while preserving normal touch targets and the fixed Bottom Tab Bar.
+The Overview density is tuned specifically for **iPhone Pro Max portrait**. The target is that zones **1–6 are visible on the initial Overview without vertical scrolling** while preserving practical touch targets and the fixed Bottom Tab Bar.
 
-To achieve that without dropping factual information:
+### Self-contained production frontend v0.4.2
 
-- Header vertical padding is reduced;
-- the current-watering hero is compacted;
-- Connection / Mode / Rain / Seasonal state use one four-column status row on the primary viewport;
-- Next watering is a compact status strip;
-- zone rows are reduced in height while remaining tappable and retaining long-press Home Assistant more-info.
+The production panel follows the mandatory NikaS specialized-panel frontend release standard:
 
-Smaller phone widths may fall back to a less dense layout rather than forcing clipped labels.
+```text
+Home Assistant
+      ↓
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.4.2
+      ↓
+<nikas-ho-sc-8w-panel>
+```
+
+`irrigation-panel.js` is the only project-owned JavaScript file required at runtime. It does not import previous UI versions. Historical frontend implementations are retained by Git history rather than chained browser imports.
+
+This release uses a stable production filename plus query-string cache busting. Correct panel loading must not depend on a warm browser cache.
 
 ## Safety boundary
 
@@ -84,7 +90,7 @@ Smaller phone widths may fall back to a less dense layout rather than forcing cl
 - Write operations may be exposed only through stable, tested integration APIs.
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
-- Manual selection and duration controls in UI v0.4 are local UI state only; the controller is not written until the integration publishes a verified Action.
+- Manual selection and duration controls are local UI state only; the controller is not written until the integration publishes a verified Action.
 
 ## Device scope
 
@@ -104,11 +110,7 @@ custom_components/
     sensor.py
     frontend.py
     frontend/
-      irrigation-panel-v03.js
-      irrigation-panel-v032.js
-      irrigation-panel-v033.js
-      irrigation-panel-v040.js
-      irrigation-panel-v041.js
+      irrigation-panel.js
     translations/
       en.json
       ru.json
@@ -122,7 +124,8 @@ hacs.json
 - Secrets, Local Keys, tokens, account credentials and private device data must never be committed.
 - Releases must be traceable to source commits.
 - Production write behavior must be explicitly tested before promotion.
-- Shared contribution/security defaults are inherited from `NikaSir/.github` unless overridden here.
+- Specialized production frontend must be self-contained and must not depend on historical UI modules at runtime.
+- Shared contribution/security/frontend standards are inherited from `NikaSir/.github` unless overridden here by an explicit architecture decision.
 
 ## License and third-party attribution
 
