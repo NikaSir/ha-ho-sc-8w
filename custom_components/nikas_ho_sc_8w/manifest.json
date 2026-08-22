@@ -12,6 +12,7 @@
   "integration_type": "device",
   "dependencies": [
     "frontend",
-    "http"
+    "http",
+    "panel_custom"
   ]
 }
