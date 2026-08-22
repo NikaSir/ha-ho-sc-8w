@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "0.4.2",
+    "dashboard_version": "0.4.3",
     "navigation": {
       "header_back": "explicit_parent_route",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
@@ -20,6 +20,11 @@
       "module_url": "/nikas-ho-sc-8w/irrigation-panel.js",
       "cache_busting": "query_string_version",
       "historical_runtime_imports": false
+    },
+    "overview_layout": {
+      "primary_viewport": "iphone_pro_max_portrait",
+      "fill_available_vertical_field": true,
+      "zones_1_6_visible_without_first_screen_scroll": true
     }
   },
   "ownership": {
