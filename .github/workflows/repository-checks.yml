@@ -47,6 +47,23 @@ jobs:
             python -m compileall -q custom_components
           fi
 
+      - name: Run protocol invariant tests
+        run: |
+          if [ -d tests ]; then
+            python -m unittest discover -s tests -p 'test_*.py' -v
+          fi
+
+      - name: Validate shell helpers
+        shell: sh
+        run: |
+          if [ -d tools ]; then
+            for script in tools/*.sh; do
+              [ -e "$script" ] || continue
+              sh -n "$script"
+              echo "OK $script"
+            done
+          fi
+
       - name: Validate self-contained production panel bundle
         shell: bash
         run: |

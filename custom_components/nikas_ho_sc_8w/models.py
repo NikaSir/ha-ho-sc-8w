@@ -10,6 +10,9 @@ from .const import NUM_ZONES
 
 DP45_LENGTH = 34
 DP38_BLOCK_SIZE = 20
+DP38_FLAGS_OFFSET = 19
+DP38_RAIN_FOLLOW_MASK = 0x01
+DP38_PROTOCOL_LAB_ZONE = 8
 
 
 @dataclass(frozen=True)
@@ -61,7 +64,7 @@ class ScheduleChannel:
 
     @property
     def rain_sensor_follow_inferred(self) -> bool:
-        return bool(self.flags_raw & 0x01)
+        return bool(self.flags_raw & DP38_RAIN_FOLLOW_MASK)
 
     def as_dict(self) -> dict[str, Any]:
         year, month, day = self.anchor_date
@@ -148,7 +151,7 @@ def decode_dp38(data: bytes) -> list[ScheduleChannel]:
                 cycle_mode=block[14],
                 cycle_value=block[15],
                 anchor_date=(year, month, day),
-                flags_raw=block[19],
+                flags_raw=block[DP38_FLAGS_OFFSET],
             )
         )
     return channels
@@ -189,7 +192,7 @@ def encode_dp38_channel(channel: ScheduleChannel) -> bytes:
     block[16] = (year - 2000) & 0xFF if year else 0
     block[17] = month & 0xFF
     block[18] = day & 0xFF
-    block[19] = channel.flags_raw & 0xFF
+    block[DP38_FLAGS_OFFSET] = channel.flags_raw & 0xFF
     for slot, (hour, minute) in enumerate(channel.start_times):
         if not 0 <= hour <= 23 or not 0 <= minute <= 59:
             raise ValueError(f"Invalid start time {hour}:{minute}")
@@ -197,3 +200,39 @@ def encode_dp38_channel(channel: ScheduleChannel) -> bytes:
         block[8 + slot] = minute
     validate_dp38_block(bytes(block), expected_zone=channel.station)
     return bytes(block)
+
+
+def dp38_byte_diff(before: bytes, after: bytes) -> list[dict[str, int]]:
+    """Return byte-level differences for two equally sized DP38 blocks."""
+    if len(before) != len(after):
+        raise ValueError("DP38 diff requires payloads with equal length")
+    return [
+        {"offset": offset, "before": old, "after": new, "xor": old ^ new}
+        for offset, (old, new) in enumerate(zip(before, after, strict=True))
+        if old != new
+    ]
+
+
+def build_dp38_zone8_rain_probe(block: bytes, follow_rain_sensor: bool) -> bytes:
+    """Build a Zone 8 protocol-lab candidate by changing only DP38 flag bit 0.
+
+    This helper is intentionally restricted to Zone 8. The production zones are
+    not accepted until the write semantics have been verified on the physically
+    unused test channel.
+    """
+    validate_dp38_block(block, expected_zone=DP38_PROTOCOL_LAB_ZONE)
+    candidate = bytearray(block)
+    if follow_rain_sensor:
+        candidate[DP38_FLAGS_OFFSET] |= DP38_RAIN_FOLLOW_MASK
+    else:
+        candidate[DP38_FLAGS_OFFSET] &= ~DP38_RAIN_FOLLOW_MASK
+    result = bytes(candidate)
+
+    changes = dp38_byte_diff(block, result)
+    if changes and (
+        len(changes) != 1
+        or changes[0]["offset"] != DP38_FLAGS_OFFSET
+        or changes[0]["xor"] != DP38_RAIN_FOLLOW_MASK
+    ):
+        raise AssertionError("Zone 8 rain probe modified more than DP38 flag bit 0")
+    return result

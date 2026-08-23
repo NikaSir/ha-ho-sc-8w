@@ -1,0 +1,43 @@
+protocol_lab_zone8_rain_preflight:
+  name: Protocol lab — Zone 8 preflight
+  description: >-
+    LAB ONLY. Reads the fresh controller-sourced Zone 8 DP38 block and returns
+    the exact opposite rain-flag candidate plus byte-level diff. Nothing is written.
+  fields:
+    config_entry_id:
+      name: Configuration entry
+      description: HO-SC-8W configuration entry used for the local controller session.
+      required: true
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+
+protocol_lab_zone8_rain_probe:
+  name: Protocol lab — Zone 8 rain flag
+  description: >-
+    LAB ONLY. Performs the controlled DP38 Zone 8 one-bit write, exact controller
+    read-back, rollback, and rollback read-back. Run the preflight action first and
+    use its proposed follow-rain value. This is not a production irrigation control.
+  fields:
+    config_entry_id:
+      name: Configuration entry
+      description: HO-SC-8W configuration entry used for the local controller session.
+      required: true
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    follow_rain_sensor:
+      name: Temporary rain-follow value
+      description: >-
+        Use the proposed value returned by protocol_lab_zone8_rain_preflight. The
+        exact original Zone 8 DP38 block is restored in the rollback phase.
+      required: true
+      selector:
+        boolean:
+    confirmation:
+      name: Confirmation token
+      description: Must be exactly ZONE8_DP38_WRITE.
+      required: true
+      example: ZONE8_DP38_WRITE
+      selector:
+        text:
