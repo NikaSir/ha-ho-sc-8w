@@ -1,4 +1,4 @@
-"""Read-only Home Assistant integration for INKBIRD / HiOazo HO-SC-8W."""
+"""Home Assistant integration for INKBIRD / HiOazo HO-SC-8W."""
 
 from __future__ import annotations
 
@@ -27,21 +27,24 @@ from .const import (
 )
 from .coordinator import HOSC8WCoordinator
 from .frontend import async_setup_panel
+from .protocol_lab import async_setup_protocol_lab
 
 _LOGGER = logging.getLogger(__name__)
 
-# b002 migration gate: no writable Home Assistant platforms are loaded.
+# No writable Home Assistant entity platforms are loaded. The protocol-lab
+# branch registers one separate admin-gated Zone 8 service action only.
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
+    await async_setup_protocol_lab(hass)
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up one HO-SC-8W config entry in read-only mode."""
+    """Set up one HO-SC-8W config entry with read-only entity platforms."""
     preference = entry.options.get(CONF_CONNECTION_MODE, CONNECTION_MODE_AUTO)
     if preference not in {
         CONNECTION_MODE_AUTO,
@@ -75,7 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"Cannot connect to HO-SC-8W using requested policy {preference}"
         )
 
-    _LOGGER.info("Starting HO-SC-8W read-only integration using %s transport", transport)
+    _LOGGER.info("Starting HO-SC-8W integration using %s transport", transport)
     coordinator = HOSC8WCoordinator(hass, api, entry)
     await coordinator.async_initialize_schedule_cache()
     await coordinator.async_config_entry_first_refresh()
