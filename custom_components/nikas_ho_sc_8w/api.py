@@ -404,6 +404,8 @@ class HOSC8WAPI:
 
             original = bytes.fromhex(prepared["before_hex"])
             candidate = bytes.fromhex(prepared["candidate_hex"])
+            candidate_wire = base64.b64encode(candidate).decode("ascii")
+            original_wire = base64.b64encode(original).decode("ascii")
             device = self._ensure_connection()
             if not device:
                 raise RuntimeError("Local controller connection is unavailable")
@@ -411,6 +413,7 @@ class HOSC8WAPI:
             result = dict(prepared)
             result.update(
                 {
+                    "wire_encoding": "base64",
                     "candidate_sent": False,
                     "candidate_read_back": False,
                     "rollback_sent": False,
@@ -424,14 +427,14 @@ class HOSC8WAPI:
             )
             device.set_socketTimeout(1)
             try:
-                device.set_value(DP_NORMAL_TIME, candidate, nowait=True)
+                device.set_value(DP_NORMAL_TIME, candidate_wire, nowait=True)
                 result["candidate_sent"] = True
                 result["candidate_read_back"] = (
                     self._lab_receive_dp38_zone8(candidate, timeout_seconds) == candidate
                 )
             finally:
                 try:
-                    device.set_value(DP_NORMAL_TIME, original, nowait=True)
+                    device.set_value(DP_NORMAL_TIME, original_wire, nowait=True)
                     result["rollback_sent"] = True
                     result["rollback_read_back"] = (
                         self._lab_receive_dp38_zone8(original, timeout_seconds) == original
