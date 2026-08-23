@@ -38,6 +38,25 @@ The zone number is not accepted as action input. Zone 8 is hard-coded in the pro
 
 Internally the integration keeps DP38 as bytes. For TinyTuya local control the RAW datapoint candidate is sent as a Base64 ASCII string. Read-back is decoded through the existing RAW parser and compared byte-for-byte with the candidate.
 
+## Install the laboratory component
+
+The branch contains `tools/dp38_zone8_lab_component.sh`. It changes only `/config/custom_components/nikas_ho_sc_8w`, keeps the existing component under `/config/.ha-ho-sc-8w-dp38-lab-backup`, and does not touch config entries, `.storage`, Home Assistant data, or controller state.
+
+From Home Assistant Terminal & SSH, download the helper from this branch and run it with `install`:
+
+```sh
+curl -fL \
+  https://github.com/NikaSir/ha-ho-sc-8w/raw/refs/heads/protocol/dp38-zone8-rain-probe/tools/dp38_zone8_lab_component.sh \
+  -o /tmp/dp38_zone8_lab_component.sh
+sh /tmp/dp38_zone8_lab_component.sh install
+```
+
+If `curl` is unavailable, download the same file with `wget` and run it with `sh`.
+
+The helper deliberately does not restart Home Assistant. Restart Home Assistant manually after it reports `LAB COMPONENT INSTALLED`.
+
+Do not use HACS Update/Redownload for this integration while the lab component is installed, because that would replace the branch files with the normal repository version.
+
 ## Step 1 — read-only preflight
 
 After installing this laboratory branch and restarting Home Assistant:
@@ -118,12 +137,24 @@ Any of the following is a FAIL and blocks promotion of DP38 writes:
 
 If rollback cannot be verified, do not repeat the probe until the actual Zone 8 state has been independently inspected.
 
+## Roll back the laboratory component
+
+After the test, or at any time before the write probe, restore the exact component that was present before lab installation:
+
+```sh
+sh /tmp/dp38_zone8_lab_component.sh rollback
+```
+
+If `/tmp` has been cleared by the restart, download the helper again with the same command above, then run it with `rollback`. The persistent backup remains under `/config/.ha-ho-sc-8w-dp38-lab-backup` until rollback succeeds.
+
+Restart Home Assistant manually after the helper reports `ORIGINAL COMPONENT RESTORED`.
+
 ## Production promotion gate
 
 Only after a successful physical probe should the project consider a separate change that:
 
 - records the physical result in the PR;
-- removes the branch-only `protocol_lab.py` actions and laboratory `services.yaml` entries;
+- removes the branch-only `protocol_lab.py` actions, laboratory `services.yaml` entries, and install helper;
 - marks the rain-flag write semantics as verified only for the proven field;
 - separately designs any production schedule-write API with read-before-write, diff validation, conflict protection, read-back and rollback;
 - keeps raw DP writes out of Lovelace/frontend code.
