@@ -12,7 +12,8 @@ BACKUP_ROOT="$CONFIG_DIR/.ha-ho-sc-8w-dp38-lab-backup"
 BACKUP="$BACKUP_ROOT/nikas_ho_sc_8w"
 STAGE_ROOT="$CONFIG_DIR/.ha-ho-sc-8w-dp38-lab-stage"
 STAGE="$STAGE_ROOT/nikas_ho_sc_8w"
-ARCHIVE_URL="https://github.com/NikaSir/ha-ho-sc-8w/archive/refs/heads/protocol/dp38-zone8-rain-probe.tar.gz"
+LAB_COMPONENT_COMMIT="47f087b43f5db3c9e175d23a009b369efa0de9c2"
+ARCHIVE_URL="https://github.com/NikaSir/ha-ho-sc-8w/archive/${LAB_COMPONENT_COMMIT}.tar.gz"
 
 fail() {
   echo "ERROR: $*" >&2
@@ -46,18 +47,18 @@ install_lab() {
   trap 'rm -rf "$tmp" "$STAGE_ROOT"' EXIT INT TERM
 
   archive="$tmp/lab.tar.gz"
-  echo "Downloading lab branch..."
+  echo "Downloading pinned lab component commit $LAB_COMPONENT_COMMIT..."
   download_archive "$archive"
   tar -xzf "$archive" -C "$tmp"
 
   source_component="$(find "$tmp" -type d -path '*/custom_components/nikas_ho_sc_8w' -print -quit)"
   [ -n "$source_component" ] || fail "Lab component was not found in downloaded archive"
-  [ -f "$source_component/protocol_lab.py" ] || fail "protocol_lab.py missing from lab branch"
-  [ -f "$source_component/services.yaml" ] || fail "services.yaml missing from lab branch"
+  [ -f "$source_component/protocol_lab.py" ] || fail "protocol_lab.py missing from lab component"
+  [ -f "$source_component/services.yaml" ] || fail "services.yaml missing from lab component"
   grep -q 'protocol_lab_zone8_rain_preflight' "$source_component/services.yaml" \
-    || fail "Preflight action missing from lab branch"
+    || fail "Preflight action missing from lab component"
   grep -q 'protocol_lab_zone8_rain_probe' "$source_component/services.yaml" \
-    || fail "Probe action missing from lab branch"
+    || fail "Probe action missing from lab component"
 
   mkdir -p "$STAGE_ROOT"
   cp -a "$source_component" "$STAGE"
@@ -69,7 +70,7 @@ install_lab() {
     fail "Could not create component backup"
   fi
 
-  echo "Activating lab component..."
+  echo "Activating pinned lab component..."
   if ! mv "$STAGE" "$TARGET"; then
     echo "Lab activation failed; restoring original component..." >&2
     mv "$BACKUP" "$TARGET" || true
@@ -82,6 +83,7 @@ install_lab() {
   rm -rf "$tmp"
 
   echo "LAB COMPONENT INSTALLED"
+  echo "Commit: $LAB_COMPONENT_COMMIT"
   echo "Backup: $BACKUP"
   echo "Restart Home Assistant manually, then run the read-only preflight action first."
   echo "Do NOT run the write probe before the preflight response is reviewed."
