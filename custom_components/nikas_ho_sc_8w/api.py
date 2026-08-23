@@ -31,7 +31,17 @@ from .const import (
     NUM_ZONES,
     TUYA_VERSION,
 )
-from .models import PROFILE, ScheduleChannel, decode_dp38, decode_dp45, encode_dp45_start_manual
+from .models import (
+    DP38_PROTOCOL_LAB_ZONE,
+    PROFILE,
+    ScheduleChannel,
+    build_dp38_zone8_rain_probe,
+    decode_dp38,
+    decode_dp45,
+    dp38_byte_diff,
+    encode_dp45_start_manual,
+    validate_dp38_block,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -311,6 +321,135 @@ class HOSC8WAPI:
         if self._using_cloud and self._has_cloud:
             return self._cloud_update()
         return False
+
+    def prepare_dp38_zone8_rain_probe(self, follow_rain_sensor: bool) -> dict[str, Any]:
+        """Prepare, but never send, the controlled DP38 Zone 8 rain-bit mutation."""
+        zone = DP38_PROTOCOL_LAB_ZONE
+        source = self.device.schedule_sources.get(zone)
+        original = self.device.schedule_blocks.get(zone)
+        if original is None:
+            raise RuntimeError("No DP38 Zone 8 block is available for the protocol probe")
+        if source != "controller":
+            raise RuntimeError(
+                "DP38 Zone 8 probe requires a fresh controller-sourced block; "
+                f"current source is {source or 'unknown'}"
+            )
+        validate_dp38_block(original, expected_zone=zone)
+        candidate = build_dp38_zone8_rain_probe(original, follow_rain_sensor)
+        changes = dp38_byte_diff(original, candidate)
+        return {
+            "zone": zone,
+            "source": source,
+            "follow_rain_sensor": follow_rain_sensor,
+            "before_hex": original.hex().upper(),
+            "candidate_hex": candidate.hex().upper(),
+            "diff": changes,
+            "already_in_requested_state": not changes,
+            "local_transport": self.active_transport == CONNECTION_MODE_LOCAL,
+            "controller_idle": self.device.active_zone == 0 and self.device.queued_zone == 0,
+            "write_exposed_to_home_assistant": False,
+        }
+
+    def _lab_receive_dp38_zone8(
+        self, expected: bytes, timeout_seconds: float = 4.0
+    ) -> bytes | None:
+        """Wait for a controller DP38 push containing the expected Zone 8 block."""
+        if not self._tuya or not self._connected:
+            return None
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
+            try:
+                response = self._tuya.receive()
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("Zone 8 DP38 probe receive failed: %s", exc)
+                return None
+            if not isinstance(response, dict) or "Err" in response:
+                continue
+            dps = response.get("dps")
+            if not isinstance(dps, dict) or str(DP_NORMAL_TIME) not in dps:
+                continue
+            self.device.update_from_dps(dps)
+            current = self.device.schedule_blocks.get(DP38_PROTOCOL_LAB_ZONE)
+            if current == expected:
+                return current
+        return None
+
+    def _lab_write_dp38_zone8_rain_probe(
+        self,
+        follow_rain_sensor: bool,
+        *,
+        confirmation: str,
+        timeout_seconds: float = 4.0,
+    ) -> dict[str, Any]:
+        """Execute one Zone 8 DP38 write/read-back/rollback laboratory probe.
+
+        This private method is deliberately not registered as a Home Assistant
+        service, entity action, or frontend command. It is restricted to the
+        physically unused Zone 8 and requires an explicit confirmation token.
+        """
+        if confirmation != "ZONE8_DP38_WRITE":
+            raise PermissionError("Explicit Zone 8 protocol-lab confirmation is required")
+
+        with self._io_lock:
+            prepared = self.prepare_dp38_zone8_rain_probe(follow_rain_sensor)
+            if prepared["already_in_requested_state"]:
+                raise ValueError(
+                    "Zone 8 already has the requested rain flag; choose the opposite state "
+                    "so the probe produces a one-bit mutation"
+                )
+            if not prepared["local_transport"]:
+                raise RuntimeError("DP38 protocol probe is local-transport only")
+            if not prepared["controller_idle"]:
+                raise RuntimeError("DP38 protocol probe requires no active or queued watering")
+
+            original = bytes.fromhex(prepared["before_hex"])
+            candidate = bytes.fromhex(prepared["candidate_hex"])
+            device = self._ensure_connection()
+            if not device:
+                raise RuntimeError("Local controller connection is unavailable")
+
+            result = dict(prepared)
+            result.update(
+                {
+                    "candidate_sent": False,
+                    "candidate_read_back": False,
+                    "rollback_sent": False,
+                    "rollback_read_back": False,
+                }
+            )
+
+            _LOGGER.warning(
+                "HO-SC-8W protocol lab: writing DP38 Zone 8 only; diff=%s",
+                prepared["diff"],
+            )
+            device.set_socketTimeout(1)
+            try:
+                device.set_value(DP_NORMAL_TIME, candidate, nowait=True)
+                result["candidate_sent"] = True
+                result["candidate_read_back"] = (
+                    self._lab_receive_dp38_zone8(candidate, timeout_seconds) == candidate
+                )
+            finally:
+                try:
+                    device.set_value(DP_NORMAL_TIME, original, nowait=True)
+                    result["rollback_sent"] = True
+                    result["rollback_read_back"] = (
+                        self._lab_receive_dp38_zone8(original, timeout_seconds) == original
+                    )
+                finally:
+                    device.set_socketTimeout(5)
+
+            result["probe_verified"] = bool(
+                result["candidate_sent"]
+                and result["candidate_read_back"]
+                and result["rollback_sent"]
+                and result["rollback_read_back"]
+            )
+            if not result["rollback_read_back"]:
+                _LOGGER.error(
+                    "HO-SC-8W protocol lab could not verify the Zone 8 DP38 rollback"
+                )
+            return result
 
     def receive_push_update(self) -> bool:
         """Consume one unsolicited update from the persistent local socket."""
