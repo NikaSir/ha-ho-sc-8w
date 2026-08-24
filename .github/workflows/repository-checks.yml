@@ -71,6 +71,11 @@ jobs:
             exit 1
           fi
 
+          if ! grep -Fq 'hass-toggle-menu' "$bundle"; then
+            echo 'Native Home Assistant sidebar menu event is missing from production panel.'
+            exit 1
+          fi
+
           echo 'OK self-contained frontend bundle'
 
       - name: Reject tracked credential/key files
