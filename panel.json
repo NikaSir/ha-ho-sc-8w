@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.5.6",
+    "dashboard_version": "0.5.7",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -42,6 +42,7 @@
       "production_zones": [1, 2, 3, 4, 5, 6],
       "zone_8": "diagnostics_only",
       "hydraulic_path": "incoming_mainline_to_manifold_to_valves_to_zones",
+      "mainline_connection_side": "left_via_pressure_gauge",
       "electrical_path": "controller_to_valve_actuators",
       "rain_sensor_path": "rain_sensor_to_controller",
       "water_passes_through_controller": false,

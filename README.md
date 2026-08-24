@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.5.6**.
+Current panel version: **0.5.7**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -96,6 +96,10 @@ The status screen now treats the approved light render as the visual source of t
 ### Undistorted equipment and live pressure v0.5.6
 
 The approved schematic now keeps one proportional canvas at every viewport width, preventing the controller, rain sensor and manifold from being compressed vertically on wide screens. Embedded equipment and zone imagery is pre-scaled with high-quality interpolation for cleaner Retina rendering. The mainline gauge and node card resolve `Датчик давления полив` by its Home Assistant friendly name and display its live state and unit.
+
+### Left-side mainline entry v0.5.7
+
+The incoming water path now runs from the pressure gauge vertically upward and then horizontally into the left end of the manifold. The previous bottom run and right-side riser are removed, including the old blue branch embedded in the manifold image. Pressure lookup keeps the exact `Датчик давления полив` friendly-name match and adds a conservative pressure-plus-irrigation token fallback.
 
 ### Self-contained production frontend v0.4.3
 

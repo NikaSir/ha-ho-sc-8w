@@ -85,6 +85,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             },
             "system_visualization": {
                 "hydraulic_path": "incoming_mainline_to_manifold_to_valves_to_zones",
+                "mainline_connection_side": "left_via_pressure_gauge",
                 "electrical_path": "controller_to_valve_actuators",
                 "rain_sensor_path": "rain_sensor_to_controller",
                 "water_passes_through_controller": False,
@@ -93,7 +94,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "theme_strategy": "fixed_light_reference_dark_theme_deferred",
                 "production_zones": [1, 2, 3, 4, 5, 6],
                 "mainline_state_source_verified": True,
-                "mainline_entity_resolution": "friendly_name_Датчик давления полив",
+                "mainline_entity_resolution": "friendly_name_or_pressure_irrigation_tokens",
                 "zone_8_diagnostics_only": True,
             },
             "primary_device": "iphone_pro_max_portrait",
