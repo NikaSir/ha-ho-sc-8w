@@ -7,16 +7,17 @@
     "icon": "mdi:sprinkler",
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
-    "preferred_view": "overview",
-    "dashboard_version": "0.4.4",
+    "preferred_view": "status",
+    "dashboard_version": "0.5.0",
     "navigation": {
       "header_back": "explicit_parent_route",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "browser_history_back": false,
       "views": [
-        "overview",
+        "status",
+        "zones",
+        "program",
         "manual",
-        "settings",
         "diagnostics"
       ]
     },
@@ -26,10 +27,12 @@
       "cache_busting": "query_string_version",
       "historical_runtime_imports": false
     },
-    "overview_layout": {
-      "primary_viewport": "iphone_pro_max_portrait",
-      "fill_available_vertical_field": true,
-      "zones_1_6_visible_without_first_screen_scroll": true
+    "system_visualization": {
+      "controller": "HO-SC-8W",
+      "production_zones": [1, 2, 3, 4, 5, 6],
+      "zone_8": "diagnostics_only",
+      "mainline_state": "unverified_no_sensor",
+      "dynamic_state_source": "home_assistant_entities"
     }
   },
   "ownership": {
