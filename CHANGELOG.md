@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.17` / panel `0.5.9`: bind irrigation pressure to the confirmed Home Assistant entity `sensor.nikas_h2000_pro_voda_na_poliv_2`, render the value as text-only `Давление полива: 2,90 bar`, and retain conservative fallback discovery for compatible `Вода на полив` sensors measured in bar.
+- `1.0.0-b005.17` / panel `0.5.9`: remove the obsolete pressure-gauge pictogram and stretch the manifold, six valve overlays, strict vertical valve-to-zone branches and six zone cards across the diagram's usable width with shared measured centers.
 - `1.0.0-b005.16` / panel `0.5.8`: replace the incorrect tall white controller crop with an accurate wide turquoise INKBIRD / HiOazo HO-SC-8W front product cutout reconstructed from the supplied reference, including the LCD and eight-zone identity; preserve its natural proportions and reconnect the rain/control wires orthogonally.
 - `1.0.0-b005.16` / panel `0.5.8`: enforce an 11 px mobile copy floor equal to the `Локально` badge and expand zone, KPI, core-node, mode and navigation geometry so secondary labels no longer collapse into unreadable microtype.
 - `1.0.0-b005.15` / panel `0.5.7`: reroute incoming water from the pressure gauge vertically upward and into the left end of the manifold with strict orthogonal segments; remove the bottom traverse, right riser and baked-in right blue branch.
