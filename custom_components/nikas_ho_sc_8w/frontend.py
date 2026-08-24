@@ -62,9 +62,9 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "parent_path": PANEL_PARENT_PATH,
             "header": {
                 "title_alignment": "viewport_center",
-                "left_action": "menu",
+                "left_action": "home_assistant_sidebar_menu",
                 "right_action": "refresh",
-                "menu_parent_path": PANEL_PARENT_PATH,
+                "menu_event": "hass-toggle-menu",
             },
             "navigation": {
                 "primary": "full_width_fixed_bottom_tab_bar",
@@ -72,11 +72,11 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "tabs": ["status", "zones", "program", "manual", "diagnostics"],
             },
             "information_architecture": {
-                "status": "system_state_visualization_and_operational_summary",
+                "status": "approved_render_system_state_nodes_current_mode",
                 "zones": "production_zones_1_6_status_and_drilldown",
                 "program": "controller_resident_dp38_read_only_program",
                 "manual": "zone_then_duration_then_start_gate",
-                "diagnostics": "integration_health_program_audit_and_zone_8_lab",
+                "diagnostics": "integration_health_and_zone_8_lab",
             },
             "frontend_bundle": {
                 "mode": "self_contained",

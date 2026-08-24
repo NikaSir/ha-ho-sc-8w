@@ -8,11 +8,11 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.5.1",
+    "dashboard_version": "0.5.2",
     "navigation": {
-      "header_left": "menu",
+      "header_left": "home_assistant_sidebar_menu",
+      "header_menu_event": "hass-toggle-menu",
       "header_right": "refresh",
-      "menu_parent_route": "/dashboard-actions",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "browser_history_back": false,
       "views": [
@@ -28,6 +28,14 @@
       "module_url": "/nikas-ho-sc-8w/irrigation-panel.js",
       "cache_busting": "query_string_version",
       "historical_runtime_imports": false
+    },
+    "status_layout": {
+      "reference": "approved_system_state_render",
+      "sections": [
+        "system_state",
+        "core_nodes",
+        "current_mode"
+      ]
     },
     "system_visualization": {
       "controller": "HO-SC-8W",
@@ -45,6 +53,6 @@
   },
   "standards": {
     "integration_panel_template": "NikaS specialized panel variant",
-    "header": "menu_centered_title_refresh"
+    "header": "ha_sidebar_menu_centered_title_refresh"
   }
 }
