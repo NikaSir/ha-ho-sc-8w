@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.16` / panel `0.5.8`: replace the incorrect tall white controller crop with an accurate wide turquoise INKBIRD / HiOazo HO-SC-8W front product cutout reconstructed from the supplied reference, including the LCD and eight-zone identity; preserve its natural proportions and reconnect the rain/control wires orthogonally.
+- `1.0.0-b005.16` / panel `0.5.8`: enforce an 11 px mobile copy floor equal to the `Локально` badge and expand zone, KPI, core-node, mode and navigation geometry so secondary labels no longer collapse into unreadable microtype.
 - `1.0.0-b005.15` / panel `0.5.7`: reroute incoming water from the pressure gauge vertically upward and into the left end of the manifold with strict orthogonal segments; remove the bottom traverse, right riser and baked-in right blue branch.
 - `1.0.0-b005.15` / panel `0.5.7`: retain exact `Датчик давления полив` lookup and add a conservative pressure-plus-irrigation entity-name fallback for Home Assistant installations whose generated friendly name differs.
 - `1.0.0-b005.14` / panel `0.5.6`: preserve one approved diagram aspect ratio across mobile and wide screens so the controller, rain sensor and manifold are no longer vertically compressed.
