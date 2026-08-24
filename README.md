@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.5.4**.
+Current panel version: **0.5.5**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -88,6 +88,10 @@ Water never enters or exits the controller in the diagram. Every valve is placed
 ### Compact mobile status composition v0.5.4
 
 The iPhone layout restores the accepted compact first-screen composition. The header, system diagram, KPI row, core nodes and current-mode controls use reduced mobile geometry; the six valve centers remain aligned with the six zone cards, and the corrected hydraulic/electrical topology is unchanged.
+
+### Approved light visual composition v0.5.5
+
+The status screen now treats the approved light render as the visual source of truth. It restores the full-width realistic manifold, the physical controller and rain-sensor presentation, photographic zone thumbnails, the larger diagram field and the original white-card hierarchy. The light surface is isolated from Home Assistant dark-theme text variables so a dark host theme cannot produce white text on white cards. A dedicated dark visual treatment is intentionally deferred until it can preserve this approved geometry instead of replacing it.
 
 ### Self-contained production frontend v0.4.3
 
