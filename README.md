@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.5.3**.
+Current panel version: **0.5.4**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -84,6 +84,10 @@ The primary status diagram keeps two systems visually and semantically separate:
 - grey sensor path: rain sensor → HO-SC-8W controller.
 
 Water never enters or exits the controller in the diagram. Every valve is placed directly above its matching zone, and all valve-to-zone connections are vertical. Mainline pressure remains `Нет датчика` until a verified Home Assistant entity is available.
+
+### Compact mobile status composition v0.5.4
+
+The iPhone layout restores the accepted compact first-screen composition. The header, system diagram, KPI row, core nodes and current-mode controls use reduced mobile geometry; the six valve centers remain aligned with the six zone cards, and the corrected hydraulic/electrical topology is unchanged.
 
 ### Self-contained production frontend v0.4.3
 

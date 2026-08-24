@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.12` / panel `0.5.4`: restore the accepted compact iPhone status composition after the v0.5.3 topology update enlarged the diagram and exposed legacy mobile geometry.
+- `1.0.0-b005.12` / panel `0.5.4`: align the exact centers of valves 1–6 with zone cards 1–6, reduce first-screen cards and navigation geometry, and retain the corrected separated water and electrical paths.
 - `1.0.0-b005.11` / panel `0.5.3`: correct the system schematic topology. Water now follows only `incoming mainline → manifold → valve → zone`; the controller is connected to all six valve actuators by a separate grey control-wire bus, and the rain sensor is wired only to the controller.
 - `1.0.0-b005.11` / panel `0.5.3`: place zones 1–6 in one row directly below valves 1–6 and use strict vertical one-to-one water paths without curves, crossings or side branches.
 - `1.0.0-b005.11` / panel `0.5.3`: add a pressure-gauge presentation on the incoming mainline while preserving fail-closed truthfulness: the UI continues to show `Нет датчика` until a verified pressure entity exists.
