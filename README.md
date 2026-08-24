@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.5.5**.
+Current panel version: **0.5.6**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -83,7 +83,7 @@ The primary status diagram keeps two systems visually and semantically separate:
 - grey electrical path: HO-SC-8W controller → six valve actuators;
 - grey sensor path: rain sensor → HO-SC-8W controller.
 
-Water never enters or exits the controller in the diagram. Every valve is placed directly above its matching zone, and all valve-to-zone connections are vertical. Mainline pressure remains `Нет датчика` until a verified Home Assistant entity is available.
+Water never enters or exits the controller in the diagram. Every valve is placed directly above its matching zone, and all valve-to-zone connections are vertical. Mainline pressure is read from the Home Assistant entity whose friendly name is `Датчик давления полив`; missing or unavailable data is never presented as healthy.
 
 ### Compact mobile status composition v0.5.4
 
@@ -92,6 +92,10 @@ The iPhone layout restores the accepted compact first-screen composition. The he
 ### Approved light visual composition v0.5.5
 
 The status screen now treats the approved light render as the visual source of truth. It restores the full-width realistic manifold, the physical controller and rain-sensor presentation, photographic zone thumbnails, the larger diagram field and the original white-card hierarchy. The light surface is isolated from Home Assistant dark-theme text variables so a dark host theme cannot produce white text on white cards. A dedicated dark visual treatment is intentionally deferred until it can preserve this approved geometry instead of replacing it.
+
+### Undistorted equipment and live pressure v0.5.6
+
+The approved schematic now keeps one proportional canvas at every viewport width, preventing the controller, rain sensor and manifold from being compressed vertically on wide screens. Embedded equipment and zone imagery is pre-scaled with high-quality interpolation for cleaner Retina rendering. The mainline gauge and node card resolve `Датчик давления полив` by its Home Assistant friendly name and display its live state and unit.
 
 ### Self-contained production frontend v0.4.3
 
