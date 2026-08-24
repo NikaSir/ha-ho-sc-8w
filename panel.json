@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.5.7",
+    "dashboard_version": "0.5.8",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -38,7 +38,7 @@
       ]
     },
     "system_visualization": {
-      "controller": "HO-SC-8W",
+      "controller": "INKBIRD / HiOazo HO-SC-8W with LCD and Wi-Fi",
       "production_zones": [1, 2, 3, 4, 5, 6],
       "zone_8": "diagnostics_only",
       "hydraulic_path": "incoming_mainline_to_manifold_to_valves_to_zones",
@@ -47,7 +47,7 @@
       "rain_sensor_path": "rain_sensor_to_controller",
       "water_passes_through_controller": false,
       "zone_routing": "orthogonal_vertical_one_to_one",
-      "mobile_layout": "approved_light_reference_first_screen",
+      "mobile_layout": "approved_light_reference_with_11px_copy_floor",
       "mainline_state": "home_assistant_friendly_name_Датчик давления полив",
       "mainline_state_source_verified": true,
       "dynamic_state_source": "home_assistant_entities",
