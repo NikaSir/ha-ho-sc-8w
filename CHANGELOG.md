@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.10` / panel `0.5.2`: align the production status screen with the approved irrigation render: `Состояние системы` hero, controller → six-valve manifold → zones 1–6 visualization, four factual KPI tiles, `Основные узлы`, `Текущий режим`, and the fixed five-tab navigation.
+- `1.0.0-b005.10` / panel `0.5.2`: replace the integration-owned drawer with the native Home Assistant sidebar trigger. The upper-left `mdi:menu` control emits `hass-toggle-menu`; the upper-right control remains factual `homeassistant.update_entity` refresh.
+- `1.0.0-b005.10` / panel `0.5.2`: preserve fail-closed semantics while matching the design. The mainline remains `Нет датчика`, Zone 8 remains diagnostics-only, Pause remains unavailable without a verified action API, and no raw DP38/DP45 write is introduced.
 - `1.0.0-b005.9` / panel `0.5.1`: replace the Header Back control with a real panel menu and add a factual forced-refresh action on the right; the menu exposes the five panel sections and an explicit return to `/dashboard-actions`.
 - `1.0.0-b005.9` / panel `0.5.1`: polish the primary status screen toward the approved visual render — larger controller/manifold composition, pictorial CSS zone thumbnails, separate next-watering card, tighter mainline/rain placement and removal of the redundant current-mode block from the status page.
 - `1.0.0-b005.9` / panel `0.5.1`: preserve the factual boundary: mainline stays `Нет датчика`, Zone 8 stays diagnostics-only, `unknown/unavailable` are never healthy, and no raw DP38/DP45 write or unverified control action is introduced.
