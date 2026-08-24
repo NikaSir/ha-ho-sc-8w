@@ -8,9 +8,11 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.5.0",
+    "dashboard_version": "0.5.1",
     "navigation": {
-      "header_back": "explicit_parent_route",
+      "header_left": "menu",
+      "header_right": "refresh",
+      "menu_parent_route": "/dashboard-actions",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "browser_history_back": false,
       "views": [
@@ -32,7 +34,8 @@
       "production_zones": [1, 2, 3, 4, 5, 6],
       "zone_8": "diagnostics_only",
       "mainline_state": "unverified_no_sensor",
-      "dynamic_state_source": "home_assistant_entities"
+      "dynamic_state_source": "home_assistant_entities",
+      "zone_scene_thumbnails": "css_generated"
     }
   },
   "ownership": {
@@ -41,7 +44,7 @@
     "unknown_unavailable_are_healthy": false
   },
   "standards": {
-    "integration_panel_template": "NikaS Integration Panel Template v1.0",
-    "header": "icon_only_back_symmetric_52px"
+    "integration_panel_template": "NikaS specialized panel variant",
+    "header": "menu_centered_title_refresh"
   }
 }

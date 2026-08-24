@@ -62,11 +62,9 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "parent_path": PANEL_PARENT_PATH,
             "header": {
                 "title_alignment": "viewport_center",
-                "show_brand_icon": False,
-                "back": {
-                    "icon": "mdi:arrow-left",
-                    "parent_path": PANEL_PARENT_PATH,
-                },
+                "left_action": "menu",
+                "right_action": "refresh",
+                "menu_parent_path": PANEL_PARENT_PATH,
             },
             "navigation": {
                 "primary": "full_width_fixed_bottom_tab_bar",
