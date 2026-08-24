@@ -58,7 +58,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         config={
             "version": PANEL_VERSION,
             "owner": "ha-ho-sc-8w",
-            "preferred_view": "overview",
+            "preferred_view": "status",
             "parent_path": PANEL_PARENT_PATH,
             "header": {
                 "title_alignment": "viewport_center",
@@ -71,23 +71,25 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "navigation": {
                 "primary": "full_width_fixed_bottom_tab_bar",
                 "floating": False,
-                "tabs": ["overview", "manual", "settings", "diagnostics"],
+                "tabs": ["status", "zones", "program", "manual", "diagnostics"],
             },
             "information_architecture": {
-                "overview": "compact_program_status_and_zone_drilldown",
-                "manual": "zone_then_duration_then_start",
-                "settings": "controller_global_parameters",
-                "diagnostics": "integration_health_and_program_audit",
-                "program_audit": "diagnostics_drilldown_read_only",
+                "status": "system_state_visualization_and_operational_summary",
+                "zones": "production_zones_1_6_status_and_drilldown",
+                "program": "controller_resident_dp38_read_only_program",
+                "manual": "zone_then_duration_then_start_gate",
+                "diagnostics": "integration_health_program_audit_and_zone_8_lab",
             },
             "frontend_bundle": {
                 "mode": "self_contained",
                 "runtime_historical_imports": False,
                 "cache_busting": "query_string",
             },
-            "overview_density": {
-                "target": "all_zones_1_6_visible_without_scroll",
-                "viewport": "iphone_pro_max_portrait",
+            "system_visualization": {
+                "controller_to_valves_to_zones": True,
+                "production_zones": [1, 2, 3, 4, 5, 6],
+                "mainline_state_source_verified": False,
+                "zone_8_diagnostics_only": True,
             },
             "primary_device": "iphone_pro_max_portrait",
         },

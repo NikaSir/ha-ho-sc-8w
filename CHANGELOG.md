@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.8` / panel `0.5.0`: redesign the primary irrigation surface around a dynamic system-state visualization inspired by the shared NikaS ZONT / S8 OMNI application language. The panel now shows controller → six-valve manifold → zones 1–6, with active and queued paths derived from factual Home Assistant telemetry.
+- `1.0.0-b005.8` / panel `0.5.0`: move primary navigation to `Состояние · Зоны · Программа · Ручной · Диагн.` and add dedicated production-zone and read-only DP38 program views.
+- `1.0.0-b005.8` / panel `0.5.0`: keep the visualization fail-closed — the mainline / master-valve tile explicitly says `Нет датчика` because no verified source exists; Zone 8 remains diagnostics-only; no raw DP38/DP45 write or unverified control action is introduced.
 - `1.0.0-b005.7` / panel `0.4.4`: align the irrigation shell with NikaS Integration Panel Template v1.0 — icon-only Back, symmetric 52/52 px Header slots (48/48 narrow), centered title and unchanged fixed Bottom Tab Bar.
 - `1.0.0-b005.7` / panel `0.4.4`: UI-only standardization; controller logic, DP handling and write safety are unchanged.
 - `1.0.0-b005.6` / panel `0.4.3`: expand the iPhone Pro Max Overview vertically to use the full field above the fixed Bottom Tab Bar while keeping zones 1–6 visible without first-screen scrolling.
@@ -23,6 +26,8 @@ All notable project changes are recorded here.
 
 ### Added
 
+- Dynamic irrigation schematic with truthful controller, valve-channel, zone, rain-setting and mainline-source semantics.
+- Five-tab mobile-first irrigation navigation matching the approved system-state render direction.
 - CI release checks for JavaScript syntax, exactly one production frontend bundle, and rejection of historical-version runtime imports.
 - Machine-readable panel metadata for the stable `/dashboard-irrigation` route, parent `/dashboard-actions`, current information architecture and self-contained frontend-bundle contract.
 - Initial GitHub repository bootstrap and project boundary documentation.
