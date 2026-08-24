@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.11` / panel `0.5.3`: correct the system schematic topology. Water now follows only `incoming mainline → manifold → valve → zone`; the controller is connected to all six valve actuators by a separate grey control-wire bus, and the rain sensor is wired only to the controller.
+- `1.0.0-b005.11` / panel `0.5.3`: place zones 1–6 in one row directly below valves 1–6 and use strict vertical one-to-one water paths without curves, crossings or side branches.
+- `1.0.0-b005.11` / panel `0.5.3`: add a pressure-gauge presentation on the incoming mainline while preserving fail-closed truthfulness: the UI continues to show `Нет датчика` until a verified pressure entity exists.
 - `1.0.0-b005.10` / panel `0.5.2`: align the production status screen with the approved irrigation render: `Состояние системы` hero, controller → six-valve manifold → zones 1–6 visualization, four factual KPI tiles, `Основные узлы`, `Текущий режим`, and the fixed five-tab navigation.
 - `1.0.0-b005.10` / panel `0.5.2`: replace the integration-owned drawer with the native Home Assistant sidebar trigger. The upper-left `mdi:menu` control emits `hass-toggle-menu`; the upper-right control remains factual `homeassistant.update_entity` refresh.
 - `1.0.0-b005.10` / panel `0.5.2`: preserve fail-closed semantics while matching the design. The mainline remains `Нет датчика`, Zone 8 remains diagnostics-only, Pause remains unavailable without a verified action API, and no raw DP38/DP45 write is introduced.

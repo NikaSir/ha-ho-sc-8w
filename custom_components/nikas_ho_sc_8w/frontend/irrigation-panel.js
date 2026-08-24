@@ -1,5 +1,5 @@
 (() => {
-  const UI_VERSION = "0.5.2";
+  const UI_VERSION = "0.5.3";
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
 
@@ -203,13 +203,13 @@
     irrigationDiagram(e) {
       const active = this.zoneSet(this.state(e.active));
       const queued = this.zoneSet(this.state(e.queued));
-      const valveXs = [328, 370, 412, 454, 496, 538];
-      const zoneYs = [102, 170, 238, 306, 374, 442];
-      const lines = valveXs.map((x, idx) => {
+      const valveXs = [246, 378, 510, 642, 774, 906];
+      const waterLines = valveXs.map((x, idx) => {
         const zone = idx + 1;
-        const cls = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "idle";
-        return `<path class="pipe ${cls}" d="M ${x} 253 C ${x + 38} 253, 602 ${zoneYs[idx]}, 660 ${zoneYs[idx]}"/>`;
+        const cls = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
+        return `<path class="pipe ${cls}" d="M ${x} 304 V 320"/>`;
       }).join("");
+      const controlDrops = valveXs.map((x) => `<path class="wire control" d="M ${x} 190 V 228"/>`).join("");
       const valves = valveXs.map((_, idx) => {
         const zone = idx + 1;
         const cls = active.has(String(zone)) ? "running" : queued.has(String(zone)) ? "queued" : "";
@@ -227,18 +227,20 @@
       }).join("");
       return `<div class="systemDiagram">
         <svg class="pipes" viewBox="0 0 1000 540" preserveAspectRatio="none" aria-hidden="true">
-          <path class="pipe supply" d="M 195 290 C 245 290, 270 253, 308 253"/>
-          ${lines}
-          <path class="pipe idle" d="M 190 340 C 220 440, 350 492, 520 492"/>
-          <path class="pipe sensor" d="M 574 78 L 574 194"/>
+          <path class="wire rainWire" d="M 150 178 H 186 V 92 H 224"/>
+          <path class="wire control" d="M 126 352 V 370 H 184 V 190 H 906"/>
+          ${controlDrops}
+          <path class="pipe supply" d="M 45 485 H 965 V 294 H 940"/>
+          ${waterLines}
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
         <span class="controllerCheck ${this.bad(this.state(e.connection)) ? "bad" : ""}"><ha-icon icon="${this.bad(this.state(e.connection)) ? "mdi:help" : "mdi:check"}"></ha-icon></span>
         <div class="manifold"><div class="valves">${valves}</div><div class="rail"></div></div>
         <button class="rainSensor" data-entity="${this.esc(e.rain)}"><ha-icon icon="mdi:access-point"></ha-icon><span>Датчик<br>дождя</span></button>
-        <div class="zoneStack">${zones}</div>
-        <div class="mainlineDevice"><ha-icon icon="mdi:water-pump"></ha-icon></div>
-        <div class="mainlineLabel"><span>Магистраль ·</span><b>Нет датчика</b></div>
+        <div class="controlLabel">Провод управления клапанами</div>
+        <div class="zoneRow">${zones}</div>
+        <div class="mainlineDevice"><ha-icon icon="mdi:gauge"></ha-icon></div>
+        <div class="mainlineLabel"><span>Входящая магистраль · Давление ·</span><b>Нет датчика</b></div>
       </div>`;
     }
 
@@ -390,6 +392,27 @@
         .bottomNav{position:fixed;z-index:30;left:0;right:0;bottom:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 97%,transparent);border-top:1px solid var(--line);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}.bottomNavInner{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;max-width:920px;margin:0 auto}.bottomNav button{display:grid;place-items:center;align-content:center;gap:3px;min-height:65px;border:0;border-radius:17px;background:transparent;color:var(--muted);font-size:9px;font-weight:750}.bottomNav button ha-icon{--mdc-icon-size:25px}.bottomNav button.active{background:#eaf7fc;color:var(--a)}
         @media(max-width:520px){.app{padding-left:10px;padding-right:10px}.appHeader{grid-template-columns:50px minmax(0,1fr) 50px;min-height:74px;padding-top:calc(7px + env(safe-area-inset-top))}.headerButton{width:50px;height:50px;border-radius:18px}.headerButton ha-icon{--mdc-icon-size:27px}.headerTitle strong{font-size:21px}.headerTitle small{font-size:9.5px}.content{padding-top:9px}.hero{padding:14px;border-radius:24px}.heroHead h1{font-size:26px}.heroHead p{font-size:11.5px}.connectionBadge{padding:8px 11px;font-size:11px}.connectionWrap>small{font-size:7px}.systemDiagram{height:350px;margin-top:13px}.controller{left:2%;top:27%;width:20.5%;height:49%}.controller .body b{font-size:10px}.controller .body small{font-size:6px}.controllerCheck{left:17%;top:24%;width:28px;height:28px}.manifold{left:25%;top:40%;width:35%}.valve i{width:14px;height:47px}.zoneStack{right:1.5%;top:6.5%;width:36.5%;gap:5px}.diagramZone{grid-template-columns:42px minmax(0,1fr) auto 14px;gap:5px;min-height:47px;padding:4px 5px}.scene{width:42px;height:36px}.scene ha-icon{--mdc-icon-size:19px}.zoneText b{font-size:9px}.zoneText small{font-size:6px}.duration{font-size:10px}.readyIcon{--mdc-icon-size:13px}.rainSensor{left:47%;top:2%;padding:5px}.mainlineDevice{left:44%;bottom:6%}.mainlineLabel{left:35%;bottom:.5%}.metrics{gap:5px}.metric{grid-template-columns:27px minmax(0,1fr);min-height:62px;padding:6px}.metric ha-icon{--mdc-icon-size:22px}.metric small{font-size:6.2px}.metric b{font-size:11px}.nodeGrid,.modeGrid{gap:5px}.node{grid-template-columns:28px minmax(0,1fr);min-height:69px;padding:7px}.node>ha-icon{--mdc-icon-size:23px}.node small{font-size:6.5px}.node b{font-size:10.5px}.node em{font-size:6px}.mode{min-height:88px;padding:7px}.mode ha-icon{--mdc-icon-size:28px}.mode b{font-size:12px}.mode small{font-size:7px}.bottomNav button{min-height:63px}}
         @media(max-width:390px){.heroHead h1{font-size:23px}.connectionBadge{font-size:10px;padding:7px 9px}.systemDiagram{height:330px}.zoneStack{width:37.5%}.diagramZone{grid-template-columns:35px minmax(0,1fr) auto 12px}.scene{width:35px;height:31px}.zoneText b{font-size:8px}.duration{font-size:9px}.metrics,.nodeGrid,.modeGrid{grid-template-columns:repeat(2,1fr)}}
+        /* v0.5.3: separate hydraulic routing from controller wiring. */
+        .systemDiagram{height:430px}
+        .pipe.water{stroke:color-mix(in srgb,var(--a) 62%,#d9e9f3)}
+        .wire{fill:none;stroke:#74818d;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+        .wire.rainWire{stroke-width:2.7}
+        .controller{left:2.5%;top:25%;width:14.5%;height:44%}
+        .controller .body b{font-size:10px}.controller .body small{font-size:6px}.controller .ports{gap:11px}.controller .ports i{width:7px;height:10px;background:#59656f}
+        .controllerCheck{left:13.5%;top:22.5%;width:27px;height:27px}.controllerCheck ha-icon{--mdc-icon-size:16px}
+        .manifold{left:18%;right:3%;top:39%;width:auto;height:27%}.valves{left:0;right:0;gap:5px}.valve b{font-size:8px}.rail{top:55%}
+        .rainSensor{left:18%;top:3%;grid-template-columns:30px auto;padding:6px 8px}.rainSensor ha-icon{--mdc-icon-size:25px}.rainSensor span{font-size:8px}
+        .controlLabel{position:absolute;z-index:3;right:10%;top:27%;padding:3px 7px;border-radius:9px;background:#fbfdfdcc;color:#687681;font-size:9px;white-space:nowrap}
+        .zoneRow{position:absolute;z-index:2;left:18%;right:3%;top:59%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+        .zoneRow .diagramZone{position:relative;display:grid;grid-template-columns:1fr;grid-template-rows:50px auto auto;align-content:start;justify-items:stretch;gap:4px;min-width:0;min-height:118px;padding:6px 5px;border-radius:14px;text-align:left}
+        .zoneRow .scene{width:100%;height:50px;border-radius:9px}.zoneRow .scene ha-icon{--mdc-icon-size:23px}
+        .zoneRow .zoneText{min-width:0;text-align:left}.zoneRow .zoneText b{font-size:9.5px;white-space:nowrap}.zoneRow .zoneText small{margin-top:3px;font-size:6.5px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+        .zoneRow .duration{display:flex;align-items:baseline;gap:2px;font-size:12px;text-align:left}.zoneRow .duration small{display:inline;font-size:6px}
+        .zoneRow .readyIcon{position:absolute;right:3px;top:3px;--mdc-icon-size:13px;filter:drop-shadow(0 1px 2px #fff)}
+        .mainlineDevice{left:5%;bottom:5.5%;width:39px;height:39px;border:2px solid #687681;border-radius:50%;background:#fff;color:var(--a);box-shadow:none}.mainlineDevice ha-icon{--mdc-icon-size:25px}
+        .mainlineLabel{left:50%;bottom:.5%;transform:translateX(-50%);gap:4px;padding:4px 8px;font-size:8px;white-space:nowrap}.mainlineLabel b{font-size:8.5px}
+        @media(max-width:520px){.systemDiagram{height:385px}.controller{left:2%;top:27%;width:15%;height:42%}.controller .body b{font-size:8px}.controller .body small{font-size:5px}.controllerCheck{left:12.8%;top:24%;width:24px;height:24px}.manifold{left:18%;right:2%;top:40%;height:26%}.valve i{width:14px;height:47px}.rainSensor{left:17%;top:2%;padding:4px}.rainSensor span{font-size:7px}.controlLabel{right:4%;top:27%;font-size:7px}.zoneRow{left:18%;right:2%;top:59%;gap:4px}.zoneRow .diagramZone{grid-template-rows:35px auto auto;gap:3px;min-height:105px;padding:4px 3px;border-radius:11px}.zoneRow .scene{height:35px;border-radius:7px}.zoneRow .scene ha-icon{--mdc-icon-size:17px}.zoneRow .zoneText b{font-size:7.5px}.zoneRow .zoneText small{font-size:5.2px}.zoneRow .duration{font-size:9.5px}.zoneRow .duration small{font-size:5px}.zoneRow .readyIcon{right:2px;top:2px;--mdc-icon-size:10px}.mainlineDevice{left:4%;bottom:5%;width:34px;height:34px}.mainlineDevice ha-icon{--mdc-icon-size:21px}.mainlineLabel{bottom:.3%;padding:3px 6px;font-size:6.8px}.mainlineLabel b{font-size:7px}}
+        @media(max-width:390px){.systemDiagram{height:370px}.controlLabel{font-size:6.3px}.zoneRow .diagramZone{grid-template-rows:31px auto auto;min-height:99px;padding:3px 2px}.zoneRow .scene{height:31px}.zoneRow .zoneText b{font-size:7px}.zoneRow .zoneText small{font-size:4.8px}.zoneRow .duration{font-size:9px}.mainlineLabel{font-size:6.2px}.mainlineLabel b{font-size:6.5px}}
       `;
     }
 
