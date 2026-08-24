@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.14` / panel `0.5.6`: preserve one approved diagram aspect ratio across mobile and wide screens so the controller, rain sensor and manifold are no longer vertically compressed.
+- `1.0.0-b005.14` / panel `0.5.6`: replace the small embedded JPEG crops with cleaned 3× WebP assets for sharper high-density rendering without increasing the production bundle footprint materially.
+- `1.0.0-b005.14` / panel `0.5.6`: resolve the Home Assistant entity named `Датчик давления полив`, show its live state and unit on the incoming mainline and core-node card, and keep missing/unavailable readings fail-closed.
 - `1.0.0-b005.13` / panel `0.5.5`: restore the approved light status render as the visual source of truth: full-width realistic manifold, physical controller and rain sensor, photographic zone thumbnails, larger diagram field and the original white-card hierarchy.
 - `1.0.0-b005.13` / panel `0.5.5`: isolate the approved light palette from Home Assistant dark-theme text variables, preventing white-on-white and faded status content; a separate dark treatment is deferred until it can preserve the approved geometry.
 - `1.0.0-b005.13` / panel `0.5.5`: retain the verified schematic topology and strict one-to-one vertical valve-to-zone routing while replacing the unrelated compact card composition.

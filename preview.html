@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    html,body{margin:0;background:#f7f7f8;color:#151515}
+    ha-icon{display:inline-grid;place-items:center;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);font-size:calc(var(--mdc-icon-size,24px)*.65)}
+    ha-icon::before{content:"●"}
+  </style>
+</head>
+<body>
+  <nikas-ho-sc-8w-panel id="panel"></nikas-ho-sc-8w-panel>
+  <script src="custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js"></script>
+  <script>
+    const now = new Date().toISOString();
+    const state = (value, attributes = {}) => ({state:String(value),attributes,last_updated:now,last_changed:now});
+    const states = {
+      "sensor.kontroller_poliva_ho_sc_8w_connection_mode": state("local"),
+      "sensor.kontroller_poliva_ho_sc_8w_operation_mode": state("Auto"),
+      "sensor.kontroller_poliva_ho_sc_8w_irrigation_mode": state("order"),
+      "sensor.kontroller_poliva_ho_sc_8w_active_zones": state("None"),
+      "sensor.kontroller_poliva_ho_sc_8w_queued_zones": state("None"),
+      "sensor.kontroller_poliva_ho_sc_8w_rain_sensor": state("disabled"),
+      "sensor.datchik_davleniia_poliv": state("2.8", {
+        friendly_name: "Датчик давления полив",
+        unit_of_measurement: "бар"
+      }),
+      "sensor.kontroller_poliva_ho_sc_8w_seasonal_adjustment": state("100"),
+      "sensor.kontroller_poliva_ho_sc_8w_timer_error_alarm": state("clear"),
+      "sensor.kontroller_poliva_ho_sc_8w_schedule_cache": state("complete")
+    };
+    for (let zone = 1; zone <= 8; zone += 1) {
+      states[`sensor.kontroller_poliva_ho_sc_8w_zone_${zone}_time_remaining`] = state("0");
+      states[`sensor.kontroller_poliva_ho_sc_8w_zone_${zone}_time_elapsed`] = state("0");
+      states[`sensor.kontroller_poliva_ho_sc_8w_schedule_zone_${zone}`] = state("configured", {
+        duration_min: zone === 2 ? 20 : 10,
+        start_times: [zone === 1 || zone === 2 ? "05:00" : `05:${String((zone - 2) * 10).padStart(2,"0")}`],
+        calendar_mode: zone === 1 ? "interval" : "weekly",
+        interval_days: zone === 1 ? 2 : 0,
+        rain_sensor_follow: true
+      });
+    }
+    document.getElementById("panel").hass = {states, callService: async () => {}};
+  </script>
+</body>
+</html>
