@@ -89,6 +89,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "rain_sensor_path": "rain_sensor_to_controller",
                 "water_passes_through_controller": False,
                 "orthogonal_zone_routing": True,
+                "mobile_layout": "compact_first_screen",
                 "production_zones": [1, 2, 3, 4, 5, 6],
                 "mainline_state_source_verified": False,
                 "zone_8_diagnostics_only": True,
