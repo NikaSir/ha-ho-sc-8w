@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.15` / panel `0.5.7`: reroute incoming water from the pressure gauge vertically upward and into the left end of the manifold with strict orthogonal segments; remove the bottom traverse, right riser and baked-in right blue branch.
+- `1.0.0-b005.15` / panel `0.5.7`: retain exact `Датчик давления полив` lookup and add a conservative pressure-plus-irrigation entity-name fallback for Home Assistant installations whose generated friendly name differs.
 - `1.0.0-b005.14` / panel `0.5.6`: preserve one approved diagram aspect ratio across mobile and wide screens so the controller, rain sensor and manifold are no longer vertically compressed.
 - `1.0.0-b005.14` / panel `0.5.6`: replace the small embedded JPEG crops with cleaned 3× WebP assets for sharper high-density rendering without increasing the production bundle footprint materially.
 - `1.0.0-b005.14` / panel `0.5.6`: resolve the Home Assistant entity named `Датчик давления полив`, show its live state and unit on the incoming mainline and core-node card, and keep missing/unavailable readings fail-closed.
