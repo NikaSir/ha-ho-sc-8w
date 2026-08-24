@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.5.8**.
+Current panel version: **0.5.9**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -105,6 +105,10 @@ The incoming water path now runs from the pressure gauge vertically upward and t
 
 The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. On mobile, supporting text has an 11 px floor—the same size as the `Локально` badge—and the diagram/KPI/node/mode cards are given enough height to avoid compressed labels.
 
+### Confirmed irrigation pressure and full-width manifold v0.5.9
+
+The pressure readout is bound first to the confirmed Home Assistant entity `sensor.nikas_h2000_pro_voda_na_poliv_2`. It is presented as text only (`Давление полива: 2,90 bar`) with two decimal places; the obsolete gauge pictogram is removed. The manifold, all six valve-state overlays, vertical valve-to-zone branches and zone cards now share the full diagram width and the same measured valve centers.
+
 ### Self-contained production frontend v0.4.3
 
 The production panel follows the mandatory NikaS specialized-panel frontend release standard:
@@ -112,7 +116,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend rele
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.5.8
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.5.9
       ↓
 <nikas-ho-sc-8w-panel>
 ```
