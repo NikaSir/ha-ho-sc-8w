@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.13` / panel `0.5.5`: restore the approved light status render as the visual source of truth: full-width realistic manifold, physical controller and rain sensor, photographic zone thumbnails, larger diagram field and the original white-card hierarchy.
+- `1.0.0-b005.13` / panel `0.5.5`: isolate the approved light palette from Home Assistant dark-theme text variables, preventing white-on-white and faded status content; a separate dark treatment is deferred until it can preserve the approved geometry.
+- `1.0.0-b005.13` / panel `0.5.5`: retain the verified schematic topology and strict one-to-one vertical valve-to-zone routing while replacing the unrelated compact card composition.
 - `1.0.0-b005.12` / panel `0.5.4`: restore the accepted compact iPhone status composition after the v0.5.3 topology update enlarged the diagram and exposed legacy mobile geometry.
 - `1.0.0-b005.12` / panel `0.5.4`: align the exact centers of valves 1–6 with zone cards 1–6, reduce first-screen cards and navigation geometry, and retain the corrected separated water and electrical paths.
 - `1.0.0-b005.11` / panel `0.5.3`: correct the system schematic topology. Water now follows only `incoming mainline → manifold → valve → zone`; the controller is connected to all six valve actuators by a separate grey control-wire bus, and the rain sensor is wired only to the controller.
