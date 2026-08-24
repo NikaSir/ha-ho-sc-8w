@@ -1,5 +1,5 @@
 (() => {
-  const UI_VERSION = "0.5.3";
+  const UI_VERSION = "0.5.4";
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
 
@@ -203,7 +203,7 @@
     irrigationDiagram(e) {
       const active = this.zoneSet(this.state(e.active));
       const queued = this.zoneSet(this.state(e.queued));
-      const valveXs = [246, 378, 510, 642, 774, 906];
+      const valveXs = [247, 380, 513, 647, 780, 913];
       const waterLines = valveXs.map((x, idx) => {
         const zone = idx + 1;
         const cls = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
@@ -228,7 +228,7 @@
       return `<div class="systemDiagram">
         <svg class="pipes" viewBox="0 0 1000 540" preserveAspectRatio="none" aria-hidden="true">
           <path class="wire rainWire" d="M 150 178 H 186 V 92 H 224"/>
-          <path class="wire control" d="M 126 352 V 370 H 184 V 190 H 906"/>
+          <path class="wire control" d="M 126 352 V 370 H 184 V 190 H 913"/>
           ${controlDrops}
           <path class="pipe supply" d="M 45 485 H 965 V 294 H 940"/>
           ${waterLines}
@@ -392,27 +392,39 @@
         .bottomNav{position:fixed;z-index:30;left:0;right:0;bottom:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 97%,transparent);border-top:1px solid var(--line);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}.bottomNavInner{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;max-width:920px;margin:0 auto}.bottomNav button{display:grid;place-items:center;align-content:center;gap:3px;min-height:65px;border:0;border-radius:17px;background:transparent;color:var(--muted);font-size:9px;font-weight:750}.bottomNav button ha-icon{--mdc-icon-size:25px}.bottomNav button.active{background:#eaf7fc;color:var(--a)}
         @media(max-width:520px){.app{padding-left:10px;padding-right:10px}.appHeader{grid-template-columns:50px minmax(0,1fr) 50px;min-height:74px;padding-top:calc(7px + env(safe-area-inset-top))}.headerButton{width:50px;height:50px;border-radius:18px}.headerButton ha-icon{--mdc-icon-size:27px}.headerTitle strong{font-size:21px}.headerTitle small{font-size:9.5px}.content{padding-top:9px}.hero{padding:14px;border-radius:24px}.heroHead h1{font-size:26px}.heroHead p{font-size:11.5px}.connectionBadge{padding:8px 11px;font-size:11px}.connectionWrap>small{font-size:7px}.systemDiagram{height:350px;margin-top:13px}.controller{left:2%;top:27%;width:20.5%;height:49%}.controller .body b{font-size:10px}.controller .body small{font-size:6px}.controllerCheck{left:17%;top:24%;width:28px;height:28px}.manifold{left:25%;top:40%;width:35%}.valve i{width:14px;height:47px}.zoneStack{right:1.5%;top:6.5%;width:36.5%;gap:5px}.diagramZone{grid-template-columns:42px minmax(0,1fr) auto 14px;gap:5px;min-height:47px;padding:4px 5px}.scene{width:42px;height:36px}.scene ha-icon{--mdc-icon-size:19px}.zoneText b{font-size:9px}.zoneText small{font-size:6px}.duration{font-size:10px}.readyIcon{--mdc-icon-size:13px}.rainSensor{left:47%;top:2%;padding:5px}.mainlineDevice{left:44%;bottom:6%}.mainlineLabel{left:35%;bottom:.5%}.metrics{gap:5px}.metric{grid-template-columns:27px minmax(0,1fr);min-height:62px;padding:6px}.metric ha-icon{--mdc-icon-size:22px}.metric small{font-size:6.2px}.metric b{font-size:11px}.nodeGrid,.modeGrid{gap:5px}.node{grid-template-columns:28px minmax(0,1fr);min-height:69px;padding:7px}.node>ha-icon{--mdc-icon-size:23px}.node small{font-size:6.5px}.node b{font-size:10.5px}.node em{font-size:6px}.mode{min-height:88px;padding:7px}.mode ha-icon{--mdc-icon-size:28px}.mode b{font-size:12px}.mode small{font-size:7px}.bottomNav button{min-height:63px}}
         @media(max-width:390px){.heroHead h1{font-size:23px}.connectionBadge{font-size:10px;padding:7px 9px}.systemDiagram{height:330px}.zoneStack{width:37.5%}.diagramZone{grid-template-columns:35px minmax(0,1fr) auto 12px}.scene{width:35px;height:31px}.zoneText b{font-size:8px}.duration{font-size:9px}.metrics,.nodeGrid,.modeGrid{grid-template-columns:repeat(2,1fr)}}
-        /* v0.5.3: separate hydraulic routing from controller wiring. */
-        .systemDiagram{height:430px}
+        /* v0.5.4: compact accepted mobile composition with separate hydraulics and wiring. */
+        .systemDiagram{height:360px}
         .pipe.water{stroke:color-mix(in srgb,var(--a) 62%,#d9e9f3)}
         .wire{fill:none;stroke:#74818d;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
         .wire.rainWire{stroke-width:2.7}
-        .controller{left:2.5%;top:25%;width:14.5%;height:44%}
+        .controller{left:2.5%;top:23%;width:14.5%;height:43%}
         .controller .body b{font-size:10px}.controller .body small{font-size:6px}.controller .ports{gap:11px}.controller .ports i{width:7px;height:10px;background:#59656f}
-        .controllerCheck{left:13.5%;top:22.5%;width:27px;height:27px}.controllerCheck ha-icon{--mdc-icon-size:16px}
-        .manifold{left:18%;right:3%;top:39%;width:auto;height:27%}.valves{left:0;right:0;gap:5px}.valve b{font-size:8px}.rail{top:55%}
+        .controllerCheck{left:13.5%;top:20.5%;width:27px;height:27px}.controllerCheck ha-icon{--mdc-icon-size:16px}
+        .manifold{left:18%;right:2%;top:35%;width:auto;height:29%}.valves{left:0;right:0;gap:5px}.valve b{font-size:8px}.rail{top:55%}
         .rainSensor{left:18%;top:3%;grid-template-columns:30px auto;padding:6px 8px}.rainSensor ha-icon{--mdc-icon-size:25px}.rainSensor span{font-size:8px}
-        .controlLabel{position:absolute;z-index:3;right:10%;top:27%;padding:3px 7px;border-radius:9px;background:#fbfdfdcc;color:#687681;font-size:9px;white-space:nowrap}
-        .zoneRow{position:absolute;z-index:2;left:18%;right:3%;top:59%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
-        .zoneRow .diagramZone{position:relative;display:grid;grid-template-columns:1fr;grid-template-rows:50px auto auto;align-content:start;justify-items:stretch;gap:4px;min-width:0;min-height:118px;padding:6px 5px;border-radius:14px;text-align:left}
-        .zoneRow .scene{width:100%;height:50px;border-radius:9px}.zoneRow .scene ha-icon{--mdc-icon-size:23px}
+        .controlLabel{position:absolute;z-index:3;right:8%;top:25%;padding:3px 7px;border-radius:9px;background:#fbfdfdcc;color:#687681;font-size:8px;white-space:nowrap}
+        .zoneRow{position:absolute;z-index:2;left:18%;right:2%;top:58%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+        .zoneRow .diagramZone{position:relative;display:grid;grid-template-columns:1fr;grid-template-rows:42px auto auto;align-content:start;justify-items:stretch;gap:3px;min-width:0;min-height:101px;padding:5px 4px;border-radius:12px;text-align:left}
+        .zoneRow .scene{width:100%;height:42px;border-radius:8px}.zoneRow .scene ha-icon{--mdc-icon-size:20px}
         .zoneRow .zoneText{min-width:0;text-align:left}.zoneRow .zoneText b{font-size:9.5px;white-space:nowrap}.zoneRow .zoneText small{margin-top:3px;font-size:6.5px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-        .zoneRow .duration{display:flex;align-items:baseline;gap:2px;font-size:12px;text-align:left}.zoneRow .duration small{display:inline;font-size:6px}
+        .zoneRow .duration{display:flex;align-items:baseline;gap:2px;font-size:11px;text-align:left}.zoneRow .duration small{display:inline;font-size:6px}
         .zoneRow .readyIcon{position:absolute;right:3px;top:3px;--mdc-icon-size:13px;filter:drop-shadow(0 1px 2px #fff)}
-        .mainlineDevice{left:5%;bottom:5.5%;width:39px;height:39px;border:2px solid #687681;border-radius:50%;background:#fff;color:var(--a);box-shadow:none}.mainlineDevice ha-icon{--mdc-icon-size:25px}
-        .mainlineLabel{left:50%;bottom:.5%;transform:translateX(-50%);gap:4px;padding:4px 8px;font-size:8px;white-space:nowrap}.mainlineLabel b{font-size:8.5px}
-        @media(max-width:520px){.systemDiagram{height:385px}.controller{left:2%;top:27%;width:15%;height:42%}.controller .body b{font-size:8px}.controller .body small{font-size:5px}.controllerCheck{left:12.8%;top:24%;width:24px;height:24px}.manifold{left:18%;right:2%;top:40%;height:26%}.valve i{width:14px;height:47px}.rainSensor{left:17%;top:2%;padding:4px}.rainSensor span{font-size:7px}.controlLabel{right:4%;top:27%;font-size:7px}.zoneRow{left:18%;right:2%;top:59%;gap:4px}.zoneRow .diagramZone{grid-template-rows:35px auto auto;gap:3px;min-height:105px;padding:4px 3px;border-radius:11px}.zoneRow .scene{height:35px;border-radius:7px}.zoneRow .scene ha-icon{--mdc-icon-size:17px}.zoneRow .zoneText b{font-size:7.5px}.zoneRow .zoneText small{font-size:5.2px}.zoneRow .duration{font-size:9.5px}.zoneRow .duration small{font-size:5px}.zoneRow .readyIcon{right:2px;top:2px;--mdc-icon-size:10px}.mainlineDevice{left:4%;bottom:5%;width:34px;height:34px}.mainlineDevice ha-icon{--mdc-icon-size:21px}.mainlineLabel{bottom:.3%;padding:3px 6px;font-size:6.8px}.mainlineLabel b{font-size:7px}}
-        @media(max-width:390px){.systemDiagram{height:370px}.controlLabel{font-size:6.3px}.zoneRow .diagramZone{grid-template-rows:31px auto auto;min-height:99px;padding:3px 2px}.zoneRow .scene{height:31px}.zoneRow .zoneText b{font-size:7px}.zoneRow .zoneText small{font-size:4.8px}.zoneRow .duration{font-size:9px}.mainlineLabel{font-size:6.2px}.mainlineLabel b{font-size:6.5px}}
+        .mainlineDevice{left:4%;bottom:4%;width:34px;height:34px;border:2px solid #687681;border-radius:50%;background:#fff;color:var(--a);box-shadow:none}.mainlineDevice ha-icon{--mdc-icon-size:21px}
+        .mainlineLabel{left:50%;bottom:.5%;transform:translateX(-50%);gap:4px;padding:3px 7px;font-size:7.5px;white-space:nowrap}.mainlineLabel b{font-size:8px}
+        @media(max-width:520px){
+          .app{padding-left:7px;padding-right:7px;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+          .appHeader{grid-template-columns:44px minmax(0,1fr) 44px;gap:6px;min-height:62px;padding:calc(4px + env(safe-area-inset-top)) 0 4px}.headerButton{width:44px;height:44px;border-radius:15px}.headerButton ha-icon{--mdc-icon-size:24px}.headerTitle strong{font-size:20px}.headerTitle small{margin-top:4px;font-size:9px}.content{padding-top:6px}
+          .hero{padding:10px;border-radius:20px}.heroHead{gap:7px}.heroHead small{font-size:8px}.heroHead h1{margin:5px 0 3px;font-size:23px}.heroHead p{font-size:10px}.connectionBadge{gap:6px;padding:6px 9px;font-size:10px}.connectionBadge i{width:8px;height:8px}.connectionWrap>small{margin-top:4px;font-size:6px}
+          .systemDiagram{height:270px;margin-top:8px;border-radius:18px}.controller{left:2%;top:22%;width:15%;height:43%;border-radius:11px}.controller .body{gap:6px}.controller .body b{font-size:7.5px}.controller .body small{font-size:4.7px}.controller .ports{gap:9px}.controller .ports i{width:6px;height:8px}.controllerCheck{left:12.5%;top:18.5%;width:22px;height:22px}.controllerCheck ha-icon{--mdc-icon-size:14px}
+          .manifold{left:18%;right:2%;top:33%;height:31%}.valve b{font-size:7px}.valve i{width:11px;height:37px}.valve em{width:6px;height:10px}.rail{height:14px}
+          .rainSensor{left:16%;top:2%;grid-template-columns:24px auto;gap:4px;padding:3px}.rainSensor ha-icon{--mdc-icon-size:21px}.rainSensor span{font-size:6.5px}.controlLabel{right:3%;top:24%;padding:2px 5px;font-size:6px}
+          .zoneRow{left:18%;right:2%;top:57%;gap:3px}.zoneRow .diagramZone{grid-template-rows:29px auto auto;gap:2px;min-height:80px;padding:3px 2px;border-radius:9px}.zoneRow .scene{height:29px;border-radius:6px}.zoneRow .scene ha-icon{--mdc-icon-size:15px}.zoneRow .zoneText b{font-size:6.7px}.zoneRow .zoneText small{margin-top:1px;font-size:4.6px}.zoneRow .duration{font-size:8.5px}.zoneRow .duration small{font-size:4.4px}.zoneRow .readyIcon{right:1px;top:1px;--mdc-icon-size:9px}
+          .mainlineDevice{left:3.5%;bottom:4%;width:28px;height:28px}.mainlineDevice ha-icon{--mdc-icon-size:17px}.mainlineLabel{bottom:.7%;padding:2px 5px;font-size:5.9px}.mainlineLabel b{font-size:6.1px}
+          .metrics{gap:4px;margin-top:7px}.metric{grid-template-columns:23px minmax(0,1fr);gap:4px;min-height:52px;padding:5px;border-radius:14px}.metric ha-icon{--mdc-icon-size:20px}.metric small{font-size:5.3px}.metric b{font-size:10.5px}.metric em{margin-top:2px;font-size:5.4px}
+          .sectionCard{margin-top:8px;padding:10px;border-radius:20px}.sectionTitle{margin-bottom:7px;font-size:8px}.nodeGrid,.modeGrid{gap:4px}.node{grid-template-columns:23px minmax(0,1fr);gap:4px;min-height:58px;padding:5px;border-radius:14px}.node>ha-icon{--mdc-icon-size:20px}.node small{font-size:5.4px}.node b{font-size:9px}.node em{margin-top:2px;font-size:5px}.mode{min-height:73px;padding:5px;border-radius:15px}.mode ha-icon{--mdc-icon-size:24px}.mode b{margin-top:4px;font-size:10px}.mode small{margin-top:2px;font-size:6px}
+          .bottomNav{padding:5px 6px calc(5px + env(safe-area-inset-bottom))}.bottomNav button{min-height:55px;border-radius:14px;font-size:7.5px}.bottomNav button ha-icon{--mdc-icon-size:22px}
+        }
+        @media(max-width:390px){.systemDiagram{height:260px}.heroHead h1{font-size:21px}.connectionBadge{font-size:9px}.zoneRow .diagramZone{grid-template-rows:26px auto auto;min-height:74px}.zoneRow .scene{height:26px}.zoneRow .zoneText b{font-size:6.2px}.zoneRow .zoneText small{font-size:4.2px}.zoneRow .duration{font-size:8px}.mainlineLabel{font-size:5.5px}.mainlineLabel b{font-size:5.7px}}
       `;
     }
 
