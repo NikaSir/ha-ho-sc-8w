@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.22` / panel `0.6.4`: replace the incorrect metallic cylindrical rain sensor with an accurate off-white slotted plastic detector, articulated clamp and short cable reconstructed from the supplied product reference.
+- `1.0.0-b005.22` / panel `0.6.4`: enlarge the real sensor without crossing the valve control bus and terminate the orthogonal controller cable at the detector lead instead of inside the label.
 - `1.0.0-b005.21` / panel `0.6.3`: replace the blurred 204×285 opaque rain-sensor thumbnail with an optimized 420×577 transparent WebP derived from the high-resolution source.
 - `1.0.0-b005.21` / panel `0.6.3`: preserve the sensor's natural proportions, move its label clear of the body and route the grey cable to the lower sensor terminal without a visible gap.
 - `1.0.0-b005.20` / panel `0.6.2`: replace the incorrect opaque manual-valve thumbnails with a transparent high-resolution irrigation solenoid-valve cutout; the repeated valve elements now reveal one continuous black manifold rail.

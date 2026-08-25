@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.3";
-  const ASSET_VERSION = "0.6.3";
+  const UI_VERSION = "0.6.4";
+  const ASSET_VERSION = "0.6.4";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -8,7 +8,7 @@
     nodeValve: assetUrl("valve-v2.webp"),
     nodeMainline: assetUrl("mainline-node.webp"),
     controller: assetUrl("ho-sc-8w-controller-v4.webp"),
-    rain: assetUrl("rain-sensor-v2.webp"),
+    rain: assetUrl("rain-sensor-v3.webp"),
     manifold: assetUrl("manifold-v1.webp"),
     zone1: assetUrl("zone-1.webp"),
     zone2: assetUrl("zone-2.webp"),
@@ -307,7 +307,7 @@
       }).join("");
       return `<div class="systemDiagram">
         <svg class="deviceWires" viewBox="0 0 1000 380" preserveAspectRatio="none" aria-hidden="true">
-          <path class="wire rainWire" d="M 248 57 H 284 V 88 H 363"/>
+          <path class="wire rainWire" d="M 248 57 H 284 V 82 H 338"/>
           <path class="wire controlLead" d="M 205 82 V 110 H 82"/>
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
@@ -498,11 +498,11 @@
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
         }
-        /* v0.6.3: shared six-column axes and repaired device graphics/connections. */
+        /* v0.6.4: shared six-column axes and accurate plastic rain-sensor graphic. */
         .systemDiagram{aspect-ratio:920/500}
         .deviceWires{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none}
         .controller{left:1%;top:1%;width:25%;height:23%;background:transparent url("${APPROVED_VISUALS.controller}") center/contain no-repeat}
-        .rainSensor{left:28%;top:1%;width:30%;height:23%;background:transparent url("${APPROVED_VISUALS.rain}") left center/auto 100% no-repeat}
+        .rainSensor{left:28%;top:.5%;width:30%;height:27%;background:transparent url("${APPROVED_VISUALS.rain}") left center/auto 100% no-repeat}
         .rainSensor span{left:60%;top:30%}
         .controlBus{position:absolute;z-index:1;left:8.33%;right:8.33%;top:29%;height:2px;border-top:2px solid #6f7d88}
         .controlBus span{position:absolute;right:0;bottom:8px;padding:2px 5px;border-radius:6px;background:#fffffff0;color:#65727d;font-size:11px;white-space:nowrap}
@@ -526,7 +526,7 @@
         .statusesCard .nodeGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.statusesCard .node{display:grid;grid-template-columns:1fr;grid-template-rows:auto 48px auto;justify-items:center;align-content:start;gap:5px;min-height:142px;padding:9px 6px;text-align:center}.statusesCard .node>small{width:100%;color:#111317;font-size:11px;font-weight:800;text-align:left}.statusesCard .node>ha-icon{display:grid;grid-row:2;--mdc-icon-size:40px}.statusesCard .node>span{width:100%}.statusesCard .node b{font-size:14px}.statusesCard .node em{font-size:11px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{content:"";display:block;grid-row:2;width:58px;height:48px;background-position:center;background-size:contain;background-repeat:no-repeat}.statusesCard .node:nth-child(1)::before{background-image:url("${APPROVED_VISUALS.nodeController}")}.statusesCard .node:nth-child(2)::before{background-image:url("${APPROVED_VISUALS.nodeValve}")}.statusesCard .node:nth-child(4)::before{background-image:url("${APPROVED_VISUALS.rain}")}.statusesCard .node:nth-child(1)>ha-icon,.statusesCard .node:nth-child(2)>ha-icon,.statusesCard .node:nth-child(4)>ha-icon{display:none}.statusesCard .node:nth-child(3)>ha-icon{display:grid;color:#078fe8}
         @media(max-width:520px){
           .systemDiagram{aspect-ratio:388/350;margin-top:8px}
-          .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:28%;top:1%;width:30%;height:23%;background-size:auto 100%}.rainSensor span{left:60%;top:29%}
+          .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:28%;top:.5%;width:30%;height:27%;background-size:auto 100%}.rainSensor span{left:60%;top:29%}
           .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:0;bottom:19px;font-size:11px}
           .manifoldRail{left:3.5%;right:1.8%;top:46.5%;height:19px;border-radius:10px}.supplyLine{top:calc(46.5% + 7px);width:5%;height:5px}
           .schemaGrid{left:.2%;right:.8%;top:24%;bottom:4%;gap:5px}.schemaColumn{grid-template-rows:26px 35% 9% minmax(0,1fr)}
