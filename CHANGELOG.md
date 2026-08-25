@@ -8,6 +8,7 @@ All notable project changes are recorded here.
 
 - `1.0.0-b005.23` / panel `0.6.5`: replace the generic clamp-style rain detector with an original unbranded asset informed by the Hunter Rain-Clik construction: warm matte polycarbonate, prominent vertical vents, an adjustable upper section and a restrained aluminum extension bracket.
 - `1.0.0-b005.23` / panel `0.6.5`: retain a truly transparent local WebP and all dynamic interface layers; no Hunter photograph, branding, labels or external image URL is embedded in the HACS integration.
+- `1.0.0-b005.23` / panel `0.6.5`: publish versioned HACS-ready GitHub releases directly from the integration manifest after validated changes reach `main`.
 - `1.0.0-b005.22` / panel `0.6.4`: replace the incorrect metallic cylindrical rain sensor with an accurate off-white slotted plastic detector, articulated clamp and short cable reconstructed from the supplied product reference.
 - `1.0.0-b005.22` / panel `0.6.4`: enlarge the real sensor without crossing the valve control bus and terminate the orthogonal controller cable at the detector lead instead of inside the label.
 - `1.0.0-b005.21` / panel `0.6.3`: replace the blurred 204×285 opaque rain-sensor thumbnail with an optimized 420×577 transparent WebP derived from the high-resolution source.
