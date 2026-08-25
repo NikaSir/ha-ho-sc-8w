@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.5.9",
+    "dashboard_version": "0.6.0",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -33,8 +33,9 @@
       "reference": "approved_system_state_render",
       "sections": [
         "system_state",
-        "core_nodes",
-        "current_mode"
+        "program_mode_telemetry",
+        "primary_actions",
+        "statuses"
       ]
     },
     "system_visualization": {
@@ -48,7 +49,7 @@
       "water_passes_through_controller": false,
       "zone_routing": "orthogonal_vertical_one_to_one",
       "mobile_layout": "approved_light_reference_with_11px_copy_floor",
-      "manifold_layout": "full_width_with_exact_valve_centers",
+      "manifold_layout": "single_six_column_grid_with_shared_valve_pipe_zone_axes",
       "mainline_pressure_presentation": "text_only_two_decimal_bar_value",
       "mainline_state": "sensor.nikas_h2000_pro_voda_na_poliv_2",
       "mainline_state_source_verified": true,
