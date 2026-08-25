@@ -1,7 +1,7 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.2",
-  "integration_version": "1.0.0-b005.20",
+  "panel_version": "0.6.3",
+  "integration_version": "1.0.0-b005.21",
   "static_url": "/nikas-ho-sc-8w/",
   "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "asset_policy": {

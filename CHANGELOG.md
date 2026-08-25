@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.21` / panel `0.6.3`: replace the blurred 204×285 opaque rain-sensor thumbnail with an optimized 420×577 transparent WebP derived from the high-resolution source.
+- `1.0.0-b005.21` / panel `0.6.3`: preserve the sensor's natural proportions, move its label clear of the body and route the grey cable to the lower sensor terminal without a visible gap.
 - `1.0.0-b005.20` / panel `0.6.2`: replace the incorrect opaque manual-valve thumbnails with a transparent high-resolution irrigation solenoid-valve cutout; the repeated valve elements now reveal one continuous black manifold rail.
 - `1.0.0-b005.20` / panel `0.6.2`: reconnect the grey control drops and blue hydraulic branches to every valve, move the control-wire caption clear of channels 4–6, increase zone-card content space and reduce the mobile schematic height without breaking the shared 1–6 axes.
 - `1.0.0-b005.19` / panel `0.6.1`: move every production illustration out of the JavaScript bundle into `custom_components/nikas_ho_sc_8w/frontend/assets/`; serve them through the integration-owned `/nikas-ho-sc-8w/` static route with query-string cache busting.
