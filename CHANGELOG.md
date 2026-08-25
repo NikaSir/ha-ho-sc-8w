@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.28` / panel `0.6.10`: reduce the approved rain-sensor illustration to exactly 50% of its previous rendered size and move its label alongside the smaller body. Controller, wiring, manifold, zones and transform-canvas scaling are unchanged.
+- `1.0.0-b005.28` / panel `0.6.10`: restore the original HACS delivery model through the custom repository's `main` branch; stop creating automatic GitHub Releases when the integration manifest changes.
 - `1.0.0-b005.27` / panel `0.6.9`: ship the final approved rain-sensor cutout instead of the oversized diagonal-bracket revision. The new local WebP uses a compact vertical warm-white body, clear ventilation slots, a short rear aluminum plate and no dangling cable.
 - `1.0.0-b005.27` / panel `0.6.9`: preserve the accepted controller/valve/zone geometry and v1.3 transform-canvas scaling; only the versioned rain-sensor asset and cache key change.
 - `1.0.0-b005.26` / panel `0.6.8`: replace the iOS-unstable CSS `zoom` implementation with one idempotent Pointer Events transform canvas. Header, native HA menu, refresh action and Bottom Tab Bar remain at native scale while the work area supports focal-point pinch and pan.

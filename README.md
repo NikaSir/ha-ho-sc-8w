@@ -22,8 +22,6 @@ custom_components/nikas_ho_sc_8w/
 
 Restart Home Assistant after installation or update.
 
-Published GitHub releases use the exact integration version from `custom_components/nikas_ho_sc_8w/manifest.json`. HACS can therefore present a stable named version instead of identifying the default branch only by its commit hash.
-
 ## Integration-owned panel
 
 Stable route:
@@ -34,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.9**.
+Current panel version: **0.6.10**.
 
 The panel follows **NikaS Specialized Panel UI Standard v1.3**:
 
@@ -129,7 +127,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend rele
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.9
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.10
       ↓
 <nikas-ho-sc-8w-panel>
 ```

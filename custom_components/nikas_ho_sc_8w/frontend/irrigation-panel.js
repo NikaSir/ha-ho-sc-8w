@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.9";
-  const ASSET_VERSION = "0.6.9";
+  const UI_VERSION = "0.6.10";
+  const ASSET_VERSION = "0.6.10";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -763,8 +763,8 @@
         .systemDiagram{aspect-ratio:920/500}
         .deviceWires{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none}
         .controller{left:1%;top:1%;width:25%;height:23%;background:transparent url("${APPROVED_VISUALS.controller}") center/contain no-repeat}
-        .rainSensor{left:28%;top:.5%;width:30%;height:27%;background:transparent url("${APPROVED_VISUALS.rain}") left center/auto 100% no-repeat}
-        .rainSensor span{left:60%;top:30%}
+        .rainSensor{left:28%;top:.5%;width:30%;height:27%;background:transparent url("${APPROVED_VISUALS.rain}") left center/auto 50% no-repeat}
+        .rainSensor span{left:28%;top:38%}
         .controlBus{position:absolute;z-index:1;left:8.33%;right:8.33%;top:29%;height:2px;border-top:2px solid #6f7d88}
         .controlBus span{position:absolute;right:0;bottom:8px;padding:2px 5px;border-radius:6px;background:#fffffff0;color:#65727d;font-size:11px;white-space:nowrap}
         .manifoldRail{position:absolute;z-index:1;left:3.8%;right:2.2%;top:46.5%;height:22px;border:1px solid #10161b;border-radius:11px;background:linear-gradient(180deg,#3e474e 0%,#20272d 48%,#101519 100%);box-shadow:0 4px 8px #0004,inset 0 1px 0 #ffffff26}
@@ -788,7 +788,7 @@
         @media(max-width:520px){
           .heroPressure{margin-top:5px;padding:3px 6px}.heroPressure span,.heroPressure b{font-size:11px}
           .systemDiagram{aspect-ratio:388/350;margin-top:8px}
-          .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:28%;top:.5%;width:30%;height:27%;background-size:auto 100%}.rainSensor span{left:60%;top:29%}
+          .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:28%;top:.5%;width:30%;height:27%;background-size:auto 50%}.rainSensor span{left:28%;top:38%}
           .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:0;bottom:19px;font-size:11px}
           .manifoldRail{left:3.5%;right:1.8%;top:46.5%;height:19px;border-radius:10px}.supplyLine{top:calc(46.5% + 7px);width:5%;height:5px}
           .schemaGrid{left:.2%;right:.8%;top:24%;bottom:4%;gap:5px}.schemaColumn{grid-template-rows:26px 35% 9% minmax(0,1fr)}
