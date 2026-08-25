@@ -6,6 +6,7 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.25` / panel `0.6.7`: align the zoom percentage control with the shared specialized-panel standard: pressing the current percentage now resets the content to 100%, while the persisted initial/default scale remains 75%.
 - `1.0.0-b005.24` / panel `0.6.6`: move the live irrigation-pressure value from beneath the zone cards into the connection-status stack below `Локально`, preventing the value from being clipped or covered at any zone-card height.
 - `1.0.0-b005.24` / panel `0.6.6`: add content-only panel zoom with a persisted 75% default, on-screen minus/reset/plus controls, two-finger pinch centered on the touch midpoint and horizontal panning when enlarged; keep the Header and Bottom Tab Bar fixed at native size.
 - `1.0.0-b005.23` / panel `0.6.5`: replace the generic clamp-style rain detector with an original unbranded asset informed by the Hunter Rain-Clik construction: warm matte polycarbonate, prominent vertical vents, an adjustable upper section and a restrained aluminum extension bracket.
