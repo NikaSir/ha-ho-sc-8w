@@ -1,5 +1,5 @@
 (() => {
-  const UI_VERSION = "0.6.5";
+  const UI_VERSION = "0.6.6";
   const ASSET_VERSION = "0.6.5";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
@@ -19,6 +19,11 @@
   });
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
+  const DEFAULT_ZOOM = 0.75;
+  const MIN_ZOOM = 0.75;
+  const MAX_ZOOM = 1.5;
+  const ZOOM_STEP = 0.25;
+  const ZOOM_STORAGE_KEY = "nikas-ho-sc-8w-panel-zoom";
 
   class HOSC8WPanel extends HTMLElement {
     constructor() {
@@ -29,6 +34,13 @@
       this._drillZone = null;
       this._manualZone = 1;
       this._manualDuration = 10;
+      this._zoom = DEFAULT_ZOOM;
+      this._pinch = null;
+      try {
+        this._zoom = this.clampZoom(Number(localStorage.getItem(ZOOM_STORAGE_KEY)) || DEFAULT_ZOOM);
+      } catch (_error) {
+        this._zoom = DEFAULT_ZOOM;
+      }
     }
 
     set hass(value) { this._hass = value; this.render(); }
@@ -37,6 +49,48 @@
     connectedCallback() {
       this.render();
       requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+    }
+
+    clampZoom(value) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return DEFAULT_ZOOM;
+      return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(numeric * 100) / 100));
+    }
+    zoomCanvasStyle() {
+      const width = this._zoom <= 1 ? 100 / this._zoom : 100;
+      return `zoom:${this._zoom};width:${width}%`;
+    }
+    zoomControls() {
+      return `<div class="zoomToolbar" role="group" aria-label="Масштаб панели">
+        <button data-zoom-out aria-label="Уменьшить масштаб"><ha-icon icon="mdi:minus"></ha-icon></button>
+        <button class="zoomValue" data-zoom-reset aria-label="Вернуть масштаб 75 процентов"><span data-zoom-value>${Math.round(this._zoom * 100)}%</span></button>
+        <button data-zoom-in aria-label="Увеличить масштаб"><ha-icon icon="mdi:plus"></ha-icon></button>
+      </div>`;
+    }
+    setZoom(value, focus = null, persist = true) {
+      const previous = this._zoom;
+      const next = this.clampZoom(value);
+      const pageX = focus ? window.scrollX + focus.x : 0;
+      const pageY = focus ? window.scrollY + focus.y : 0;
+      this._zoom = next;
+      const canvas = this.shadowRoot.querySelector("[data-zoom-canvas]");
+      if (canvas) {
+        canvas.style.zoom = String(next);
+        canvas.style.width = next <= 1 ? `${100 / next}%` : "100%";
+      }
+      const label = this.shadowRoot.querySelector("[data-zoom-value]");
+      if (label) label.textContent = `${Math.round(next * 100)}%`;
+      if (persist) {
+        try { localStorage.setItem(ZOOM_STORAGE_KEY, String(next)); } catch (_error) { /* storage may be unavailable */ }
+      }
+      if (focus && previous > 0 && next !== previous) {
+        const ratio = next / previous;
+        requestAnimationFrame(() => window.scrollTo({
+          left: Math.max(0, pageX * ratio - focus.x),
+          top: Math.max(0, pageY * ratio - focus.y),
+          behavior: "auto",
+        }));
+      }
     }
 
     esc(value) {
@@ -257,7 +311,9 @@
       const value = this.state(e.connection);
       const label = value === "local" ? "Локально" : value === "cloud" ? "Облако" : "Нет данных";
       const tone = value === "local" ? "local" : value === "cloud" ? "cloud" : "unknown";
-      return `<div class="connectionWrap"><div class="connectionBadge ${tone}"><i></i><b>${label}</b></div><small>${this.esc(this.updatedAge(e.connection))}</small></div>`;
+      const pressure = this.pressurePresentation(e);
+      const pressureEntity = e.pressure ? ` data-entity="${this.esc(e.pressure)}"` : "";
+      return `<div class="connectionWrap"><div class="connectionBadge ${tone}"><i></i><b>${label}</b></div><small>${this.esc(this.updatedAge(e.connection))}</small><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button></div>`;
     }
     zoneIcon(zone) {
       return ({ 1: "mdi:sprinkler", 2: "mdi:sprinkler-variant", 3: "mdi:flower", 4: "mdi:greenhouse", 5: "mdi:sprout", 6: "mdi:pine-tree" })[zone] || "mdi:water";
@@ -286,8 +342,6 @@
     irrigationDiagram(e) {
       const active = this.zoneSet(this.state(e.active));
       const queued = this.zoneSet(this.state(e.queued));
-      const pressure = this.pressurePresentation(e);
-      const pressureEntity = e.pressure ? ` data-entity="${this.esc(e.pressure)}"` : "";
       const columns = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
         const z = this.zoneRuntime(e, zone);
         const valveTone = active.has(String(zone)) ? "running" : queued.has(String(zone)) ? "queued" : "";
@@ -316,7 +370,6 @@
         <div class="manifoldRail" aria-hidden="true"></div>
         <div class="supplyLine" aria-hidden="true"></div>
         <div class="schemaGrid">${columns}</div>
-        <div class="mainlineLabel"${pressureEntity}><span>Давление полива:</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></div>
       </div>`;
     }
 
@@ -400,6 +453,27 @@
     bindActions() {
       this.shadowRoot.querySelector("[data-ha-menu]")?.addEventListener("click", () => this.openHaMenu());
       this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", () => this.refreshNow());
+      this.shadowRoot.querySelector("[data-zoom-out]")?.addEventListener("click", () => this.setZoom(this._zoom - ZOOM_STEP));
+      this.shadowRoot.querySelector("[data-zoom-in]")?.addEventListener("click", () => this.setZoom(this._zoom + ZOOM_STEP));
+      this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this.setZoom(DEFAULT_ZOOM));
+      const zoomCanvas = this.shadowRoot.querySelector("[data-zoom-canvas]");
+      const touchDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+      const touchMidpoint = (touches) => ({ x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2 });
+      zoomCanvas?.addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 2) return;
+        this._pinch = { distance: touchDistance(event.touches), zoom: this._zoom };
+      }, { passive: true });
+      zoomCanvas?.addEventListener("touchmove", (event) => {
+        if (event.touches.length !== 2 || !this._pinch?.distance) return;
+        event.preventDefault();
+        const scale = touchDistance(event.touches) / this._pinch.distance;
+        this.setZoom(this._pinch.zoom * scale, touchMidpoint(event.touches), false);
+      }, { passive: false });
+      zoomCanvas?.addEventListener("touchend", (event) => {
+        if (!this._pinch || event.touches.length >= 2) return;
+        this._pinch = null;
+        try { localStorage.setItem(ZOOM_STORAGE_KEY, String(this._zoom)); } catch (_error) { /* storage may be unavailable */ }
+      }, { passive: true });
       this.shadowRoot.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
         this._view = button.dataset.view || "status";
         this._drillZone = null;
@@ -498,7 +572,15 @@
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
         }
-        /* v0.6.5: shared six-column axes and original Rain-Clik-inspired sensor asset. */
+        /* v0.6.6: pressure in the connection stack plus panel-only 75–150% zoom. */
+        .app{padding-bottom:calc(150px + env(safe-area-inset-bottom));overflow-x:visible}
+        .zoomToolbar{display:flex;justify-content:flex-end;align-items:center;margin:5px 0 2px}
+        .zoomToolbar>button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);background:#fff;color:var(--muted)}
+        .zoomToolbar>button:first-child{border-radius:15px 0 0 15px}.zoomToolbar>button:last-child{border-radius:0 15px 15px 0}
+        .zoomToolbar .zoomValue{width:58px;border-left:0;border-right:0;border-radius:0;color:var(--a);font-size:12px;font-weight:800}
+        .zoomToolbar ha-icon{--mdc-icon-size:21px}.zoomCanvas{transform-origin:top left;touch-action:pan-x pan-y}.content.zoomCanvas{padding-top:5px}
+        .heroPressure{display:flex;align-items:baseline;justify-content:flex-end;gap:5px;margin:7px 0 0 auto;padding:4px 7px;border:1px solid #dfe5e8;border-radius:10px;background:#fff;color:#505861;white-space:nowrap}
+        .heroPressure span{font-size:11px}.heroPressure b{color:#079b29;font-size:12px}.heroPressure b.unknown{color:#6f7780}
         .systemDiagram{aspect-ratio:920/500}
         .deviceWires{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none}
         .controller{left:1%;top:1%;width:25%;height:23%;background:transparent url("${APPROVED_VISUALS.controller}") center/contain no-repeat}
@@ -525,6 +607,7 @@
         .statusesCard{padding:12px}.statusesHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.statusesHead .sectionTitle{margin:0;color:#111317;font-size:18px;letter-spacing:0;text-transform:none}.statusesHead>span{color:#626a73;font-size:11px;font-weight:700}
         .statusesCard .nodeGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.statusesCard .node{display:grid;grid-template-columns:1fr;grid-template-rows:auto 48px auto;justify-items:center;align-content:start;gap:5px;min-height:142px;padding:9px 6px;text-align:center}.statusesCard .node>small{width:100%;color:#111317;font-size:11px;font-weight:800;text-align:left}.statusesCard .node>ha-icon{display:grid;grid-row:2;--mdc-icon-size:40px}.statusesCard .node>span{width:100%}.statusesCard .node b{font-size:14px}.statusesCard .node em{font-size:11px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{content:"";display:block;grid-row:2;width:58px;height:48px;background-position:center;background-size:contain;background-repeat:no-repeat}.statusesCard .node:nth-child(1)::before{background-image:url("${APPROVED_VISUALS.nodeController}")}.statusesCard .node:nth-child(2)::before{background-image:url("${APPROVED_VISUALS.nodeValve}")}.statusesCard .node:nth-child(4)::before{background-image:url("${APPROVED_VISUALS.rain}")}.statusesCard .node:nth-child(1)>ha-icon,.statusesCard .node:nth-child(2)>ha-icon,.statusesCard .node:nth-child(4)>ha-icon{display:none}.statusesCard .node:nth-child(3)>ha-icon{display:grid;color:#078fe8}
         @media(max-width:520px){
+          .app{padding-bottom:calc(142px + env(safe-area-inset-bottom))}.zoomToolbar{margin-top:3px}.heroPressure{margin-top:5px;padding:3px 6px}.heroPressure span,.heroPressure b{font-size:11px}
           .systemDiagram{aspect-ratio:388/350;margin-top:8px}
           .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:28%;top:.5%;width:30%;height:27%;background-size:auto 100%}.rainSensor span{left:60%;top:29%}
           .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:0;bottom:19px;font-size:11px}
@@ -546,7 +629,7 @@
       if (!VIEWS.includes(this._view)) this._view = "status";
       const header = this.header();
       if (!this._hass) {
-        this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}<main class="content"><section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section></main></div>${this.bottomNav()}`;
+        this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this.zoomControls()}<main class="content zoomCanvas" data-zoom-canvas style="${this.zoomCanvasStyle()}"><section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section></main></div>${this.bottomNav()}`;
         this.bindActions();
         return;
       }
@@ -556,7 +639,7 @@
       else if (this._view === "program") content = this.programView(e);
       else if (this._view === "manual") content = this.manualView(e);
       else if (this._view === "diagnostics") content = this.diagnosticsView(e);
-      this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}<main class="content">${content}</main></div>${this.bottomNav()}`;
+      this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this.zoomControls()}<main class="content zoomCanvas" data-zoom-canvas style="${this.zoomCanvasStyle()}">${content}</main></div>${this.bottomNav()}`;
       this.bindActions();
     }
   }
