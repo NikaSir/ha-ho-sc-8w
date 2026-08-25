@@ -1,5 +1,5 @@
 (() => {
-  const UI_VERSION = "0.5.9";
+  const UI_VERSION = "0.6.0";
   const APPROVED_VISUALS = Object.freeze({
     nodeController: "data:image/webp;base64,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",
     nodeValve: "data:image/webp;base64,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",
@@ -209,6 +209,16 @@
       if (minutes < 60) return `Обновлено ${minutes} мин назад`;
       return `Обновлено ${Math.floor(minutes / 60)} ч назад`;
     }
+    updatedValue(entityId) {
+      const obj = entityId ? this.states()[entityId] : null;
+      const stamp = obj?.last_updated || obj?.last_changed;
+      if (!stamp) return "—";
+      const seconds = Math.max(0, Math.round((Date.now() - new Date(stamp).getTime()) / 1000));
+      if (seconds < 60) return `${seconds} с`;
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes} мин`;
+      return `${Math.floor(minutes / 60)} ч`;
+    }
 
     header() {
       return `<header class="appHeader">
@@ -275,62 +285,52 @@
       const queued = this.zoneSet(this.state(e.queued));
       const pressure = this.pressurePresentation(e);
       const pressureEntity = e.pressure ? ` data-entity="${this.esc(e.pressure)}"` : "";
-      const valveXs = [80, 244, 411, 575, 739, 903];
-      const waterLines = valveXs.map((x, idx) => {
-        const zone = idx + 1;
-        const cls = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
-        return `<path class="pipe ${cls}" d="M ${x} 345 V 384"/>`;
-      }).join("");
-      const valves = valveXs.map((_, idx) => {
-        const zone = idx + 1;
-        const cls = active.has(String(zone)) ? "running" : queued.has(String(zone)) ? "queued" : "";
-        return `<span class="valve ${cls}"><b>${zone}</b><i></i><em></em></span>`;
-      }).join("");
-      const zones = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
+      const columns = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
         const z = this.zoneRuntime(e, zone);
+        const valveTone = active.has(String(zone)) ? "running" : queued.has(String(zone)) ? "queued" : "";
+        const branchTone = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
         const readyIcon = z.tone === "unknown" ? "mdi:help-circle" : z.tone === "off" ? "mdi:minus-circle" : "mdi:check-circle";
-        return `<button class="diagramZone ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}">
-          <span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span>
-          <span class="zoneText"><b>Зона ${zone}</b><small>${this.esc(z.label)}</small></span>
-          <span class="duration">${this.esc(z.duration)}<small>мин</small></span>
-          <ha-icon class="readyIcon" icon="${readyIcon}"></ha-icon>
-        </button>`;
+        return `<div class="schemaColumn" data-axis="${zone}">
+          <span class="valveNumber">${zone}</span>
+          <span class="valvePhoto ${valveTone}" aria-hidden="true"></span>
+          <span class="waterBranch ${branchTone}" aria-hidden="true"></span>
+          <button class="diagramZone ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}">
+            <span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span>
+            <span class="zoneText"><b>Зона ${zone}</b><small>${this.esc(z.label)}</small></span>
+            <span class="duration">${this.esc(z.duration)}<small>мин</small></span>
+            <ha-icon class="readyIcon" icon="${readyIcon}"></ha-icon>
+          </button>
+        </div>`;
       }).join("");
       return `<div class="systemDiagram">
-        <svg class="pipes" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true">
-          <path class="wire rainWire" d="M 235 82 H 270 V 104 H 286 V 82"/>
-          <path class="wire control" d="M 220 141 V 155 H 43"/>
-          <path class="supplyArrow" d="M 8 560 L 34 548 V 572 Z"/>
-          <path class="pipe supply" d="M 34 560 H 40 V 277 H 50"/>
-          ${waterLines}
+        <svg class="deviceWires" viewBox="0 0 1000 380" preserveAspectRatio="none" aria-hidden="true">
+          <path class="wire rainWire" d="M 248 57 H 284 V 70 H 310"/>
+          <path class="wire controlLead" d="M 205 82 V 110 H 82"/>
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
-        <span class="controllerCheck ${this.bad(this.state(e.connection)) ? "bad" : ""}"><ha-icon icon="${this.bad(this.state(e.connection)) ? "mdi:help" : "mdi:check"}"></ha-icon></span>
-        <div class="manifold"><div class="valves">${valves}</div><div class="rail"></div></div>
         <button class="rainSensor" data-entity="${this.esc(e.rain)}"><ha-icon icon="mdi:access-point"></ha-icon><span>Датчик<br>дождя</span></button>
-        <div class="controlLabel">Провод управления клапанами</div>
-        <div class="zoneRow">${zones}</div>
+        <div class="controlBus"><span>Провод управления клапанами</span></div>
+        <div class="manifoldRail" aria-hidden="true"></div>
+        <div class="supplyLine" aria-hidden="true"></div>
+        <div class="schemaGrid">${columns}</div>
         <div class="mainlineLabel"${pressureEntity}><span>Давление полива:</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></div>
       </div>`;
     }
 
     metrics(e) {
-      const activeValue = this.state(e.active);
-      const activeCount = this.bad(activeValue) ? "—" : this.zoneSet(activeValue).size;
       const seasonal = this.state(e.seasonal);
       const operation = this.state(e.operation);
-      const rain = this.state(e.rain);
+      const nextStart = this.zoneRuntime(e, 1).start;
       const data = [
-        ["mdi:home-automation", "Режим", this.human("operation", operation), e.operation, operation === "Auto" ? "good" : ""],
-        ["mdi:account-group", "Активные зоны", activeCount, e.active, activeCount === 0 ? "" : "active"],
-        ["mdi:water-percent", "Сезонная коррекция", this.bad(seasonal) ? "Нет данных" : `${seasonal} %`, e.seasonal, "water"],
-        ["mdi:weather-rainy", "Дождевой датчик", this.human("rain", rain), e.rain, rain === "enabled" ? "good" : ""],
+        ["mdi:calendar-blank-outline", "ПРОГРАММА", nextStart, "Следующий полив", e.zones[1].schedule, "water"],
+        ["mdi:autorenew", "РЕЖИМ", this.human("operation", operation), this.bad(seasonal) ? "Сезон · —" : `Сезон · ${seasonal} %`, e.operation, operation === "Auto" ? "active" : ""],
+        ["mdi:signal", "ТЕЛЕМЕТРИЯ", this.updatedValue(e.connection), "Последнее обновление", e.connection, "good"],
       ];
-      return `<div class="metrics">${data.map(([icon, label, value, id, tone]) => `<button class="metric ${tone}" data-entity="${this.esc(id)}"><ha-icon icon="${icon}"></ha-icon><span><small>${label}</small><b>${this.esc(value)}</b>${label === "Активные зоны" && value === 0 ? `<em>Ожидание</em>` : ""}</span></button>`).join("")}</div>`;
+      return `<div class="metrics">${data.map(([icon, label, value, note, id, tone]) => `<button class="metric ${tone}" data-entity="${this.esc(id)}"><small>${label}</small><div><ha-icon icon="${icon}"></ha-icon><span><b>${this.esc(value)}</b><em>${this.esc(note)}</em></span></div></button>`).join("")}</div>`;
     }
     hero(e) {
       const status = this.systemStatus(e);
-      return `<section class="hero ${status.tone}"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionBadge(e)}</div>${this.irrigationDiagram(e)}${this.metrics(e)}</section>`;
+      return `<section class="hero ${status.tone}"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionBadge(e)}</div>${this.irrigationDiagram(e)}</section>`;
     }
 
     nodes(e) {
@@ -340,22 +340,20 @@
       const cards = [
         ["mdi:memory", "Контроллер", controller, connection === "local" ? "Локальный канал" : "", e.connection, this.bad(connection) ? "bad" : "good"],
         ["mdi:pipe-valve", "Клапаны", "6 зон", "Зоны 1–6", null, "good"],
-        ["mdi:gauge", "Давление полива", pressure.value, pressure.note, e.pressure, pressure.tone],
-        ["mdi:clipboard-text-outline", "Тест зона 8", "Диагн.", "Лабораторная", e.zones[8].schedule, "good"],
+        ["mdi:water", "Давление", pressure.value, "Норма", e.pressure, pressure.tone],
+        ["mdi:weather-rainy", "Дождь", this.human("rain", this.state(e.rain)), "Без блокировки", e.rain, this.state(e.rain) === "enabled" ? "good" : ""],
       ];
-      return `<section class="sectionCard"><div class="sectionTitle">ОСНОВНЫЕ УЗЛЫ</div><div class="nodeGrid">${cards.map(([icon, title, value, note, id, tone]) => `<button class="node ${tone}" ${id ? `data-entity="${this.esc(id)}"` : ""}><ha-icon icon="${icon}"></ha-icon><span><small>${title}</small><b>${this.esc(value)}</b><em>${note}</em></span></button>`).join("")}</div></section>`;
+      return `<section class="sectionCard statusesCard"><div class="statusesHead"><div class="sectionTitle">Статусы</div><span>Все ›</span></div><div class="nodeGrid">${cards.map(([icon, title, value, note, id, tone]) => `<button class="node ${tone}" ${id ? `data-entity="${this.esc(id)}"` : ""}><small>${title}</small><ha-icon icon="${icon}"></ha-icon><span><b>${this.esc(value)}</b><em>${note}</em></span></button>`).join("")}</div></section>`;
     }
     currentMode(e) {
       const operation = this.state(e.operation);
-      const seasonal = this.state(e.seasonal);
-      return `<section class="sectionCard"><div class="sectionTitle">ТЕКУЩИЙ РЕЖИМ</div><div class="modeGrid">
-        <button class="mode ${operation === "Auto" ? "active" : ""}" data-entity="${this.esc(e.operation)}"><ha-icon icon="mdi:home-automation"></ha-icon><b>Авто</b><small>${operation === "Auto" ? "Сейчас активно" : "Режим контроллера"}</small></button>
-        <button class="mode" data-go="manual"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>Доступен</small></button>
+      return `<section class="quickActions"><div class="modeGrid">
+        <button class="mode ${operation === "Auto" ? "active" : ""}" data-entity="${this.esc(e.operation)}"><ha-icon icon="mdi:play"></ha-icon><b>Полив</b><small>${operation === "Auto" ? "Авто" : this.esc(this.human("operation", operation))}</small></button>
         <button class="mode disabled" disabled><ha-icon icon="mdi:pause-circle-outline"></ha-icon><b>Пауза</b><small>Недоступно</small></button>
-        <button class="mode" data-go="program"><ha-icon icon="mdi:leaf"></ha-icon><b>Сезон</b><small>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</small></button>
+        <button class="mode manualAction" data-go="manual"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>Доступен</small></button>
       </div></section>`;
     }
-    statusView(e) { return `${this.hero(e)}${this.nodes(e)}${this.currentMode(e)}`; }
+    statusView(e) { return `${this.hero(e)}${this.metrics(e)}${this.currentMode(e)}${this.nodes(e)}`; }
 
     zoneDetail(e, zone) {
       const z = this.zoneRuntime(e, zone);
@@ -496,6 +494,44 @@
           small,em{font-size:var(--ui-copy-min)!important}
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
+        }
+        /* v0.6.0: one shared six-column axis grid and S8-style status hierarchy. */
+        .systemDiagram{aspect-ratio:920/500}
+        .deviceWires{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none}
+        .controller{left:1%;top:1%;width:25%;height:23%;background:transparent url("${APPROVED_VISUALS.controller}") center/contain no-repeat}
+        .rainSensor{left:29%;top:1%;width:23%;height:22%;background:transparent url("${APPROVED_VISUALS.rain}") left center/38% auto no-repeat}
+        .rainSensor span{left:40%;top:30%}
+        .controlBus{position:absolute;z-index:1;left:8.33%;right:8.33%;top:29%;height:2px;border-top:2px solid #6f7d88}
+        .controlBus span{position:absolute;right:0;bottom:8px;padding:2px 5px;border-radius:6px;background:#fffffff0;color:#65727d;font-size:11px;white-space:nowrap}
+        .manifoldRail{position:absolute;z-index:1;left:3.8%;right:2.2%;top:46.5%;height:22px;border:1px solid #10161b;border-radius:11px;background:linear-gradient(180deg,#3e474e 0%,#20272d 48%,#101519 100%);box-shadow:0 4px 8px #0004,inset 0 1px 0 #ffffff26}
+        .supplyLine{position:absolute;z-index:0;left:0;top:calc(46.5% + 8px);width:5%;height:5px;background:#078fe8}
+        .schemaGrid{position:absolute;z-index:2;left:.2%;right:1%;top:26%;bottom:7%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+        .schemaColumn{position:relative;display:grid;grid-template-rows:28px 44% 12% minmax(0,1fr);justify-items:center;min-width:0}
+        .valveNumber{z-index:4;display:grid;place-items:center;width:25px;height:25px;border:1.5px solid #7b8994;border-radius:50%;background:#fff;color:#4f5b65;font-size:12px;font-weight:800;line-height:1}
+        .schemaColumn::before{content:"";position:absolute;z-index:0;left:50%;top:0;height:31px;border-left:2px solid #6f7d88;transform:translateX(-50%)}
+        .valvePhoto{position:relative;z-index:3;display:block;width:100%;height:100%;background:transparent url("${APPROVED_VISUALS.nodeValve}") center/contain no-repeat;filter:drop-shadow(0 3px 3px #0004)}
+        .valvePhoto.running{filter:drop-shadow(0 0 5px #078fe8)}.valvePhoto.queued{filter:drop-shadow(0 0 5px #e89a12)}
+        .waterBranch{z-index:0;display:block;width:5px;height:100%;background:#078fe8}.waterBranch.queue{background:#e89a12}
+        .schemaGrid .diagramZone{position:relative;display:grid;grid-template-columns:1fr;grid-template-rows:47px auto auto;align-content:start;justify-items:stretch;gap:4px;width:100%;min-width:0;min-height:0;height:100%;padding:6px 5px;border:1px solid #dce1e5;border-radius:14px;background:#fff;color:#111317;text-align:left;box-shadow:0 3px 10px #1118270b}
+        .schemaGrid .scene{width:100%;height:47px;border-radius:9px;background-position:center;background-size:cover;background-repeat:no-repeat;box-shadow:inset 0 0 0 1px #0000000a}.schemaGrid .scene ha-icon{display:none}
+        .schemaGrid .zoneText{min-width:0;text-align:left}.schemaGrid .zoneText b{font-size:11px;line-height:1.05;color:#111317;white-space:nowrap}.schemaGrid .zoneText small{margin-top:3px;color:#71777e;font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+        .schemaGrid .duration{display:flex;align-items:baseline;gap:3px;color:#111317;font-size:14px;text-align:left}.schemaGrid .duration small{display:inline;color:#626a73;font-size:11px}.schemaGrid .readyIcon{position:absolute;right:4px;top:5px;color:#08a52b;--mdc-icon-size:14px;filter:drop-shadow(0 1px 2px #fff)}
+        .mainlineLabel{bottom:.2%;font-size:11px}.mainlineLabel b{font-size:11px}
+        .metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.metric{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:9px;min-height:110px;padding:12px;border-radius:20px}.metric>small{font-size:11px;font-weight:800}.metric>div{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:9px;width:100%}.metric>div>ha-icon{--mdc-icon-size:36px}.metric>div span{min-width:0}.metric b{font-size:20px}.metric em{font-size:11px}
+        .quickActions{margin-top:8px}.quickActions .modeGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.quickActions .mode{min-height:116px}.quickActions .mode ha-icon{--mdc-icon-size:38px}.quickActions .manualAction{border-color:#078fe855;background:linear-gradient(145deg,#079bd0,#087aec);color:#fff}.quickActions .manualAction ha-icon,.quickActions .manualAction b,.quickActions .manualAction small{color:#fff}
+        .statusesCard{padding:12px}.statusesHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.statusesHead .sectionTitle{margin:0;color:#111317;font-size:18px;letter-spacing:0;text-transform:none}.statusesHead>span{color:#626a73;font-size:11px;font-weight:700}
+        .statusesCard .nodeGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.statusesCard .node{display:grid;grid-template-columns:1fr;grid-template-rows:auto 48px auto;justify-items:center;align-content:start;gap:5px;min-height:142px;padding:9px 6px;text-align:center}.statusesCard .node>small{width:100%;color:#111317;font-size:11px;font-weight:800;text-align:left}.statusesCard .node>ha-icon{display:grid;grid-row:2;--mdc-icon-size:40px}.statusesCard .node>span{width:100%}.statusesCard .node b{font-size:14px}.statusesCard .node em{font-size:11px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{content:"";display:block;grid-row:2;width:58px;height:48px;background-position:center;background-size:contain;background-repeat:no-repeat}.statusesCard .node:nth-child(1)::before{background-image:url("${APPROVED_VISUALS.nodeController}")}.statusesCard .node:nth-child(2)::before{background-image:url("${APPROVED_VISUALS.nodeValve}")}.statusesCard .node:nth-child(4)::before{background-image:url("${APPROVED_VISUALS.rain}")}.statusesCard .node:nth-child(1)>ha-icon,.statusesCard .node:nth-child(2)>ha-icon,.statusesCard .node:nth-child(4)>ha-icon{display:none}.statusesCard .node:nth-child(3)>ha-icon{display:grid;color:#078fe8}
+        @media(max-width:520px){
+          .systemDiagram{aspect-ratio:388/380;margin-top:8px}
+          .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:29%;top:1%;width:24%;height:22%;background-size:38% auto}.rainSensor span{left:40%;top:29%}
+          .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:-4%;bottom:6px;font-size:11px}
+          .manifoldRail{left:3.5%;right:1.8%;top:46.5%;height:19px;border-radius:10px}.supplyLine{top:calc(46.5% + 7px);width:5%;height:5px}
+          .schemaGrid{left:.2%;right:.8%;top:26%;bottom:7%;gap:5px}.schemaColumn{grid-template-rows:28px 44% 12% minmax(0,1fr)}
+          .valveNumber{width:23px;height:23px;font-size:11px}.schemaColumn::before{height:30px}.valvePhoto{width:112%}
+          .schemaGrid .diagramZone{grid-template-rows:34px auto auto;gap:3px;padding:4px 3px;border-radius:10px}.schemaGrid .scene{height:34px;border-radius:7px}.schemaGrid .zoneText b,.schemaGrid .zoneText small,.schemaGrid .duration small{font-size:11px}.schemaGrid .duration{font-size:14px}.schemaGrid .readyIcon{right:3px;top:4px;--mdc-icon-size:13px}
+          .metrics{gap:5px}.metric{min-height:102px;padding:9px 7px}.metric>div{grid-template-columns:32px minmax(0,1fr);gap:6px}.metric>div>ha-icon{--mdc-icon-size:30px}.metric b{font-size:17px}
+          .quickActions .modeGrid{gap:5px}.quickActions .mode{min-height:100px;padding:7px}.quickActions .mode ha-icon{--mdc-icon-size:31px}
+          .statusesCard{margin-top:7px;padding:9px}.statusesHead{margin-bottom:6px}.statusesCard .nodeGrid{gap:5px}.statusesCard .node{grid-template-rows:auto 42px auto;min-height:132px;padding:7px 4px;border-radius:15px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{width:46px;height:42px}.statusesCard .node>ha-icon{--mdc-icon-size:34px}.statusesCard .node b{font-size:13px}
         }
       `;
     }
