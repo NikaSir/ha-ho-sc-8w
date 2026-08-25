@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.20` / panel `0.6.2`: replace the incorrect opaque manual-valve thumbnails with a transparent high-resolution irrigation solenoid-valve cutout; the repeated valve elements now reveal one continuous black manifold rail.
+- `1.0.0-b005.20` / panel `0.6.2`: reconnect the grey control drops and blue hydraulic branches to every valve, move the control-wire caption clear of channels 4–6, increase zone-card content space and reduce the mobile schematic height without breaking the shared 1–6 axes.
 - `1.0.0-b005.19` / panel `0.6.1`: move every production illustration out of the JavaScript bundle into `custom_components/nikas_ho_sc_8w/frontend/assets/`; serve them through the integration-owned `/nikas-ho-sc-8w/` static route with query-string cache busting.
 - `1.0.0-b005.19` / panel `0.6.1`: add a machine-readable asset manifest and CI checks that reject missing files, inline Base64 images and externally hosted image URLs while preserving the approved six-column valve-to-zone geometry and live Home Assistant data layers.
 - `1.0.0-b005.18` / panel `0.6.0`: rebuild the status schematic as one responsive six-column grid. Each column now owns its valve number, valve image, vertical water branch and matching zone card, so valves 1–6 cannot drift away from zones 1–6 at any mobile width.

@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.1";
-  const ASSET_VERSION = "0.6.1";
+  const UI_VERSION = "0.6.2";
+  const ASSET_VERSION = "0.6.2";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -498,7 +498,7 @@
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
         }
-        /* v0.6.0: one shared six-column axis grid and S8-style status hierarchy. */
+        /* v0.6.2: one shared six-column axis grid with continuous physical connections. */
         .systemDiagram{aspect-ratio:920/500}
         .deviceWires{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none}
         .controller{left:1%;top:1%;width:25%;height:23%;background:transparent url("${APPROVED_VISUALS.controller}") center/contain no-repeat}
@@ -525,13 +525,15 @@
         .statusesCard{padding:12px}.statusesHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.statusesHead .sectionTitle{margin:0;color:#111317;font-size:18px;letter-spacing:0;text-transform:none}.statusesHead>span{color:#626a73;font-size:11px;font-weight:700}
         .statusesCard .nodeGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.statusesCard .node{display:grid;grid-template-columns:1fr;grid-template-rows:auto 48px auto;justify-items:center;align-content:start;gap:5px;min-height:142px;padding:9px 6px;text-align:center}.statusesCard .node>small{width:100%;color:#111317;font-size:11px;font-weight:800;text-align:left}.statusesCard .node>ha-icon{display:grid;grid-row:2;--mdc-icon-size:40px}.statusesCard .node>span{width:100%}.statusesCard .node b{font-size:14px}.statusesCard .node em{font-size:11px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{content:"";display:block;grid-row:2;width:58px;height:48px;background-position:center;background-size:contain;background-repeat:no-repeat}.statusesCard .node:nth-child(1)::before{background-image:url("${APPROVED_VISUALS.nodeController}")}.statusesCard .node:nth-child(2)::before{background-image:url("${APPROVED_VISUALS.nodeValve}")}.statusesCard .node:nth-child(4)::before{background-image:url("${APPROVED_VISUALS.rain}")}.statusesCard .node:nth-child(1)>ha-icon,.statusesCard .node:nth-child(2)>ha-icon,.statusesCard .node:nth-child(4)>ha-icon{display:none}.statusesCard .node:nth-child(3)>ha-icon{display:grid;color:#078fe8}
         @media(max-width:520px){
-          .systemDiagram{aspect-ratio:388/380;margin-top:8px}
+          .systemDiagram{aspect-ratio:388/350;margin-top:8px}
           .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:29%;top:1%;width:24%;height:22%;background-size:38% auto}.rainSensor span{left:40%;top:29%}
-          .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:-4%;bottom:6px;font-size:11px}
+          .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:0;bottom:19px;font-size:11px}
           .manifoldRail{left:3.5%;right:1.8%;top:46.5%;height:19px;border-radius:10px}.supplyLine{top:calc(46.5% + 7px);width:5%;height:5px}
-          .schemaGrid{left:.2%;right:.8%;top:26%;bottom:7%;gap:5px}.schemaColumn{grid-template-rows:28px 44% 12% minmax(0,1fr)}
-          .valveNumber{width:23px;height:23px;font-size:11px}.schemaColumn::before{height:30px}.valvePhoto{width:112%}
-          .schemaGrid .diagramZone{grid-template-rows:34px auto auto;gap:3px;padding:4px 3px;border-radius:10px}.schemaGrid .scene{height:34px;border-radius:7px}.schemaGrid .zoneText b,.schemaGrid .zoneText small,.schemaGrid .duration small{font-size:11px}.schemaGrid .duration{font-size:14px}.schemaGrid .readyIcon{right:3px;top:4px;--mdc-icon-size:13px}
+          .schemaGrid{left:.2%;right:.8%;top:24%;bottom:4%;gap:5px}.schemaColumn{grid-template-rows:26px 35% 9% minmax(0,1fr)}
+          .valveNumber{width:23px;height:23px;font-size:11px}.schemaColumn::before{top:11px;height:31px}.valvePhoto{width:116%;margin-top:0;background-size:contain}
+          .waterBranch{position:relative;z-index:2;margin-top:-1px;height:calc(100% + 2px)}
+          .schemaGrid .diagramZone{grid-template-rows:36px auto auto;gap:4px;min-height:100px;padding:5px 4px 7px;border-radius:10px}.schemaGrid .scene{height:36px;border-radius:7px}.schemaGrid .zoneText b,.schemaGrid .zoneText small,.schemaGrid .duration small{font-size:11px}.schemaGrid .duration{font-size:14px;line-height:1.15}.schemaGrid .readyIcon{right:3px;top:4px;--mdc-icon-size:13px}
+          .mainlineLabel{bottom:0}
           .metrics{gap:5px}.metric{min-height:102px;padding:9px 7px}.metric>div{grid-template-columns:32px minmax(0,1fr);gap:6px}.metric>div>ha-icon{--mdc-icon-size:30px}.metric b{font-size:17px}
           .quickActions .modeGrid{gap:5px}.quickActions .mode{min-height:100px;padding:7px}.quickActions .mode ha-icon{--mdc-icon-size:31px}
           .statusesCard{margin-top:7px;padding:9px}.statusesHead{margin-bottom:6px}.statusesCard .nodeGrid{gap:5px}.statusesCard .node{grid-template-rows:auto 42px auto;min-height:132px;padding:7px 4px;border-radius:15px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{width:46px;height:42px}.statusesCard .node>ha-icon{--mdc-icon-size:34px}.statusesCard .node b{font-size:13px}
