@@ -1,53 +1,83 @@
-# NikaS Specialized Panel UI Standard v1.1
+# NikaS Specialized Panel UI Standard v1.3
 
 **Status:** REQUIRED  
 **Canonical source:** `NikaSir/ha-contract-generated-ui`  
-**Canonical documents:** `docs/SPECIALIZED_PANEL_SHELL_STANDARD.md`, `docs/SPECIALIZED_PANEL_ZOOM_STANDARD.md`  
+**Canonical documents:** `docs/SPECIALIZED_PANEL_SHELL_STANDARD.md`, `docs/SPECIALIZED_PANEL_ZOOM_STANDARD.md`, `docs/INTEGRATION_DASHBOARD_UI_STANDARD.md`  
+**Field reference:** Stark SolarPower mobile panel  
 **Local role:** synchronized implementation snapshot; do not create repository-specific variants.
 
 ## Ownership boundary
 
-This repository owns domain/integration UI: entities, telemetry, commands, cards, device/domain semantics and diagnostics. The shared shell owns safe areas, Header, Home Assistant main-menu button, zoom controls, zoomable work viewport and Bottom Tab Bar.
+This repository owns domain/integration UI: entities, telemetry, commands, cards, device/domain semantics and diagnostics. The shared standard owns safe areas, Header, Home Assistant menu behavior, peer-device selector placement, zoom viewport behavior and Bottom Tab Bar.
 
-**Migration rule:** do not refactor domain UI while adopting the shell. First migrate only Safe Area / Header / HA main-menu button / Zoom / Bottom Tab Bar. Domain behavior must remain functionally unchanged.
+**Migration rule:** do not refactor domain UI while adopting shell v1.3.
 
 ## Header and safe area
 
-- Respect all `env(safe-area-inset-*, 0px)` values.
-- No title or control may render under a notch or Dynamic Island.
-- Do not use device-specific offsets such as `top: 47px`.
-- **The permanent left Header control is always the Home Assistant main-system menu button (`☰`), never Back.**
-- The menu button opens/toggles the standard Home Assistant main navigation/sidebar/drawer.
-- A specialized panel must not replace the left rail with browser Back, a parent-route Back button, an integration menu or a device action.
-- Title is geometrically centered; at most one shell-level action is placed on the right.
-- Left/right rails should be symmetric; touch targets approximately 44×44 pt or larger.
-- Header remains at native scale and does not participate in user zoom.
+- Safe area is consumed exactly once; no device-specific offsets.
+- No Header content may render under notch/Dynamic Island.
+- Permanent left Header control is always Home Assistant system menu `☰`.
+- It MUST dispatch the standard `hass-toggle-menu` event.
+- It is never Back, browser history, integration drawer or device action.
+- Parent/drill-down navigation, if required, belongs inside work area.
+- Title is geometrically centered; at most one shell/global action is on right.
+- Header/menu/title/right action remain native scale.
 
-Logical parent/drill-down navigation may exist elsewhere in the panel when required, but it is not the permanent left shell control.
+## Device Selector
+
+When the application has multiple peer physical devices:
+
+- selector is directly below Header;
+- selector remains native scale and outside zoom viewport;
+- device order is fixed;
+- selection does not reorder devices;
+- selected peer survives Bottom Tab changes;
+- detailed content belongs only to selected peer.
+
+Subordinate channels are not peer devices merely because they are selectable.
 
 ## Bottom Tab Bar
 
-- Primary in-app navigation with 3–5 sections uses one full-width fixed Bottom Tab Bar.
-- It is edge-attached, not a floating card/pill.
-- It respects `env(safe-area-inset-bottom, 0px)` and the iOS Home Indicator.
-- Active tab is unambiguous; items use icon + short label.
-- Final work content scrolls fully above the bar.
-- Bottom Tab Bar remains at native scale.
+- Primary 3–5 sections use one full-width fixed edge-attached Bottom Tab Bar.
+- It respects effective bottom safe area/Home Indicator.
+- Active tab is unambiguous; icon + short label.
+- Final work content scrolls fully above bar.
+- Bottom Tab Bar remains native scale.
 
-## Zoom
+## Zoom — Stark field baseline
 
-Every specialized panel supports pinch-to-zoom and on-screen `− / percentage / +` controls.
+- Exactly one zoomable work viewport exists per panel instance.
+- Only work area scales; Header, Device Selector and Bottom Tab Bar stay native.
+- Primary interaction is two-finger focal-point pinch.
+- Enlarged content can pan/scroll.
+- Permanent on-screen `− / % / +` controls are not used.
+- When pinch ends at **97–103%**, scale snaps to exactly **100%**.
+- **Two-finger double tap** resets scale and work-area scroll to **100%**.
+- Reset briefly shows native-scale confirmation `Масштаб 100%`.
+- Scale persists locally per panel/client and preferably per peer device when applicable.
+- Shell installation/reconciliation is idempotent: never wrap an already zoomable area again.
+- Repeated HA updates must not create nested wrappers, duplicate gesture handlers, blank wrapper space or progressive shrinkage.
 
-Defaults: **75–200%**, step **10%**, tap percentage → **100%**.
+## Visual/data rules from Stark experience
 
-Pinch scales around the point between the fingers; enlarged content can pan/scroll; only the work viewport scales. Home Assistant chrome, Header, permanent HA main-menu button, zoom controls and Bottom Tab Bar remain native-sized. Scale persists locally per panel/client; responsive layout is selected before zoom; zoom must not alter entity semantics, thresholds, `unknown/unavailable`, routes, confirmations or commands.
+- Normal measurements use neutral typography; semantic colors are reserved for confirmed health/warning/fault.
+- `unknown`, `unavailable`, stale/source loss never appear healthy.
+- Backend semantic entities/thresholds own factual meaning; frontend does not silently duplicate business logic.
+- Do not invent unsupported runtime, watts, alarms or reserve estimates.
+- Panel-critical artwork ships locally; no external CDN and no Base64 images in production JS.
+- Background/context art contains no live HA values; dynamic values/status/flow layers remain separate runtime UI.
+- Use version/cache busting for local frontend assets.
+- Prefer native Home Assistant more-info/history for factual entity detail when appropriate.
 
-## Prohibited patterns
+## Render/delivery rules
 
-Do not introduce repository-specific Header/Bottom Tab Bar geometry, permanent Back in the left Header rail, independent incompatible zoom, whole-page zoom, hard-coded notch/Home Indicator offsets, or simultaneous domain refactor during shell migration.
+- Avoid full UI rebuilds for unrelated Home Assistant state churn when practical.
+- Optimization must preserve exactly one shell/work viewport, selected peer, active Bottom Tab and zoom state.
+- Production frontend uses one deterministic entry module; historical modules are not runtime dependency chain.
+- CI validates syntax, registration/manifest parity and packaged assets.
 
 ## Acceptance
 
-A migration is accepted only when existing domain behavior is preserved and the panel additionally has: safe Header below the notch/Dynamic Island, **HA main-system menu permanently on the left**, fixed full-width bottom navigation above the Home Indicator, pinch + `−/%/+`, focal-point zoom, pan/scroll when enlarged, 100% reset, per-panel persistence, and native-sized shell navigation.
+A migration is accepted only when existing domain behavior is preserved and the panel passes real mobile checks for: safe areas, `hass-toggle-menu`, centered Header, native selector where applicable, fixed Bottom Tab Bar, focal-point pinch, 97–103% snap, two-finger reset + `Масштаб 100%`, persistence, exactly one zoom viewport after repeated HA updates, explicit unavailable/stale states and unchanged domain safety.
 
 > Canonical policy remains in `ha-contract-generated-ui`. If this snapshot conflicts with a newer canonical standard, the canonical standard wins and this local copy must be synchronized.
