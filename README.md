@@ -34,33 +34,35 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.7**.
+Current panel version: **0.6.8**.
 
-The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
+The panel follows **NikaS Specialized Panel UI Standard v1.3**:
 
 It also conforms to **NikaS Integration Panel Template v1.0**.
 
-- compact symmetric Header with icon-only `←` Back;
-- viewport-centered title without decorative Header icon;
-- irrigation parent route: `/dashboard-actions`;
-- full-width fixed non-floating Bottom Tab Bar;
+- compact symmetric Header with the native Home Assistant `☰` menu;
+- viewport-centered title and one global refresh action;
+- full-width edge-attached non-floating Bottom Tab Bar;
 - iOS Safe Area handling and bottom clearance;
-- no top-tab navigation for primary sections.
+- one transform-based work canvas; Header and Bottom Tab Bar stay at native scale;
+- focal-point pinch and pan in the 75–200% range, with a 100% default;
+- two-finger double tap resets the work canvas to 100%; 97–103% snaps to 100%;
+- scale and position persist locally without nesting wrappers during HA updates.
 
 ### Information architecture v0.4
 
 The user-facing application model is domain-oriented rather than protocol-oriented:
 
-- **Обзор** — automatic-program status, current watering, next watering and zones 1–6;
-- **Зона N** — drill-down from Overview with the factual schedule/settings of that zone;
-- **Ручной** — select zone, set duration, then start; the start action remains intentionally disabled until a safe public Actions API is published;
-- **Настройки** — controller-wide parameters such as operation mode, seasonal adjustment, rain sensor and irrigation order;
-- **Диагн.** — integration health, transport/cache/errors and a read-only **Проверка программы** drill-down for confirming the complete decoded DP38 configuration.
+- **Состояние** — factual controller state, six-axis valve/zone schematic, program/mode/telemetry and statuses;
+- **Зоны** — production zones 1–6 with factual drill-down;
+- **Программа** — read-only decoded automatic program;
+- **Ручной** — zone and duration preparation; start stays disabled until a verified public Actions API exists;
+- **Диагн.** — integration health and diagnostics-only Zone 8.
 
 The primary Bottom Tab Bar is:
 
 ```text
-Обзор · Ручной · Настройки · Диагн.
+Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
 `Программы` is not a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
@@ -127,7 +129,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend rele
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.7
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.8
       ↓
 <nikas-ho-sc-8w-panel>
 ```

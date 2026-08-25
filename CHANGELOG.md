@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.26` / panel `0.6.8`: replace the iOS-unstable CSS `zoom` implementation with one idempotent Pointer Events transform canvas. Header, native HA menu, refresh action and Bottom Tab Bar remain at native scale while the work area supports focal-point pinch and pan.
+- `1.0.0-b005.26` / panel `0.6.8`: align with NikaS Zoom v1.3 — 75–200% range, 100% default, per-client/per-view persistence, 97–103% snap and two-finger double-tap reset with a temporary `Масштаб 100%` confirmation; remove permanent zoom controls.
 - `1.0.0-b005.25` / panel `0.6.7`: align the zoom percentage control with the shared specialized-panel standard: pressing the current percentage now resets the content to 100%, while the persisted initial/default scale remains 75%.
 - `1.0.0-b005.24` / panel `0.6.6`: move the live irrigation-pressure value from beneath the zone cards into the connection-status stack below `Локально`, preventing the value from being clipped or covered at any zone-card height.
 - `1.0.0-b005.24` / panel `0.6.6`: add content-only panel zoom with a persisted 75% default, on-screen minus/reset/plus controls, two-finger pinch centered on the touch midpoint and horizontal panning when enlarged; keep the Header and Bottom Tab Bar fixed at native size.

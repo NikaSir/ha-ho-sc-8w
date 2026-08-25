@@ -1,5 +1,5 @@
 (() => {
-  const UI_VERSION = "0.6.7";
+  const UI_VERSION = "0.6.8";
   const ASSET_VERSION = "0.6.5";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
@@ -19,12 +19,11 @@
   });
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
-  const DEFAULT_ZOOM = 0.75;
-  const RESET_ZOOM = 1;
-  const MIN_ZOOM = 0.75;
-  const MAX_ZOOM = 1.5;
-  const ZOOM_STEP = 0.25;
-  const ZOOM_STORAGE_KEY = "nikas-ho-sc-8w-panel-zoom";
+  const VIEW_SCALE_MIN = 0.75;
+  const VIEW_SCALE_MAX = 2;
+  const VIEW_SCALE_SNAP_MIN = 0.97;
+  const VIEW_SCALE_SNAP_MAX = 1.03;
+  const VIEW_STATE_PREFIX = "nikas_ho_sc_8w.view_transform.v2";
 
   class HOSC8WPanel extends HTMLElement {
     constructor() {
@@ -35,63 +34,133 @@
       this._drillZone = null;
       this._manualZone = 1;
       this._manualDuration = 10;
-      this._zoom = DEFAULT_ZOOM;
-      this._pinch = null;
-      try {
-        this._zoom = this.clampZoom(Number(localStorage.getItem(ZOOM_STORAGE_KEY)) || DEFAULT_ZOOM);
-      } catch (_error) {
-        this._zoom = DEFAULT_ZOOM;
-      }
+      this._renderQueued = false;
+      this._renderDeferred = false;
+      this._viewTransform = { scale: 1, x: 0, y: 0 };
+      this._viewTransformKey = null;
+      this._gesturePointers = new Map();
+      this._gestureStart = null;
+      this._gestureMoved = false;
+      this._hadMultiTouch = false;
+      this._twoFingerTapAt = 0;
+      this._suppressClicksUntil = 0;
+      this._scaleToastTimer = null;
+      this._resizeBound = false;
+      this._wheelSaveTimer = null;
+      this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
     }
 
-    set hass(value) { this._hass = value; this.render(); }
-    set panel(value) { this._panel = value; }
+    set hass(value) { this._hass = value; this._queueRender(); }
+    set panel(value) { this._panel = value; this._viewTransformKey = null; this._queueRender(); }
     set narrow(value) { this.toggleAttribute("narrow", Boolean(value)); }
     connectedCallback() {
-      this.render();
-      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+      if (!this._resizeBound) {
+        window.addEventListener("resize", this._onRealViewportResize);
+        window.visualViewport?.addEventListener("resize", this._onRealViewportResize);
+        this._resizeBound = true;
+      }
+      this._queueRender();
+    }
+    disconnectedCallback() {
+      window.removeEventListener("resize", this._onRealViewportResize);
+      window.visualViewport?.removeEventListener("resize", this._onRealViewportResize);
+      this._resizeBound = false;
     }
 
-    clampZoom(value) {
+    _queueRender() {
+      if (this._gesturePointers.size) {
+        this._renderDeferred = true;
+        return;
+      }
+      if (this._renderQueued) return;
+      this._renderQueued = true;
+      requestAnimationFrame(() => {
+        this._renderQueued = false;
+        if (this._gesturePointers.size) {
+          this._renderDeferred = true;
+          return;
+        }
+        this._render();
+      });
+    }
+
+    _transformStorageKey() {
+      const owner = this._panel?.config?.entry_id || this._panel?.config?.device_id || "default";
+      return `${VIEW_STATE_PREFIX}:${owner}:${this._view}`;
+    }
+
+    _restoreTransform(force = false) {
+      const key = this._transformStorageKey();
+      if (!force && this._viewTransformKey === key) return;
+      this._viewTransformKey = key;
+      this._viewTransform = { scale: 1, x: 0, y: 0 };
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) || "null");
+        if (saved && Number.isFinite(saved.scale) && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+          this._viewTransform = { scale: this._clampScale(saved.scale), x: saved.x, y: saved.y };
+        }
+      } catch (_error) { /* storage may be unavailable or stale */ }
+    }
+
+    _saveTransform() {
+      try { localStorage.setItem(this._transformStorageKey(), JSON.stringify(this._viewTransform)); } catch (_error) { /* storage may be unavailable */ }
+    }
+
+    _clampScale(value) {
       const numeric = Number(value);
-      if (!Number.isFinite(numeric)) return DEFAULT_ZOOM;
-      return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(numeric * 100) / 100));
+      if (!Number.isFinite(numeric)) return 1;
+      return Math.min(VIEW_SCALE_MAX, Math.max(VIEW_SCALE_MIN, numeric));
     }
-    zoomCanvasStyle() {
-      const width = this._zoom <= 1 ? 100 / this._zoom : 100;
-      return `zoom:${this._zoom};width:${width}%`;
+
+    _transformCss() {
+      const { scale, x, y } = this._viewTransform;
+      return `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
     }
-    zoomControls() {
-      return `<div class="zoomToolbar" role="group" aria-label="Масштаб панели">
-        <button data-zoom-out aria-label="Уменьшить масштаб"><ha-icon icon="mdi:minus"></ha-icon></button>
-        <button class="zoomValue" data-zoom-reset aria-label="Вернуть масштаб 100 процентов"><span data-zoom-value>${Math.round(this._zoom * 100)}%</span></button>
-        <button data-zoom-in aria-label="Увеличить масштаб"><ha-icon icon="mdi:plus"></ha-icon></button>
+
+    _workspace(content) {
+      this._restoreTransform(false);
+      return `<div class="workViewport" data-work-viewport>
+        <div class="workCanvas" data-work-canvas style="transform:${this._transformCss()}"><main class="content">${content}</main></div>
+        <div class="scaleToast" data-scale-toast aria-live="polite"></div>
       </div>`;
     }
-    setZoom(value, focus = null, persist = true) {
-      const previous = this._zoom;
-      const next = this.clampZoom(value);
-      const pageX = focus ? window.scrollX + focus.x : 0;
-      const pageY = focus ? window.scrollY + focus.y : 0;
-      this._zoom = next;
-      const canvas = this.shadowRoot.querySelector("[data-zoom-canvas]");
-      if (canvas) {
-        canvas.style.zoom = String(next);
-        canvas.style.width = next <= 1 ? `${100 / next}%` : "100%";
-      }
-      const label = this.shadowRoot.querySelector("[data-zoom-value]");
-      if (label) label.textContent = `${Math.round(next * 100)}%`;
-      if (persist) {
-        try { localStorage.setItem(ZOOM_STORAGE_KEY, String(next)); } catch (_error) { /* storage may be unavailable */ }
-      }
-      if (focus && previous > 0 && next !== previous) {
-        const ratio = next / previous;
-        requestAnimationFrame(() => window.scrollTo({
-          left: Math.max(0, pageX * ratio - focus.x),
-          top: Math.max(0, pageY * ratio - focus.y),
-          behavior: "auto",
-        }));
-      }
+
+    _showScaleToast(text) {
+      const toast = this.shadowRoot.querySelector("[data-scale-toast]");
+      if (!toast) return;
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(this._scaleToastTimer);
+      this._scaleToastTimer = setTimeout(() => toast.classList.remove("show"), 1100);
+    }
+
+    _applyTransform() {
+      const canvas = this.shadowRoot.querySelector("[data-work-canvas]");
+      if (canvas) canvas.style.transform = this._transformCss();
+    }
+
+    _clampAndApplyTransform(persist = false) {
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
+      const canvas = this.shadowRoot.querySelector("[data-work-canvas]");
+      if (!viewport || !canvas) return;
+      const scale = this._clampScale(this._viewTransform.scale);
+      const naturalWidth = Math.max(canvas.offsetWidth, 1);
+      const naturalHeight = Math.max(canvas.scrollHeight, canvas.offsetHeight, 1);
+      const minX = Math.min(0, viewport.clientWidth - naturalWidth * scale);
+      const minY = Math.min(0, viewport.clientHeight - naturalHeight * scale);
+      this._viewTransform = {
+        scale,
+        x: Math.min(0, Math.max(minX, this._viewTransform.x)),
+        y: Math.min(0, Math.max(minY, this._viewTransform.y)),
+      };
+      this._applyTransform();
+      if (persist) this._saveTransform();
+    }
+
+    _resetTransform(showToast = true) {
+      this._viewTransform = { scale: 1, x: 0, y: 0 };
+      this._clampAndApplyTransform(true);
+      if (showToast) this._showScaleToast("Масштаб 100%");
     }
 
     esc(value) {
@@ -451,41 +520,157 @@
       return `<div class="pageIntro"><small>ДИАГНОСТИКА</small><h2>Состояние интеграции</h2><p>Только фактическая телеметрия.</p></div><section class="diagList">${rows.map(([label, id, value, kind]) => `<button data-entity="${this.esc(id)}"><span>${label}</span><b>${this.esc(kind ? this.human(kind, value) : value)}</b><ha-icon icon="mdi:chevron-right"></ha-icon></button>`).join("")}</section><section class="lab"><h3>Зона 8 · лабораторная</h3><p>Состояние: <b>${this.esc(this.zoneStateText(this.state(z8)))}</b></p><p>Raw-write из панели отсутствует.</p></section>`;
     }
 
+    _cancelLongPresses() {
+      this.shadowRoot.querySelectorAll("[data-entity]").forEach((node) => {
+        node.dispatchEvent(new Event("pointercancel", { bubbles: false }));
+      });
+    }
+
+    _bindWorkspaceGestures() {
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
+      if (!viewport) return;
+      const point = (event) => {
+        const rect = viewport.getBoundingClientRect();
+        return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      };
+      const midpoint = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      const distance = (a, b) => Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+      const beginPinch = () => {
+        const points = [...this._gesturePointers.values()];
+        if (points.length < 2) return;
+        const mid = midpoint(points[0], points[1]);
+        const scale = this._viewTransform.scale;
+        this._gestureStart = {
+          type: "pinch",
+          distance: distance(points[0], points[1]),
+          scale,
+          midX: mid.x,
+          midY: mid.y,
+          contentX: (mid.x - this._viewTransform.x) / scale,
+          contentY: (mid.y - this._viewTransform.y) / scale,
+        };
+      };
+
+      viewport.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        const current = point(event);
+        this._gesturePointers.set(event.pointerId, current);
+        try { viewport.setPointerCapture(event.pointerId); } catch (_error) { /* capture may be unavailable */ }
+        if (this._gesturePointers.size === 1) {
+          this._gestureMoved = false;
+          this._hadMultiTouch = false;
+          this._gestureStart = { type: "pan", point: current, x: this._viewTransform.x, y: this._viewTransform.y };
+        } else if (this._gesturePointers.size === 2) {
+          this._hadMultiTouch = true;
+          beginPinch();
+        }
+      });
+
+      viewport.addEventListener("pointermove", (event) => {
+        if (!this._gesturePointers.has(event.pointerId)) return;
+        const current = point(event);
+        this._gesturePointers.set(event.pointerId, current);
+        if (this._gesturePointers.size >= 2) {
+          event.preventDefault();
+          const points = [...this._gesturePointers.values()];
+          if (this._gestureStart?.type !== "pinch") beginPinch();
+          const start = this._gestureStart;
+          if (!start || start.type !== "pinch") return;
+          const mid = midpoint(points[0], points[1]);
+          const nextScale = this._clampScale(start.scale * distance(points[0], points[1]) / start.distance);
+          if (Math.abs(nextScale - start.scale) > 0.008 || Math.hypot(mid.x - start.midX, mid.y - start.midY) > 4) this._gestureMoved = true;
+          this._viewTransform = {
+            scale: nextScale,
+            x: mid.x - start.contentX * nextScale,
+            y: mid.y - start.contentY * nextScale,
+          };
+          this._cancelLongPresses();
+          this._clampAndApplyTransform(false);
+          return;
+        }
+        const start = this._gestureStart;
+        if (!start || start.type !== "pan") return;
+        const dx = current.x - start.point.x;
+        const dy = current.y - start.point.y;
+        if (Math.hypot(dx, dy) > 4) {
+          this._gestureMoved = true;
+          this._cancelLongPresses();
+        }
+        if (!this._gestureMoved) return;
+        event.preventDefault();
+        this._viewTransform = { ...this._viewTransform, x: start.x + dx, y: start.y + dy };
+        this._clampAndApplyTransform(false);
+      }, { passive: false });
+
+      const finishPointer = (event) => {
+        if (!this._gesturePointers.has(event.pointerId)) return;
+        this._gesturePointers.delete(event.pointerId);
+        try { viewport.releasePointerCapture(event.pointerId); } catch (_error) { /* capture may already be released */ }
+        if (this._gesturePointers.size === 1) {
+          const remaining = [...this._gesturePointers.values()][0];
+          this._gestureStart = { type: "pan", point: remaining, x: this._viewTransform.x, y: this._viewTransform.y };
+          return;
+        }
+        if (this._gesturePointers.size) return;
+
+        const now = Date.now();
+        if (this._hadMultiTouch && !this._gestureMoved) {
+          if (now - this._twoFingerTapAt < 450) {
+            this._twoFingerTapAt = 0;
+            this._resetTransform(true);
+          } else {
+            this._twoFingerTapAt = now;
+          }
+        } else if (this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
+          this._viewTransform.scale = 1;
+          this._clampAndApplyTransform(true);
+          this._showScaleToast("Масштаб 100%");
+        } else {
+          this._clampAndApplyTransform(true);
+        }
+        if (this._gestureMoved) this._suppressClicksUntil = now + 350;
+        this._gestureStart = null;
+        this._gestureMoved = false;
+        this._hadMultiTouch = false;
+        if (this._renderDeferred) {
+          this._renderDeferred = false;
+          this._queueRender();
+        }
+      };
+      viewport.addEventListener("pointerup", finishPointer);
+      viewport.addEventListener("pointercancel", finishPointer);
+      viewport.addEventListener("click", (event) => {
+        if (Date.now() < this._suppressClicksUntil) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      }, true);
+      viewport.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        this._viewTransform = {
+          ...this._viewTransform,
+          x: this._viewTransform.x - event.deltaX,
+          y: this._viewTransform.y - event.deltaY,
+        };
+        this._clampAndApplyTransform(false);
+        clearTimeout(this._wheelSaveTimer);
+        this._wheelSaveTimer = setTimeout(() => this._saveTransform(), 180);
+      }, { passive: false });
+    }
+
     bindActions() {
       this.shadowRoot.querySelector("[data-ha-menu]")?.addEventListener("click", () => this.openHaMenu());
       this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", () => this.refreshNow());
-      this.shadowRoot.querySelector("[data-zoom-out]")?.addEventListener("click", () => this.setZoom(this._zoom - ZOOM_STEP));
-      this.shadowRoot.querySelector("[data-zoom-in]")?.addEventListener("click", () => this.setZoom(this._zoom + ZOOM_STEP));
-      this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this.setZoom(RESET_ZOOM));
-      const zoomCanvas = this.shadowRoot.querySelector("[data-zoom-canvas]");
-      const touchDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-      const touchMidpoint = (touches) => ({ x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2 });
-      zoomCanvas?.addEventListener("touchstart", (event) => {
-        if (event.touches.length !== 2) return;
-        this._pinch = { distance: touchDistance(event.touches), zoom: this._zoom };
-      }, { passive: true });
-      zoomCanvas?.addEventListener("touchmove", (event) => {
-        if (event.touches.length !== 2 || !this._pinch?.distance) return;
-        event.preventDefault();
-        const scale = touchDistance(event.touches) / this._pinch.distance;
-        this.setZoom(this._pinch.zoom * scale, touchMidpoint(event.touches), false);
-      }, { passive: false });
-      zoomCanvas?.addEventListener("touchend", (event) => {
-        if (!this._pinch || event.touches.length >= 2) return;
-        this._pinch = null;
-        try { localStorage.setItem(ZOOM_STORAGE_KEY, String(this._zoom)); } catch (_error) { /* storage may be unavailable */ }
-      }, { passive: true });
+      this._bindWorkspaceGestures();
       this.shadowRoot.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
         this._view = button.dataset.view || "status";
         this._drillZone = null;
         this.render();
-        window.scrollTo({ top: 0, behavior: "auto" });
       }));
       this.shadowRoot.querySelectorAll("[data-go]").forEach((button) => button.addEventListener("click", () => {
         this._view = button.dataset.go;
         this._drillZone = null;
         this.render();
-        window.scrollTo({ top: 0, behavior: "auto" });
       }));
       this.shadowRoot.querySelector("[data-drill-back]")?.addEventListener("click", () => {
         this._drillZone = null;
@@ -496,7 +681,6 @@
           this._view = "zones";
           this._drillZone = Number(event.currentTarget.dataset.zone);
           this.render();
-          window.scrollTo({ top: 0, behavior: "auto" });
         }
       }));
       this.shadowRoot.querySelectorAll("[data-manual-zone]").forEach((button) => button.addEventListener("click", () => {
@@ -573,13 +757,7 @@
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
         }
-        /* v0.6.7: panel zoom reset returns to the 100% standard scale. */
-        .app{padding-bottom:calc(150px + env(safe-area-inset-bottom));overflow-x:visible}
-        .zoomToolbar{display:flex;justify-content:flex-end;align-items:center;margin:5px 0 2px}
-        .zoomToolbar>button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);background:#fff;color:var(--muted)}
-        .zoomToolbar>button:first-child{border-radius:15px 0 0 15px}.zoomToolbar>button:last-child{border-radius:0 15px 15px 0}
-        .zoomToolbar .zoomValue{width:58px;border-left:0;border-right:0;border-radius:0;color:var(--a);font-size:12px;font-weight:800}
-        .zoomToolbar ha-icon{--mdc-icon-size:21px}.zoomCanvas{transform-origin:top left;touch-action:pan-x pan-y}.content.zoomCanvas{padding-top:5px}
+        /* v0.6.8: a single transform canvas keeps the HA shell at native scale. */
         .heroPressure{display:flex;align-items:baseline;justify-content:flex-end;gap:5px;margin:7px 0 0 auto;padding:4px 7px;border:1px solid #dfe5e8;border-radius:10px;background:#fff;color:#505861;white-space:nowrap}
         .heroPressure span{font-size:11px}.heroPressure b{color:#079b29;font-size:12px}.heroPressure b.unknown{color:#6f7780}
         .systemDiagram{aspect-ratio:920/500}
@@ -608,7 +786,7 @@
         .statusesCard{padding:12px}.statusesHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.statusesHead .sectionTitle{margin:0;color:#111317;font-size:18px;letter-spacing:0;text-transform:none}.statusesHead>span{color:#626a73;font-size:11px;font-weight:700}
         .statusesCard .nodeGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.statusesCard .node{display:grid;grid-template-columns:1fr;grid-template-rows:auto 48px auto;justify-items:center;align-content:start;gap:5px;min-height:142px;padding:9px 6px;text-align:center}.statusesCard .node>small{width:100%;color:#111317;font-size:11px;font-weight:800;text-align:left}.statusesCard .node>ha-icon{display:grid;grid-row:2;--mdc-icon-size:40px}.statusesCard .node>span{width:100%}.statusesCard .node b{font-size:14px}.statusesCard .node em{font-size:11px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{content:"";display:block;grid-row:2;width:58px;height:48px;background-position:center;background-size:contain;background-repeat:no-repeat}.statusesCard .node:nth-child(1)::before{background-image:url("${APPROVED_VISUALS.nodeController}")}.statusesCard .node:nth-child(2)::before{background-image:url("${APPROVED_VISUALS.nodeValve}")}.statusesCard .node:nth-child(4)::before{background-image:url("${APPROVED_VISUALS.rain}")}.statusesCard .node:nth-child(1)>ha-icon,.statusesCard .node:nth-child(2)>ha-icon,.statusesCard .node:nth-child(4)>ha-icon{display:none}.statusesCard .node:nth-child(3)>ha-icon{display:grid;color:#078fe8}
         @media(max-width:520px){
-          .app{padding-bottom:calc(142px + env(safe-area-inset-bottom))}.zoomToolbar{margin-top:3px}.heroPressure{margin-top:5px;padding:3px 6px}.heroPressure span,.heroPressure b{font-size:11px}
+          .heroPressure{margin-top:5px;padding:3px 6px}.heroPressure span,.heroPressure b{font-size:11px}
           .systemDiagram{aspect-ratio:388/350;margin-top:8px}
           .controller{left:.5%;top:1%;width:26%;height:23%}.rainSensor{left:28%;top:.5%;width:30%;height:27%;background-size:auto 100%}.rainSensor span{left:60%;top:29%}
           .controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{right:0;bottom:19px;font-size:11px}
@@ -622,16 +800,30 @@
           .quickActions .modeGrid{gap:5px}.quickActions .mode{min-height:100px;padding:7px}.quickActions .mode ha-icon{--mdc-icon-size:31px}
           .statusesCard{margin-top:7px;padding:9px}.statusesHead{margin-bottom:6px}.statusesCard .nodeGrid{gap:5px}.statusesCard .node{grid-template-rows:auto 42px auto;min-height:132px;padding:7px 4px;border-radius:15px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{width:46px;height:42px}.statusesCard .node>ha-icon{--mdc-icon-size:34px}.statusesCard .node b{font-size:13px}
         }
+        :host{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+        .app{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-width:920px;height:100vh;height:100dvh;min-height:0;margin:0 auto;padding:0 14px;overflow:hidden}
+        .appHeader{position:relative;top:auto;z-index:60}
+        .workViewport{position:relative;min-width:0;min-height:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--bg)}
+        .workCanvas{position:absolute;left:0;top:0;width:100%;min-height:100%;transform-origin:0 0;will-change:transform;touch-action:none;-webkit-user-select:none;user-select:none}
+        .workCanvas .content{padding-top:5px;padding-bottom:18px}
+        .scaleToast{position:absolute;z-index:80;left:50%;bottom:18px;transform:translate(-50%,12px);padding:8px 13px;border-radius:99px;background:#111d;color:#fff;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+        .scaleToast.show{opacity:1;transform:translate(-50%,0)}
+        .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
+        @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
       `;
     }
 
-    render() {
+    render() { this._queueRender(); }
+
+    _render() {
       if (!this.shadowRoot) return;
       if (!VIEWS.includes(this._view)) this._view = "status";
       const header = this.header();
       if (!this._hass) {
-        this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this.zoomControls()}<main class="content zoomCanvas" data-zoom-canvas style="${this.zoomCanvasStyle()}"><section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section></main></div>${this.bottomNav()}`;
+        const loading = `<section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section>`;
+        this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this._workspace(loading)}${this.bottomNav()}</div>`;
         this.bindActions();
+        requestAnimationFrame(() => this._clampAndApplyTransform(false));
         return;
       }
       const e = this.entities();
@@ -640,8 +832,9 @@
       else if (this._view === "program") content = this.programView(e);
       else if (this._view === "manual") content = this.manualView(e);
       else if (this._view === "diagnostics") content = this.diagnosticsView(e);
-      this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this.zoomControls()}<main class="content zoomCanvas" data-zoom-canvas style="${this.zoomCanvasStyle()}">${content}</main></div>${this.bottomNav()}`;
+      this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this._workspace(content)}${this.bottomNav()}</div>`;
       this.bindActions();
+      requestAnimationFrame(() => this._clampAndApplyTransform(false));
     }
   }
 

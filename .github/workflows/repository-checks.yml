@@ -96,6 +96,24 @@ jobs:
             exit 1
           fi
 
+          if grep -Eq 'style\.zoom|(^|[;{[:space:]])zoom[[:space:]]*:' "$bundle"; then
+            echo 'Legacy CSS zoom detected; specialized panels must use one transform canvas.'
+            exit 1
+          fi
+
+          for marker in 'class="workViewport"' 'class="workCanvas"' 'translate3d' 'touch-action:none' 'Масштаб 100%'; do
+            if ! grep -Fq "$marker" "$bundle"; then
+              echo "Required transform-canvas marker is missing: $marker"
+              exit 1
+            fi
+          done
+
+          if [ "$(grep -Fo 'class="workViewport"' "$bundle" | wc -l | tr -d ' ')" != "1" ] || \
+             [ "$(grep -Fo 'class="workCanvas"' "$bundle" | wc -l | tr -d ' ')" != "1" ]; then
+            echo 'The panel must declare exactly one work viewport and one work canvas template.'
+            exit 1
+          fi
+
           echo 'OK production frontend bundle and integration-owned assets'
 
       - name: Reject tracked credential/key files
