@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.19` / panel `0.6.1`: move every production illustration out of the JavaScript bundle into `custom_components/nikas_ho_sc_8w/frontend/assets/`; serve them through the integration-owned `/nikas-ho-sc-8w/` static route with query-string cache busting.
+- `1.0.0-b005.19` / panel `0.6.1`: add a machine-readable asset manifest and CI checks that reject missing files, inline Base64 images and externally hosted image URLs while preserving the approved six-column valve-to-zone geometry and live Home Assistant data layers.
 - `1.0.0-b005.18` / panel `0.6.0`: rebuild the status schematic as one responsive six-column grid. Each column now owns its valve number, valve image, vertical water branch and matching zone card, so valves 1–6 cannot drift away from zones 1–6 at any mobile width.
 - `1.0.0-b005.18` / panel `0.6.0`: replace the fragile full-manifold background/SVG coordinate mix with repeated isolated valve visuals over one CSS manifold rail; keep the blue hydraulic inlet on the left, the grey controller-to-valve bus, and the rain sensor connected only to the controller.
 - `1.0.0-b005.18` / panel `0.6.0`: adopt the approved S8 OMNI hierarchy below the hero — program/mode/telemetry summary, three primary actions and four factual status cards — while retaining text-only irrigation pressure from `sensor.nikas_h2000_pro_voda_na_poliv_2` and diagnostics-only Zone 8.

@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.0",
+    "dashboard_version": "0.6.1",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -24,9 +24,13 @@
       ]
     },
     "frontend": {
-      "bundle": "self_contained",
+      "bundle": "integration_owned_local_assets",
       "module_url": "/nikas-ho-sc-8w/irrigation-panel.js",
+      "static_url": "/nikas-ho-sc-8w/",
+      "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
+      "inline_base64_images": false,
+      "external_image_hosts": false,
       "historical_runtime_imports": false
     },
     "status_layout": {
@@ -54,7 +58,7 @@
       "mainline_state": "sensor.nikas_h2000_pro_voda_na_poliv_2",
       "mainline_state_source_verified": true,
       "dynamic_state_source": "home_assistant_entities",
-      "zone_scene_thumbnails": "approved_reference_embedded",
+      "zone_scene_thumbnails": "approved_reference_local_webp",
       "theme_strategy": "fixed_light_reference_dark_theme_deferred"
     }
   },
