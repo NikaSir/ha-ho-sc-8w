@@ -72,7 +72,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "tabs": ["status", "zones", "program", "manual", "diagnostics"],
             },
             "information_architecture": {
-                "status": "approved_render_system_state_nodes_current_mode",
+                "status": "approved_render_system_state_summary_actions_statuses",
                 "zones": "production_zones_1_6_status_and_drilldown",
                 "program": "controller_resident_dp38_read_only_program",
                 "manual": "zone_then_duration_then_start_gate",
@@ -91,7 +91,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "water_passes_through_controller": False,
                 "orthogonal_zone_routing": True,
                 "mobile_layout": "approved_light_reference_first_screen",
-                "manifold_layout": "full_width_with_exact_valve_centers",
+                "manifold_layout": "single_six_column_grid_with_shared_valve_pipe_zone_axes",
                 "mainline_pressure_presentation": "text_only_two_decimal_bar_value",
                 "theme_strategy": "fixed_light_reference_dark_theme_deferred",
                 "production_zones": [1, 2, 3, 4, 5, 6],
