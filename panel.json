@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.6",
+    "dashboard_version": "0.6.7",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -62,6 +62,7 @@
       "theme_strategy": "fixed_light_reference_dark_theme_deferred",
       "content_zoom": {
         "default_percent": 75,
+        "reset_percent": 100,
         "minimum_percent": 75,
         "maximum_percent": 150,
         "controls": "onscreen_minus_reset_plus_and_two_finger_pinch",

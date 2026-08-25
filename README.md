@@ -34,7 +34,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.6**.
+Current panel version: **0.6.7**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -127,7 +127,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend rele
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.6
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.7
       ↓
 <nikas-ho-sc-8w-panel>
 ```

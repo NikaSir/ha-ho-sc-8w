@@ -1,5 +1,5 @@
 (() => {
-  const UI_VERSION = "0.6.6";
+  const UI_VERSION = "0.6.7";
   const ASSET_VERSION = "0.6.5";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
@@ -20,6 +20,7 @@
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
   const DEFAULT_ZOOM = 0.75;
+  const RESET_ZOOM = 1;
   const MIN_ZOOM = 0.75;
   const MAX_ZOOM = 1.5;
   const ZOOM_STEP = 0.25;
@@ -63,7 +64,7 @@
     zoomControls() {
       return `<div class="zoomToolbar" role="group" aria-label="Масштаб панели">
         <button data-zoom-out aria-label="Уменьшить масштаб"><ha-icon icon="mdi:minus"></ha-icon></button>
-        <button class="zoomValue" data-zoom-reset aria-label="Вернуть масштаб 75 процентов"><span data-zoom-value>${Math.round(this._zoom * 100)}%</span></button>
+        <button class="zoomValue" data-zoom-reset aria-label="Вернуть масштаб 100 процентов"><span data-zoom-value>${Math.round(this._zoom * 100)}%</span></button>
         <button data-zoom-in aria-label="Увеличить масштаб"><ha-icon icon="mdi:plus"></ha-icon></button>
       </div>`;
     }
@@ -455,7 +456,7 @@
       this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", () => this.refreshNow());
       this.shadowRoot.querySelector("[data-zoom-out]")?.addEventListener("click", () => this.setZoom(this._zoom - ZOOM_STEP));
       this.shadowRoot.querySelector("[data-zoom-in]")?.addEventListener("click", () => this.setZoom(this._zoom + ZOOM_STEP));
-      this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this.setZoom(DEFAULT_ZOOM));
+      this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this.setZoom(RESET_ZOOM));
       const zoomCanvas = this.shadowRoot.querySelector("[data-zoom-canvas]");
       const touchDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
       const touchMidpoint = (touches) => ({ x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2 });
@@ -572,7 +573,7 @@
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
         }
-        /* v0.6.6: pressure in the connection stack plus panel-only 75–150% zoom. */
+        /* v0.6.7: panel zoom reset returns to the 100% standard scale. */
         .app{padding-bottom:calc(150px + env(safe-area-inset-bottom));overflow-x:visible}
         .zoomToolbar{display:flex;justify-content:flex-end;align-items:center;margin:5px 0 2px}
         .zoomToolbar>button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);background:#fff;color:var(--muted)}
