@@ -22,8 +22,6 @@ custom_components/nikas_ho_sc_8w/
 
 Restart Home Assistant after installation or update.
 
-Published GitHub releases use the exact integration version from `custom_components/nikas_ho_sc_8w/manifest.json`. HACS can therefore present a stable named version instead of identifying the default branch only by its commit hash.
-
 ## Integration-owned panel
 
 Stable route:
