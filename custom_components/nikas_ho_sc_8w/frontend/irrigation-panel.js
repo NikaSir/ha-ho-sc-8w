@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.8";
-  const ASSET_VERSION = "0.6.5";
+  const UI_VERSION = "0.6.9";
+  const ASSET_VERSION = "0.6.9";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -8,7 +8,7 @@
     nodeValve: assetUrl("valve-v2.webp"),
     nodeMainline: assetUrl("mainline-node.webp"),
     controller: assetUrl("ho-sc-8w-controller-v4.webp"),
-    rain: assetUrl("rain-sensor-v4.webp"),
+    rain: assetUrl("rain-sensor-v5.webp"),
     manifold: assetUrl("manifold-v1.webp"),
     zone1: assetUrl("zone-1.webp"),
     zone2: assetUrl("zone-2.webp"),
