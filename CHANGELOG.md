@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.27` / panel `0.6.9`: ship the final approved rain-sensor cutout instead of the oversized diagonal-bracket revision. The new local WebP uses a compact vertical warm-white body, clear ventilation slots, a short rear aluminum plate and no dangling cable.
+- `1.0.0-b005.27` / panel `0.6.9`: preserve the accepted controller/valve/zone geometry and v1.3 transform-canvas scaling; only the versioned rain-sensor asset and cache key change.
 - `1.0.0-b005.26` / panel `0.6.8`: replace the iOS-unstable CSS `zoom` implementation with one idempotent Pointer Events transform canvas. Header, native HA menu, refresh action and Bottom Tab Bar remain at native scale while the work area supports focal-point pinch and pan.
 - `1.0.0-b005.26` / panel `0.6.8`: align with NikaS Zoom v1.3 — 75–200% range, 100% default, per-client/per-view persistence, 97–103% snap and two-finger double-tap reset with a temporary `Масштаб 100%` confirmation; remove permanent zoom controls.
 - `1.0.0-b005.25` / panel `0.6.7`: align the zoom percentage control with the shared specialized-panel standard: pressing the current percentage now resets the content to 100%, while the persisted initial/default scale remains 75%.

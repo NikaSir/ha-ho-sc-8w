@@ -1,7 +1,7 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.8",
-  "integration_version": "1.0.0-b005.26",
+  "panel_version": "0.6.9",
+  "integration_version": "1.0.0-b005.27",
   "static_url": "/nikas-ho-sc-8w/",
   "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "asset_policy": {
@@ -13,7 +13,7 @@
   "assets": [
     {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/ho-sc-8w-controller-v4.webp", "role": "controller"},
     {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/ho-sc-8w-controller-node-v4.webp", "role": "controller_status"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/rain-sensor-v4.webp", "role": "rain_sensor"},
+    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/rain-sensor-v5.webp", "role": "rain_sensor"},
     {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/valve-v2.webp", "role": "valve"},
     {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/mainline-node.webp", "role": "mainline_status"},
     {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/manifold-v1.webp", "role": "legacy_wide_manifold"},
