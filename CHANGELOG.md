@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.24` / panel `0.6.6`: move the live irrigation-pressure value from beneath the zone cards into the connection-status stack below `Локально`, preventing the value from being clipped or covered at any zone-card height.
+- `1.0.0-b005.24` / panel `0.6.6`: add content-only panel zoom with a persisted 75% default, on-screen minus/reset/plus controls, two-finger pinch centered on the touch midpoint and horizontal panning when enlarged; keep the Header and Bottom Tab Bar fixed at native size.
 - `1.0.0-b005.23` / panel `0.6.5`: replace the generic clamp-style rain detector with an original unbranded asset informed by the Hunter Rain-Clik construction: warm matte polycarbonate, prominent vertical vents, an adjustable upper section and a restrained aluminum extension bracket.
 - `1.0.0-b005.23` / panel `0.6.5`: retain a truly transparent local WebP and all dynamic interface layers; no Hunter photograph, branding, labels or external image URL is embedded in the HACS integration.
 - `1.0.0-b005.23` / panel `0.6.5`: publish versioned HACS-ready GitHub releases directly from the integration manifest after validated changes reach `main`.

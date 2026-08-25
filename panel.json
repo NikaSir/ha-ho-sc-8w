@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.5",
+    "dashboard_version": "0.6.6",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -54,12 +54,21 @@
       "zone_routing": "orthogonal_vertical_one_to_one",
       "mobile_layout": "approved_light_reference_with_11px_copy_floor",
       "manifold_layout": "single_six_column_grid_with_shared_valve_pipe_zone_axes",
-      "mainline_pressure_presentation": "text_only_two_decimal_bar_value",
+      "mainline_pressure_presentation": "text_only_two_decimal_bar_value_below_connection_status",
       "mainline_state": "sensor.nikas_h2000_pro_voda_na_poliv_2",
       "mainline_state_source_verified": true,
       "dynamic_state_source": "home_assistant_entities",
       "zone_scene_thumbnails": "approved_reference_local_webp",
-      "theme_strategy": "fixed_light_reference_dark_theme_deferred"
+      "theme_strategy": "fixed_light_reference_dark_theme_deferred",
+      "content_zoom": {
+        "default_percent": 75,
+        "minimum_percent": 75,
+        "maximum_percent": 150,
+        "controls": "onscreen_minus_reset_plus_and_two_finger_pinch",
+        "scope": "content_only_header_and_bottom_navigation_fixed",
+        "pinch_origin": "touch_midpoint",
+        "pan_when_enlarged": true
+      }
     }
   },
   "ownership": {
