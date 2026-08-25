@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.4";
-  const ASSET_VERSION = "0.6.4";
+  const UI_VERSION = "0.6.5";
+  const ASSET_VERSION = "0.6.5";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -8,7 +8,7 @@
     nodeValve: assetUrl("valve-v2.webp"),
     nodeMainline: assetUrl("mainline-node.webp"),
     controller: assetUrl("ho-sc-8w-controller-v4.webp"),
-    rain: assetUrl("rain-sensor-v3.webp"),
+    rain: assetUrl("rain-sensor-v4.webp"),
     manifold: assetUrl("manifold-v1.webp"),
     zone1: assetUrl("zone-1.webp"),
     zone2: assetUrl("zone-2.webp"),
@@ -498,7 +498,7 @@
           .headerTitle small,.heroHead small,.heroHead p,.connectionWrap>small,.rainSensor span,.controlLabel,.zoneRow .zoneText b,.zoneRow .zoneText small,.zoneRow .duration small,.mainlineLabel,.mainlineLabel b,.metric small,.metric em,.sectionTitle,.node small,.node em,.mode small,.bottomNav button,.detailCard p,.lab p{font-size:var(--ui-copy-min)}
           .connectionBadge{font-size:var(--ui-copy-min)}.zoneRow .duration{font-size:14px}.metric b{font-size:14px}.node b,.mode b{font-size:13px}
         }
-        /* v0.6.4: shared six-column axes and accurate plastic rain-sensor graphic. */
+        /* v0.6.5: shared six-column axes and original Rain-Clik-inspired sensor asset. */
         .systemDiagram{aspect-ratio:920/500}
         .deviceWires{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none}
         .controller{left:1%;top:1%;width:25%;height:23%;background:transparent url("${APPROVED_VISUALS.controller}") center/contain no-repeat}
