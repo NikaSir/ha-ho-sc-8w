@@ -102,6 +102,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             },
             "content_zoom": {
                 "default_percent": 75,
+                "reset_percent": 100,
                 "minimum_percent": 75,
                 "maximum_percent": 150,
                 "controls": "onscreen_minus_reset_plus_and_two_finger_pinch",
