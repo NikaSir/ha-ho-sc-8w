@@ -10,7 +10,7 @@
   "requirements": [
     "tinytuya>=1.13.0"
   ],
-  "version": "1.0.0-b005.18",
+  "version": "1.0.0-b005.19",
   "iot_class": "local_push",
   "integration_type": "device",
   "dependencies": [

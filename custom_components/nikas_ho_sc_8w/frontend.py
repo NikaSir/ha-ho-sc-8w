@@ -14,6 +14,7 @@ from .const import (
     PANEL_ELEMENT_NAME,
     PANEL_ICON,
     PANEL_JS_URL,
+    PANEL_STATIC_URL,
     PANEL_PARENT_PATH,
     PANEL_TITLE,
     PANEL_URL_PATH,
@@ -34,7 +35,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
 
     try:
         await hass.http.async_register_static_paths(
-            [StaticPathConfig(PANEL_JS_URL, str(bundle_file), False)]
+            [StaticPathConfig(PANEL_STATIC_URL, str(frontend_dir), False)]
         )
     except RuntimeError:
         _LOGGER.debug("HO-SC-8W panel static path already registered")
@@ -104,7 +105,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         config_panel_domain=DOMAIN,
     )
     _LOGGER.info(
-        "Registered HO-SC-8W irrigation panel at /%s (v%s, self-contained bundle)",
+        "Registered HO-SC-8W irrigation panel at /%s (v%s, local assets)",
         PANEL_URL_PATH,
         PANEL_VERSION,
     )

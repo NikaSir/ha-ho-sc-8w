@@ -32,7 +32,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.0**.
+Current panel version: **0.6.1**.
 
 The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
 
@@ -125,12 +125,12 @@ The production panel follows the mandatory NikaS specialized-panel frontend rele
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.0
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.1
       ↓
 <nikas-ho-sc-8w-panel>
 ```
 
-`irrigation-panel.js` is the only project-owned JavaScript file required at runtime. It does not import previous UI versions. Historical frontend implementations are retained by Git history rather than chained browser imports.
+`irrigation-panel.js` is the only project-owned JavaScript bundle required at runtime. It does not import previous UI versions. Raster illustrations are separate optimized files under `frontend/assets/`, are served by the integration itself, and use `?v=0.6.1` cache busting. The bundle contains no Base64 images and does not fetch image assets from external servers.
 
 This release uses a stable production filename plus query-string cache busting. Correct panel loading must not depend on a warm browser cache.
 
