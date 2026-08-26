@@ -38,7 +38,7 @@ Sidebar title: **Полив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
 Current panel version: **0.6.11**.
 
-The panel follows **NIKAS Specialized Panel UI Standard v1.5**:
+The panel follows **NIKAS Specialized Panel UI Standard v1.6**:
 
 It also conforms to **NikaS Integration Panel Template v1.0**.
 
