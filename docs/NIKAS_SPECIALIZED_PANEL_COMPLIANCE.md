@@ -27,3 +27,16 @@
 ## Required phone check
 
 At 100% verify native scrolling on Diagnostics, no horizontal/top displacement and immediate tap/hold response. Above 100% verify only necessary axes pan and every release/resize remains clamped. Confirm Header and Bottom navigation stay fixed and match UPS.
+
+
+<!-- v1.6-adoption -->
+## v1.6 adoption delta — 2026-08-26
+
+This section is normative. Earlier PASS evidence was collected against v1.5.
+
+- **Indicator policy:** the common two-level indicator is **NOT ENABLED**. Do not restore a standalone blue `Локально` badge without a separate explicit request.
+- Local Tuya/LAN classification remains available for diagnostics but is not automatically promoted to the common plaque.
+- **Stable DOM:** DP/telemetry updates patch existing zone/program/status nodes and never rebuild the shell, Rain-Clik asset, viewport or navigation.
+- **Fixed chrome:** short Zone/Program views must not move Bottom Tab Bar; long diagnostics scroll only inside Work Viewport.
+- **Typography:** enforce the LIDER 9–25px scale and 12px meaningful-text floor.
+- **Brand:** repository and packaged integration identity remain mandatory.
