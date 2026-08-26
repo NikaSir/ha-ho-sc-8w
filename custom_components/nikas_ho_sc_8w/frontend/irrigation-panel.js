@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.10";
-  const ASSET_VERSION = "0.6.10";
+  const UI_VERSION = "0.6.11";
+  const ASSET_VERSION = "0.6.11";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -47,6 +47,8 @@
       this._scaleToastTimer = null;
       this._resizeBound = false;
       this._wheelSaveTimer = null;
+      this._nativeScrollPositions = new Map();
+      this._pendingScrollTop = null;
       this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
     }
 
@@ -73,6 +75,10 @@
         return;
       }
       if (this._renderQueued) return;
+      const currentViewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+      if (currentViewport && this._viewTransform.scale <= 1) {
+        this._nativeScrollPositions.set(this._transformStorageKey(), currentViewport.scrollTop);
+      }
       this._renderQueued = true;
       requestAnimationFrame(() => {
         this._renderQueued = false;
@@ -119,7 +125,8 @@
 
     _workspace(content) {
       this._restoreTransform(false);
-      return `<div class="workViewport" data-work-viewport>
+      const mode = this._viewTransform.scale > 1 ? "isZoomed" : "isNative";
+      return `<div class="workViewport ${mode}" data-work-viewport>
         <div class="workCanvas" data-work-canvas style="transform:${this._transformCss()}"><main class="content">${content}</main></div>
         <div class="scaleToast" data-scale-toast aria-live="polite"></div>
       </div>`;
@@ -135,8 +142,13 @@
     }
 
     _applyTransform() {
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
       const canvas = this.shadowRoot.querySelector("[data-work-canvas]");
       if (canvas) canvas.style.transform = this._transformCss();
+      if (viewport) {
+        viewport.classList.toggle("isZoomed", this._viewTransform.scale > 1);
+        viewport.classList.toggle("isNative", this._viewTransform.scale <= 1);
+      }
     }
 
     _clampAndApplyTransform(persist = false) {
@@ -144,6 +156,12 @@
       const canvas = this.shadowRoot.querySelector("[data-work-canvas]");
       if (!viewport || !canvas) return;
       const scale = this._clampScale(this._viewTransform.scale);
+      if (scale <= 1) {
+        this._viewTransform = { scale, x: 0, y: 0 };
+        this._applyTransform();
+        if (persist) this._saveTransform();
+        return;
+      }
       const naturalWidth = Math.max(canvas.offsetWidth, 1);
       const naturalHeight = Math.max(canvas.scrollHeight, canvas.offsetHeight, 1);
       const minX = Math.min(0, viewport.clientWidth - naturalWidth * scale);
@@ -160,7 +178,30 @@
     _resetTransform(showToast = true) {
       this._viewTransform = { scale: 1, x: 0, y: 0 };
       this._clampAndApplyTransform(true);
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
+      if (viewport) viewport.scrollTop = 0;
+      this._nativeScrollPositions.set(this._transformStorageKey(), 0);
       if (showToast) this._showScaleToast("Масштаб 100%");
+    }
+
+    _switchView(view) {
+      this._saveTransform();
+      this._view = VIEWS.includes(view) ? view : "status";
+      this._drillZone = null;
+      this._viewTransformKey = null;
+      this._restoreTransform(true);
+      this._viewTransform = { scale: this._viewTransform.scale, x: 0, y: 0 };
+      this._pendingScrollTop = 0;
+      this._nativeScrollPositions.set(this._transformStorageKey(), 0);
+      this.render();
+    }
+
+    _restoreNativeScroll() {
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
+      if (!viewport || this._viewTransform.scale > 1) return;
+      const saved = this._pendingScrollTop ?? this._nativeScrollPositions.get(this._transformStorageKey()) ?? 0;
+      this._pendingScrollTop = null;
+      viewport.scrollTop = Math.max(0, saved);
     }
 
     esc(value) {
@@ -540,6 +581,8 @@
         if (points.length < 2) return;
         const mid = midpoint(points[0], points[1]);
         const scale = this._viewTransform.scale;
+        const nativeScrollTop = scale <= 1 ? viewport.scrollTop : 0;
+        if (nativeScrollTop) viewport.scrollTop = 0;
         this._gestureStart = {
           type: "pinch",
           distance: distance(points[0], points[1]),
@@ -547,7 +590,7 @@
           midX: mid.x,
           midY: mid.y,
           contentX: (mid.x - this._viewTransform.x) / scale,
-          contentY: (mid.y - this._viewTransform.y) / scale,
+          contentY: (mid.y + nativeScrollTop - this._viewTransform.y) / scale,
         };
       };
 
@@ -555,12 +598,19 @@
         if (event.pointerType === "mouse" && event.button !== 0) return;
         const current = point(event);
         this._gesturePointers.set(event.pointerId, current);
-        try { viewport.setPointerCapture(event.pointerId); } catch (_error) { /* capture may be unavailable */ }
         if (this._gesturePointers.size === 1) {
           this._gestureMoved = false;
           this._hadMultiTouch = false;
-          this._gestureStart = { type: "pan", point: current, x: this._viewTransform.x, y: this._viewTransform.y };
+          if (this._viewTransform.scale > 1) {
+            try { viewport.setPointerCapture(event.pointerId); } catch (_error) { /* capture may be unavailable */ }
+            this._gestureStart = { type: "pan", point: current, x: this._viewTransform.x, y: this._viewTransform.y };
+          } else {
+            this._gestureStart = { type: "native", point: current };
+          }
         } else if (this._gesturePointers.size === 2) {
+          for (const id of this._gesturePointers.keys()) {
+            try { viewport.setPointerCapture(id); } catch (_error) { /* capture may be unavailable */ }
+          }
           this._hadMultiTouch = true;
           beginPinch();
         }
@@ -589,7 +639,14 @@
           return;
         }
         const start = this._gestureStart;
-        if (!start || start.type !== "pan") return;
+        if (start?.type === "native") {
+          if (Math.hypot(current.x - start.point.x, current.y - start.point.y) > 4) {
+            this._gestureMoved = true;
+            this._cancelLongPresses();
+          }
+          return;
+        }
+        if (!start || start.type !== "pan" || this._viewTransform.scale <= 1) return;
         const dx = current.x - start.point.x;
         const dy = current.y - start.point.y;
         if (Math.hypot(dx, dy) > 4) {
@@ -608,7 +665,9 @@
         try { viewport.releasePointerCapture(event.pointerId); } catch (_error) { /* capture may already be released */ }
         if (this._gesturePointers.size === 1) {
           const remaining = [...this._gesturePointers.values()][0];
-          this._gestureStart = { type: "pan", point: remaining, x: this._viewTransform.x, y: this._viewTransform.y };
+          this._gestureStart = this._viewTransform.scale > 1
+            ? { type: "pan", point: remaining, x: this._viewTransform.x, y: this._viewTransform.y }
+            : { type: "native", point: remaining };
           return;
         }
         if (this._gesturePointers.size) return;
@@ -621,7 +680,7 @@
           } else {
             this._twoFingerTapAt = now;
           }
-        } else if (this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
+        } else if (this._hadMultiTouch && this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
           this._viewTransform.scale = 1;
           this._clampAndApplyTransform(true);
           this._showScaleToast("Масштаб 100%");
@@ -645,7 +704,13 @@
           event.stopImmediatePropagation();
         }
       }, true);
+      viewport.addEventListener("scroll", () => {
+        if (this._viewTransform.scale <= 1) {
+          this._nativeScrollPositions.set(this._transformStorageKey(), viewport.scrollTop);
+        }
+      }, { passive: true });
       viewport.addEventListener("wheel", (event) => {
+        if (this._viewTransform.scale <= 1) return;
         event.preventDefault();
         this._viewTransform = {
           ...this._viewTransform,
@@ -663,14 +728,10 @@
       this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", () => this.refreshNow());
       this._bindWorkspaceGestures();
       this.shadowRoot.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
-        this._view = button.dataset.view || "status";
-        this._drillZone = null;
-        this.render();
+        this._switchView(button.dataset.view || "status");
       }));
       this.shadowRoot.querySelectorAll("[data-go]").forEach((button) => button.addEventListener("click", () => {
-        this._view = button.dataset.go;
-        this._drillZone = null;
-        this.render();
+        this._switchView(button.dataset.go);
       }));
       this.shadowRoot.querySelector("[data-drill-back]")?.addEventListener("click", () => {
         this._drillZone = null;
@@ -810,6 +871,25 @@
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
         .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
+        /* v0.6.11: NIKAS Specialized Panel UI Standard v1.5 shell. */
+        .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
+        .headerButton{width:44px;height:44px;justify-self:center;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;color:var(--text)}
+        .headerButton ha-icon{--mdc-icon-size:25px}.refreshButton{color:var(--a)}
+        .headerTitle strong{font-size:21px;font-weight:800;line-height:1.05}.headerTitle small{margin-top:3px;font-size:12px;font-weight:560;color:var(--muted)}
+        .workViewport.isNative{overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+        .workViewport.isNative .workCanvas{position:relative;left:auto;top:auto;min-height:100%;touch-action:pan-y;-webkit-user-select:auto;user-select:auto;will-change:auto}
+        .workViewport.isZoomed{overflow:hidden;overscroll-behavior:none;touch-action:none}
+        .workViewport.isZoomed .workCanvas{position:absolute;left:0;top:0;touch-action:none;-webkit-user-select:none;user-select:none;will-change:transform}
+        .bottomNav{background:color-mix(in srgb,var(--card) 97%,transparent);border-top:1px solid var(--line);box-shadow:0 -3px 14px #0000000d}
+        .bottomNav button{min-height:52px;border-radius:14px;color:var(--muted);font-size:12px;font-weight:700}
+        .bottomNav button ha-icon{--mdc-icon-size:28px}.bottomNav button span{font-size:12px!important;font-weight:700;white-space:nowrap}
+        .bottomNav button.active{background:color-mix(in srgb,var(--a) 11%,transparent);color:var(--a);box-shadow:none}
+        @media(max-width:520px){
+          .appHeader{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 2px 0}
+          .headerButton{width:44px;height:44px;border-radius:16px}.headerButton ha-icon{--mdc-icon-size:25px}
+          .headerTitle strong{font-size:21px}.headerTitle small{font-size:12px}
+          .bottomNav button{min-height:52px;border-radius:14px}.bottomNav button ha-icon{--mdc-icon-size:28px}
+        }
       `;
     }
 
@@ -823,7 +903,10 @@
         const loading = `<section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section>`;
         this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this._workspace(loading)}${this.bottomNav()}</div>`;
         this.bindActions();
-        requestAnimationFrame(() => this._clampAndApplyTransform(false));
+        requestAnimationFrame(() => {
+          this._clampAndApplyTransform(false);
+          this._restoreNativeScroll();
+        });
         return;
       }
       const e = this.entities();
@@ -834,7 +917,10 @@
       else if (this._view === "diagnostics") content = this.diagnosticsView(e);
       this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this._workspace(content)}${this.bottomNav()}</div>`;
       this.bindActions();
-      requestAnimationFrame(() => this._clampAndApplyTransform(false));
+      requestAnimationFrame(() => {
+        this._clampAndApplyTransform(false);
+        this._restoreNativeScroll();
+      });
     }
   }
 

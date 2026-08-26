@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.29` / panel `0.6.11`: implement NIKAS Specialized Panel UI Standard v1.5 — native vertical scrolling with fixed origin at 100%, scale-gated axis-clamped pan above 100%, UPS Header plaques and 28 px Bottom Tab icons; tab changes return to top.
+
 - `1.0.0-b005.28` / panel `0.6.10`: reduce the approved rain-sensor illustration to exactly 50% of its previous rendered size and move its label alongside the smaller body. Controller, wiring, manifold, zones and transform-canvas scaling are unchanged.
 - `1.0.0-b005.28` / panel `0.6.10`: restore the original HACS delivery model through the custom repository's `main` branch; stop creating automatic GitHub Releases when the integration manifest changes.
 - `1.0.0-b005.27` / panel `0.6.9`: ship the final approved rain-sensor cutout instead of the oversized diagonal-bracket revision. The new local WebP uses a compact vertical warm-white body, clear ventilation slots, a short rear aluminum plate and no dangling cable.

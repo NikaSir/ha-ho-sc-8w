@@ -1,5 +1,9 @@
 # HO-SC-8W for Home Assistant
 
+<p align="center">
+  <img src="custom_components/nikas_ho_sc_8w/brand/icon.png" width="128" height="128" alt="HO-SC-8W Irrigation icon">
+</p>
+
 Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigation controller.
 
 ## Status
@@ -32,9 +36,9 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.10**.
+Current panel version: **0.6.11**.
 
-The panel follows **NikaS Specialized Panel UI Standard v1.3**:
+The panel follows **NIKAS Specialized Panel UI Standard v1.5**:
 
 It also conforms to **NikaS Integration Panel Template v1.0**.
 
@@ -42,8 +46,8 @@ It also conforms to **NikaS Integration Panel Template v1.0**.
 - viewport-centered title and one global refresh action;
 - full-width edge-attached non-floating Bottom Tab Bar;
 - iOS Safe Area handling and bottom clearance;
-- one transform-based work canvas; Header and Bottom Tab Bar stay at native scale;
-- focal-point pinch and pan in the 75–200% range, with a 100% default;
+- one autonomous work canvas; Header and Bottom Tab Bar stay at native scale;
+- native vertical scrolling with x/y fixed at zero at 100%, focal-point pinch in the 75–200% range, and axis-clamped one-pointer pan only above 100%;
 - two-finger double tap resets the work canvas to 100%; 97–103% snaps to 100%;
 - scale and position persist locally without nesting wrappers during HA updates.
 
@@ -127,7 +131,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend rele
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.10
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.11
       ↓
 <nikas-ho-sc-8w-panel>
 ```
