@@ -6,6 +6,11 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.31` / panel `0.6.13`: complete the v1.6 stable-rendering contract with a lazy DOM cache for work views. Returning to a visited tab or zone subtree reattaches and point-patches the same node instead of rebuilding it; Header, viewport, canvas and Bottom Tab Bar remain mounted. Add HACS/Hassfest validation and declare config-entry-only setup explicitly.
+
+- `1.0.0-b005.30` / panel `0.6.12`: align with NikaS Specialized Panel UI Standard v1.6 — mount Header, one zoom viewport and Bottom Tab Bar once, point-patch live telemetry, and preserve scroll/gesture state without tab or screen flicker.
+- `1.0.0-b005.30` / panel `0.6.12`: use 23/14 px Header typography (21/13 narrow), enforce the 12–25 px meaningful-copy range, retain only the existing factual transport badge, and replace the redundant controller value `Онлайн` with `Локально`.
+
 - `1.0.0-b005.29` / panel `0.6.11`: implement NIKAS Specialized Panel UI Standard v1.5 — native vertical scrolling with fixed origin at 100%, scale-gated axis-clamped pan above 100%, UPS Header plaques and 28 px Bottom Tab icons; tab changes return to top.
 
 - `1.0.0-b005.28` / panel `0.6.10`: reduce the approved rain-sensor illustration to exactly 50% of its previous rendered size and move its label alongside the smaller body. Controller, wiring, manifold, zones and transform-canvas scaling are unchanged.

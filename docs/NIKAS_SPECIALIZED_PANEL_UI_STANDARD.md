@@ -1,95 +1,194 @@
-# NIKAS Specialized Panel UI Standard v1.5
+# NikaS Specialized Panel UI Standard v1.6
 
-**Status:** REQUIRED  
-**Canonical source:** `NikaSir/ha-contract-generated-ui`  
-**Visual reference:** Stark SolarPower UPS panel
+**Status:** REQUIRED
+**Canonical source:** `NikaSir/ha-contract-generated-ui`
+**Applies to:** every integration-owned specialized Home Assistant panel
+**Primary acceptance viewport:** iPhone Pro Max, portrait
+**Reference visual implementation:** Stark SolarPower / UPS
+**Reference typography and status treatment:** LIDER
 
-## Scope and ownership
+This document supersedes every earlier shell, Header, zoom, scrolling and Bottom Tab Bar rule. Historical documents remain useful only where they do not conflict with this standard.
 
-This repository owns its domain UI, entities, telemetry, commands, cards, diagnostics and local assets. The shared NikaS standard owns application-shell behaviour. A shell-only migration must not silently change domain semantics.
+## 1. Ownership and topology
 
-Only the working area may scale. Header, peer-device selector and Bottom Tab Bar remain at native size and fixed in the application shell. Each panel instance has exactly one zoom viewport and one canvas; nested zoom wrappers and duplicate gesture handlers are prohibited.
+```text
+HEADER                                      native scale
+DEVICE SELECTOR (peer devices only)         native scale
+ONE WORK VIEWPORT                           scroll/zoom owner
+BOTTOM TAB BAR                              native scale
+```
 
-## Header and safe area
+- Only the work area scales.
+- Header, peer selector and Bottom Tab Bar never scale or move with content.
+- Exactly one zoom viewport may exist per panel instance; nested wrappers are prohibited.
+- Shell reconciliation is idempotent across redraws and Home Assistant state updates.
+- The effective iOS safe area is consumed exactly once.
+- On phones the panel owns a height-locked application shell. The outer Home Assistant page must not become the scrolling surface: only the work viewport scrolls, so Header and Bottom Tab Bar stay at fixed screen coordinates.
+- Prevent scroll chaining from the work viewport into Home Assistant's outer document. A sticky element inside the scrolling/transformed subtree does not satisfy the fixed-chrome requirement.
+- Short views fill the available work row rather than shrinking the application shell and pulling either menu toward their content.
 
-- Consume the effective top safe area exactly once. Header content must remain below Dynamic Island/notch.
-- Header is outside the zoom viewport, does not scale and is geometrically symmetric.
-- Header grid is `52px minmax(0, 1fr) 52px`; narrow mobile may use `48px minmax(0, 1fr) 48px`.
-- Minimum Header height is `62px`; narrow mobile may use `60px`.
-- The title is geometrically centred, `21px`, weight `800`. Optional subtitle/version is `12px`, weight approximately `560`, in `var(--secondary-text-color)`.
-- The permanent left control is only the Home Assistant system menu. It uses `<ha-icon icon="mdi:menu">` and dispatches `hass-toggle-menu` with `bubbles: true` and `composed: true`.
-- Back, parent-route, integration drawer and device actions are prohibited in the permanent left rail. Parent navigation belongs inside the work area.
-- At most one global command occupies the right rail. When Refresh exists it uses `<ha-icon icon="mdi:refresh">`.
-- Both Header controls use matching `44px × 44px` plaques: `16px` radius, `1px` divider-colour border, `var(--card-background-color)` background and the subtle UPS-style shadow.
-- Header icons are `25px`. Menu uses `var(--primary-text-color)`; Refresh uses `var(--primary-color)`.
-- If the right command is absent, preserve its rail so that the title stays centred.
+## 2. Header — UPS reference geometry
 
-## Peer-device selector
+- Grid: `52px minmax(0,1fr) 52px`; on very narrow screens: `48px minmax(0,1fr) 48px`.
+- Minimum height: `62px`; phone target: `60px`, plus the effective top safe area.
+- Title remains geometrically centered regardless of side actions.
+- Primary title: `23px`, weight `800`, one line; `21px` on very narrow phones.
+- Secondary/version line: `14px`, weight approximately `560`, `var(--secondary-text-color)`; `13px` on very narrow phones.
+- The permanent left action is only Home Assistant system menu `mdi:menu`; it dispatches bubbling/composed `hass-toggle-menu`.
+- At most one panel-global action occupies the right rail. Refresh uses `mdi:refresh`.
+- Menu and refresh are visually identical plaques: `44px × 44px`, `16px` radius, `1px` divider border, `var(--card-background-color)` background, subtle `0 7px 20px rgba(23,45,76,.08)` shadow and a `25px` `ha-icon` glyph.
+- Menu glyph uses `var(--primary-text-color)`; refresh uses `var(--primary-color)`.
+- A transparent refresh rail is non-conforming.
+- Back, an integration drawer, a device command or a decorative brand icon is prohibited in the permanent left rail. Parent navigation belongs inside the work area.
 
-When multiple peer physical devices exist, the selector is persistent directly below Header and remains outside the zoom viewport. Peer order is fixed, selection survives tab changes, and subordinate zones/channels are not automatically peer devices.
+## 3. Peer-device selector
 
-## Zoom and scrolling
+- Use a selector only for peer physical devices of the same integration, for example `UPS Интернет / UPS Котёл`; a zone, channel or functional subsection is not automatically a peer device.
+- It remains directly below Header, outside the work viewport and at native scale.
+- Selected peer persists across tabs and owns its own locally persisted scale/position state.
+- Hiding a selector on an aggregate view is allowed when all peers are already visible, but the same selector subtree is retained for single-peer views.
 
-- Recommended scale range is `75–200%`; default is `100%`.
-- Scaling uses a two-finger pinch relative to the midpoint between the fingers.
-- Permanent `− / % / +` controls are prohibited.
-- A stationary two-finger double tap resets scale and position to `100%`, origin and top, then briefly shows `Масштаб 100%`.
-- A pinch ending in `97–103%` snaps to exactly `100%`.
-- Scale persists locally per panel/client and per peer device when applicable.
-- Re-render reconciliation is idempotent: no nested viewport, abandoned blank area, duplicate controls or progressive shrinking.
+## 4. Work viewport at 100%
 
-### At 100%
+At exactly `scale = 1`:
 
-- The working area uses ordinary native vertical scrolling (`overflow-y: auto` or the equivalent HA scrolling surface).
-- Horizontal scrolling is prohibited.
-- Transform position is strictly `x = 0`, `y = 0`; one-finger pan and transform-based wheel handling are disabled.
-- Content cannot be pulled sideways or beyond its top edge.
-- Tap, hold/more-info and native scrolling respond without a gesture delay or conflict.
+- `x = 0` and `y = 0` are invariant;
+- one-finger transform panning is disabled;
+- normal native vertical scrolling is enabled;
+- horizontal scrolling is disabled;
+- the canvas cannot be pulled sideways, below the top origin or beyond its real lower edge;
+- clicks, hold-to-more-info and vertical scrolling start without a gesture delay;
+- stored transforms are normalized to `{scale:1,x:0,y:0}` before display.
 
-### Above 100%
+The former rule that one-finger transform panning also provides vertical movement at 100% is retired.
 
-- One-finger transform pan is enabled only while scale is greater than `100%`.
-- Enable each axis independently only when scaled content exceeds the viewport on that axis.
-- Clamp translation to actual scaled content edges; blank space outside the canvas must never be exposed.
-- Re-clamp after pinch completion, content re-render and viewport/orientation resize.
+## 5. Zoom and enlarged pan
 
-At or below `100%`, one-finger transform pan remains disabled and transform offsets are reset to `x = 0`, `y = 0`.
+- Pinch uses two fingers and preserves the focal midpoint.
+- Range is `75–200%`.
+- Permanent zoom buttons are prohibited.
+- Pinch ending within `97–103%` snaps to exactly 100% and origin.
+- Two-finger double tap resets scale, transform and native scroll to 100%/origin and briefly shows `Масштаб 100%`.
+- Scale persists locally per panel/client and per selected peer device where applicable.
+- One-finger transform panning is enabled only when `scale > 1`.
+- Each axis is enabled only when scaled content exceeds the viewport on that axis.
+- Translation is clamped to factual content edges; exposing empty canvas is prohibited.
+- Resize, orientation change, content reflow, peer switch and tab change re-run bounds clamping.
+- A tab change returns native scroll to the top and removes invalid translation; stored scale may remain.
+- A second finger cancels pending more-info; post-gesture synthetic clicks are briefly suppressed, while intentional stationary hold still opens native more-info.
+- Pinch and two-finger reset must not open history, a graph or more-info.
 
-## View changes and interactions
+## 6. Bottom Tab Bar — UPS reference geometry
 
-- Changing a Bottom Tab or peer device returns the work area to the top. Saved scale may remain, but offsets must be recomputed and invalid offsets discarded.
-- The second pointer immediately cancels pending more-info. Starting a real pan dispatches/carries equivalent `pointercancel`; post-gesture synthetic clicks are briefly suppressed.
-- A deliberate stationary hold continues to open native Home Assistant more-info.
+- One fixed, edge-attached, full-width bar; never a floating card or pill.
+- It remains outside the work viewport and above the Home Indicator.
+- Background: `var(--card-background-color)`; top divider and a subtle upward shadow.
+- Insets: approximately `6px` top and `calc(6px + env(safe-area-inset-bottom))` bottom, with safe left/right padding.
+- All destinations have equal-width columns; 3–5 primary tabs are supported.
+- Tab touch target minimum height: `52px`.
+- Tab radius: approximately `16px`; compact internal padding and approximately `3px` icon/label gap.
+- Icons are MDI through `ha-icon`, never text characters; canonical glyph size is `28px`.
+- Labels are one line, approximately `12px`, weight `700`, readable and ellipsized only when necessary.
+- Inactive content uses `var(--secondary-text-color)`.
+- Active icon/label use `var(--primary-color)` and an approximately 11% primary-color background, without a second shadow.
+- Navigating between tabs restores the work area to the page start before interaction resumes.
+- A short view must not move the bar. A long view must scroll its final control/card fully clear of the bar and Home Indicator.
 
-## Bottom Tab Bar
+## 7. Typography envelope
 
-- Use one fixed, edge-attached, full-width Bottom Tab Bar outside the zoom viewport; it is not a floating card.
-- The bar uses `var(--card-background-color)`, a thin top divider and the subtle UPS-style top shadow.
-- Account for `env(safe-area-inset-bottom)` exactly once and leave enough content clearance for the final row.
-- Tabs have equal width and minimum height `52px`.
-- Icons are MDI icons rendered only through `ha-icon`, size `28px`; text glyphs are prohibited as icons.
-- Labels are one readable line, `12px`, weight `700`; shorten long names rather than wrap them.
-- The active tab uses `var(--primary-color)` for icon and label and an approximately `11%` primary-colour background with `13–14px` radius. It has no extra shadow.
-- Inactive tabs use `var(--secondary-text-color)`.
+- Meaningful user-facing text stays within `12–25px` inclusive.
+- `12px` is the minimum for captions, state freshness, navigation labels, chips and compact secondary values.
+- `25px` is the maximum for a prominent live value or compact hero heading. Larger display typography is not part of the phone form baseline.
+- The Header is governed by its explicit `23/14px` wide and `21/13px` narrow pairs above.
+- `9–10px` is allowed only for redundant, non-interactive schematic annotations whose meaning is already conveyed elsewhere. It is prohibited for statuses, controls, navigation, entity names, measurements and required explanations.
+- A layout that needs meaningful text below `12px` must be recomposed instead of shrinking the type.
 
-## State, assets and delivery
+## 8. Optional connection and freshness indicator
 
-- Normal measurements use neutral typography. Green/amber/red are reserved for verified semantic states.
-- `unknown`, `unavailable`, stale or untrusted data never appears healthy. Do not invent unsupported values.
-- Prefer native HA more-info/history for factual detail.
-- Critical visual assets ship locally; no CDN or Base64 substitute where a normal asset is suitable. Live values remain separate from background art.
-- Keep one stable production frontend entry module and cache-bust it by UI/build version. Panel registration and machine-readable manifests must agree with runtime behaviour.
+The two-level indicator is introduced only by an explicit product request. It is not a mandatory shell element. In particular, it is absent from `Дом сейчас` and StarLine until separately requested.
 
-## Repository and integration identity
+- The first line describes the actual data path: `Локально`, `Облако`, `Резерв`, `Нет связи` or `Нет данных`.
+- `Онлайн` is not used: it duplicates `Локально`/`Облако` and hides the transport path.
+- Tuya Local and Zigbee delivered through local MQTT are `Локально`; Tuya cloud and other remote cloud APIs are `Облако`.
+- Local transport also includes a local LAN/API, local MQTT, Modbus and SNMP path that does not require an external vendor service.
+- `Резерв` means a known fallback path is actively supplying data, not merely that fallback capability exists.
+- The second line describes freshness only: `Данные актуальны`, `Данные устарели` or `Нет данных`.
+- Transport and freshness are independent. For example, `Облако · Данные устарели` is valid; stale data must not be relabelled as a transport outage without evidence.
+- A failed current poll makes preserved telemetry `Данные устарели`. Unless a domain documents another justified threshold, a sample also becomes stale after three normal polling intervals; it becomes current again only after a new successful sample is accepted.
+- Main line: `16px/700`; freshness line: `13px/550–600`.
+- The main status color drives the dot, main label, approximately `8–12%` tinted plaque background and approximately `30%` border. A current freshness line remains neutral; stale/no-data freshness uses the appropriate warning/unreliable color.
+- `Локально`/`Облако` use the success color, `Резерв` warning, `Нет связи` error and `Нет данных` neutral. Color is always accompanied by text.
+- The status lamp stays fully inside the plaque. Size the stable two-line surface for the longest allowed label; do not move a lamp outside its rounded background.
+- Flashing, pulsing, saturated full fills and repeated entrance animations are prohibited.
+- The indicator is a stable DOM subtree. State updates patch its text, classes and ARIA label; they never remount the panel or animate layout geometry.
 
-- Every integration repository must have a deliberate repository visual identity (README hero/logo and GitHub social preview/avatar where repository settings support it).
-- The mandatory HACS minimum is a packaged `custom_components/<domain>/brand/icon.png`; an arbitrary image elsewhere in the repository is not sufficient.
-- Preserve an approved square source icon; provide logo/dark variants when the artwork is not theme-neutral.
-- HACS category, `hacs.json`, integration domain, manifest name and README installation steps must agree.
-- Do not invent a new brand without an approved source asset. Missing files or publication steps are recorded as compliance gaps.
+## 9. Stable rendering and flicker prevention
 
-## Mandatory iPhone acceptance
+- Header, peer selector, one viewport, one work canvas, persistent background and Bottom Tab Bar are mounted once per panel instance.
+- A `hass` setter or telemetry timer must patch existing text, attributes, classes and CSS variables. Reassigning the panel or card `shadowRoot.innerHTML` for routine telemetry is prohibited.
+- Tabs and peer-device views use lazy DOM caching. Returning to a visited view reattaches the same view subtree; it must not rebuild the application shell.
+- A structural configuration change may replace only the affected work-view subtree. It must not create a second viewport or discard the fixed chrome.
+- The stored transform is applied before a newly selected work view becomes visible. Background images and large compositor layers are not recreated during scroll, telemetry refresh or indicator updates.
+- Rendering is coalesced to at most one animation frame, and unchanged values do not write the DOM.
+- Wrapping a full redraw in `requestAnimationFrame`, or delaying it until after scrolling, is still a full redraw and is non-conforming.
+- Keys, element order and child topology remain stable for state-only changes. Conditional status copy uses stable placeholders or targeted insertion rather than whole-tree replacement.
+- Exact changing telemetry age is not a structural key. An unchanged image does not receive the same `src` again.
+- `backdrop-filter`, masks, `will-change` and containment may be used only on persistent layers; toggling or remounting them during scroll is prohibited because it can flash in iOS WebView.
+- No polling loop may rebuild the active tab. Time-only displays patch their own text nodes.
+- A full-screen loading frame is allowed only during initial mount. Later loss, staleness and recovery patch the mounted content in place.
 
-Verify on long Diagnostics content and the primary view: native vertical scroll at `100%`; no horizontal movement; no top-edge pull; only necessary pan axes above `100%`; clamping after release and resize; no pinch snap-back; taps do not become accidental pans; stationary hold opens more-info; Header, selector and Bottom Tab Bar remain fixed and native-sized; menu and Refresh plaques match UPS geometry; safe areas are correct.
+## 10. Brand and repository identity
 
-> Newer canonical standards in `ha-contract-generated-ui` supersede this synchronized snapshot.
+- Every integration repository ships a recognizable integration brand asset.
+- A packaged `custom_components/<domain>/brand/icon.png` is mandatory; it is the minimum HACS brand asset and must not be an empty placeholder.
+- `brand/logo.png`, `brand/dark_icon.png` and `brand/dark_logo.png` are required when the mark or wordmark is not legible in both themes.
+- Brand files use the integration package layout expected by Home Assistant/HACS and are included in distribution checks.
+- README starts with the same recognizable project/integration identity; repository and installed integration must not present unrelated marks.
+- Header does not display the brand icon; it is for repository/HACS/HA identity, sidebar/launcher and suitable domain cards.
+- Changed raster assets use deterministic cache/version handling where served by the panel.
+
+## 11. Required automated guards
+
+Repository tests or static checks must verify:
+
+1. exactly one work/zoom viewport;
+2. no permanent scale controls;
+3. `hass-toggle-menu` and `mdi:menu` in the left rail;
+4. both Header actions use the standard plaque geometry;
+5. Bottom Tab icons use `ha-icon` and canonical size;
+6. no horizontal movement and no transform pan at 100%;
+7. axis-aware overflow bounds above 100%;
+8. clamp after resize/tab/peer changes;
+9. brand `icon.png` exists in the shipped integration package;
+10. meaningful typography stays within `12–25px`, subject only to the documented schematic exception;
+11. routine telemetry cannot replace the shell, viewport, canvas, background or Bottom Tab Bar;
+12. an optional connection indicator, when requested, uses the canonical transport/freshness vocabulary and status-tinted plaque;
+13. JavaScript syntax, package validation, HACS and Hassfest pass.
+
+Each repository also maintains `docs/NIKAS_SPECIALIZED_PANEL_COMPLIANCE.md` (or an equivalent explicit record). Unimplemented runtime behavior is recorded as `GAP`, never assumed to pass from documentation alone.
+
+## 12. Mandatory phone acceptance
+
+- long diagnostics pages scroll vertically at 100%;
+- 100% cannot move horizontally or be pulled away from the top origin;
+- enlarged content pans only on necessary axes and never exposes empty field;
+- release preserves clamped position without rebound;
+- pinch never causes content snap-back;
+- card activation does not become accidental pan;
+- Header, selector and Bottom Tab Bar remain stationary at every scale;
+- both Header buttons are visible matching plaques below Dynamic Island;
+- Bottom icons and labels match the Stark SolarPower visual scale;
+- integration/repository icon is present and recognizable in installed/distribution surfaces.
+- repeated telemetry, indicator transitions, tab changes and upward/downward scroll produce no full-screen flash or white frame;
+- scrolling the work area never moves Header, peer selector or Bottom Tab Bar;
+- short views do not pull either menu inward, and long views expose their last control above the Bottom Tab Bar;
+- at least ten consecutive tab switches produce no blank frame, lost map/image or duplicated viewport;
+- loss/recovery changes telemetry and any enabled indicator in place; preserved samples are visibly stale;
+- `Дом сейчас` and StarLine contain no unrequested two-level connection indicator.
+
+## 13. Publication
+
+- NikaS panel and integration work is published through traceable commits, branches and pull requests.
+- GitHub Releases are not used.
+- Automatic release tags are not used as a publication gate or update channel. An internal integration/UI version does not require a Git tag.
+- A pull request remains draft until automated checks pass and the real-phone acceptance items above are ready for user verification.

@@ -1,91 +1,60 @@
-# Home Assistant NikaS specialized-panel app shell
+# HO-SC-8W specialized-panel app shell
 
-This integration implements **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** for the HO-SC-8W specialized panel.
+The integration implements **NikaS Specialized Panel UI Standard v1.6** for iPhone Pro Max portrait first, with tablet and desktop as secondary adaptations.
 
-## Primary device
+## Stable shell
 
-- iPhone Pro Max
-- portrait orientation
-- one-handed operation
+The application has three persistent rows:
 
-Tablet and desktop layouts are secondary adaptations of the accepted mobile hierarchy.
+1. **Header** — native Home Assistant menu, centered panel identity and Refresh.
+2. **Work viewport** — irrigation status, zones, program, manual preparation and diagnostics.
+3. **Bottom Tab Bar** — the five primary panel sections.
 
-## Shell contract
+HO-SC-8W is one physical controller. Irrigation zones are subordinate channels, so there is no peer-device selector.
 
-HO-SC-8W is a single-device application and therefore uses three persistent levels:
+Header, viewport and Bottom Tab Bar mount once. Home Assistant telemetry point-patches existing content and must not recreate these nodes, reload imagery, jump scroll position or interrupt pinch/pan. Explicit tab or zone-detail transitions may replace only work-area children.
 
-1. **Header** — exit from the irrigation application.
-2. **Content** — irrigation status, zones, programs and diagnostics.
-3. **Bottom Tab Bar** — switch only between the application's main sections.
-
-A Device Selector is intentionally absent: irrigation zones are channels of one controller, not peer physical devices.
-
-### Header
-
-Canonical HO-SC-8W Header:
+## Header
 
 ```text
-← Назад             Полив             [reserved]
-                    HO-SC-8W · UI v0.3.3
+[☰]                 HO-SC-8W                 [↻]
+                 Система полива · UI
 ```
 
-Requirements implemented by the panel:
+- grid: `52 / 1fr / 52`, narrow `48 / 1fr / 48`;
+- both plaques: 44×44 px, 16 px radius, 1 px theme divider and the UPS shadow;
+- icons: `ha-icon` with `mdi:menu` / `mdi:refresh`, 25 px;
+- title/subtitle: 23/14 px, narrow 21/13 px;
+- the left control only emits bubbling/composed `hass-toggle-menu`;
+- Back, integration menus and irrigation actions are forbidden in the permanent Header;
+- safe area is consumed once below Dynamic Island/notch.
 
-- `mdi:arrow-left` Back control on the left;
-- explicit parent route `/dashboard-actions`;
-- no browser-history dependency as the navigation contract;
-- `Полив` geometrically centered relative to the viewport;
-- symmetric left/right Header zones so controls do not shift the title;
-- no decorative integration/device icon beside the title;
-- model/UI version kept as secondary subtitle;
-- Header controls never execute irrigation actions and have no hold/double-tap device behavior.
+## Work viewport
 
-### Bottom Tab Bar
+- exactly one viewport and one `translate3d + scale` canvas;
+- 75–200% pinch at finger midpoint, 97–103% snap, two-finger double-tap reset and `Масштаб 100%` toast;
+- at 100%: native vertical scroll, no horizontal scroll, `x = 0`, `y = 0`, no one-pointer transform pan;
+- above 100%: one-pointer pan only on overflowing axes and always clamped to content edges;
+- tab change returns to top while the selected scale may remain;
+- second pointer/pan cancels pending hold; post-gesture click is suppressed; deliberate stationary hold still opens native `more-info`.
 
-Persistent sections:
+## Bottom Tab Bar
 
 ```text
-Обзор · Зоны · Программы · Диагн.
+Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-The Tab Bar is a **full-width docked part of the application shell**:
+The bar is a native-scale grid row outside the viewport, full width and safe-area aware. Every tab is at least 52 px high, uses an MDI `ha-icon` at 28 px and a one-line 12 px/700 label. The active tab uses the theme primary colour and approximately 11% primary tint without a detached shadow.
 
-- fixed to the lower viewport edge;
-- no floating/pill-card outer gaps;
-- includes iOS bottom Safe Area;
-- remains visible during vertical scrolling;
-- page content has sufficient bottom clearance;
-- icon + short label for every section;
-- active tab is indicated inside the shared bar;
-- no detached elevation, shadow or vertical lift for the active tab;
-- primary-section tabs are never duplicated at the top.
+## Typography and indicator policy
 
-## First-screen rule
+Meaningful copy is 12–25 px. Only the redundant control-wire caption may use 10 px. The shared two-level connection/freshness indicator is opt-in and is not enabled here; the existing factual single-line `Локально`/`Облако` transport badge remains unchanged in scope.
 
-Immediately after the Header, Overview starts with factual irrigation state. The Header answers *where am I?*; the hero card answers *what is happening now?*.
+## Safety and acceptance
 
-## Entity interaction
-
-Long press on factual Home Assistant entity-backed UI opens Home Assistant more-info where applicable. Header and Bottom Tab Bar are navigation-only.
-
-## Reliability and safety
-
-- `unknown` / `unavailable` are never rendered as normal or off.
-- No raw Tuya DP writes are implemented in the frontend.
-- No unverified controls are synthesized.
-- Zone 8 remains diagnostics/development-only.
-- Main-valve state is not inferred until the integration exposes a verified source.
-
-## Acceptance
-
-The HO-SC-8W panel is compliant only when, on iPhone Pro Max portrait:
-
-- Back is explicit and targets `/dashboard-actions`;
-- title is geometrically centered and remains one line;
-- Header contains no decorative device/brand icon;
-- current irrigation state is the first major content block;
-- Bottom Tab Bar is full-width, fixed and non-floating;
-- active tab remains visually inside the common bar;
-- no horizontal scrolling exists;
-- the final content card can fully scroll above the Tab Bar;
-- light and dark themes remain readable.
+- `unknown` / `unavailable` are never rendered as healthy;
+- no raw Tuya DP write or unverified action is synthesized;
+- Zone 8 remains diagnostics-only;
+- at 100%, Diagnostics scrolls vertically while Header and Bottom Tab Bar remain stationary;
+- at increased scale, only necessary pan axes move and blank space cannot be exposed;
+- telemetry refresh during scroll, inertia or gestures causes no flash, menu movement, image reload or scroll jump.

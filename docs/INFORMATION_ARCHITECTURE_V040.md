@@ -1,8 +1,10 @@
 # HO-SC-8W panel information architecture v0.4
 
+> Historical UI v0.4 snapshot, retained for design lineage only. It is not the current navigation contract. Runtime v0.6.13 uses `Состояние · Зоны · Программа · Ручной · Диагн.` and the shell rules in `NIKAS_SPECIALIZED_PANEL_UI_STANDARD.md` v1.6.
+
 This document defines the user-facing information architecture of the integration-owned HO-SC-8W panel.
 
-It complements the project-wide `Home Assistant NikaS · Integration Dashboard UI Standard v1.2`.
+It complemented the then-current `Home Assistant NikaS · Integration Dashboard UI Standard v1.2`.
 
 ## Primary navigation
 

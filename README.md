@@ -36,9 +36,9 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.11**.
+Current panel version: **0.6.13**.
 
-The panel follows **NIKAS Specialized Panel UI Standard v1.5**:
+The panel follows **NikaS Specialized Panel UI Standard v1.6**:
 
 It also conforms to **NikaS Integration Panel Template v1.0**.
 
@@ -50,6 +50,9 @@ It also conforms to **NikaS Integration Panel Template v1.0**.
 - native vertical scrolling with x/y fixed at zero at 100%, focal-point pinch in the 75–200% range, and axis-clamped one-pointer pan only above 100%;
 - two-finger double tap resets the work canvas to 100%; 97–103% snaps to 100%;
 - scale and position persist locally without nesting wrappers during HA updates.
+- Home Assistant telemetry patches existing nodes; Header, viewport, scroll position and Bottom Tab Bar are not reconstructed and do not flicker.
+- previously opened work views are retained in a lazy DOM cache and reattached on return instead of being rebuilt.
+- meaningful interface copy stays in the 12–25 px range; only a redundant schematic wiring caption uses 10 px.
 
 ### Information architecture v0.4
 
@@ -109,7 +112,7 @@ The incoming water path now runs from the pressure gauge vertically upward and t
 
 ### Actual HO-SC-8W controller and readable type v0.5.8
 
-The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. On mobile, supporting text has an 11 px floor—the same size as the `Локально` badge—and the diagram/KPI/node/mode cards are given enough height to avoid compressed labels.
+The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.6 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
 
 ### Shared-axis irrigation schematic v0.6.0
 
@@ -126,19 +129,19 @@ The pressure readout is bound first to the confirmed Home Assistant entity `sens
 
 ### Self-contained production frontend v0.4.3
 
-The production panel follows the mandatory NikaS specialized-panel frontend release standard:
+The production panel follows the mandatory NikaS specialized-panel frontend delivery standard:
 
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.11
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.13
       ↓
 <nikas-ho-sc-8w-panel>
 ```
 
 `irrigation-panel.js` is the only project-owned JavaScript bundle required at runtime. It does not import previous UI versions. Raster illustrations are separate optimized files under `frontend/assets/`, are served by the integration itself, and use independent query-string cache busting. The bundle contains no Base64 images and does not fetch image assets from external servers.
 
-This release uses a stable production filename plus query-string cache busting. Correct panel loading must not depend on a warm browser cache.
+This build uses a stable production filename plus query-string cache busting. Correct panel loading must not depend on a warm browser cache. Normal publication is through `main` and HACS; GitHub Releases are not used.
 
 ## Safety boundary
 
