@@ -7,9 +7,10 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
 from homeassistant.core import CoreState, Event, HomeAssistant
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.typing import ConfigType
 
 from .api import HOSC8WAPI
 from .const import (
@@ -29,6 +30,8 @@ from .coordinator import HOSC8WCoordinator
 from .frontend import async_setup_panel
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 # b002 migration gate: no writable Home Assistant platforms are loaded.
 PLATFORMS: list[Platform] = [Platform.SENSOR]
