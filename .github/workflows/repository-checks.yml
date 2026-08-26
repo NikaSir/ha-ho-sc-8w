@@ -53,6 +53,8 @@ jobs:
           bundle="custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js"
           test -f "$bundle"
           node --check "$bundle"
+          node scripts/check-panel-ui-v16.mjs
+          test -f custom_components/nikas_ho_sc_8w/brand/icon.png
 
           node - <<'NODE'
           const fs = require('fs');

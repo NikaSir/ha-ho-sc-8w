@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.11";
-  const ASSET_VERSION = "0.6.11";
+  const UI_VERSION = "0.6.12";
+  const ASSET_VERSION = "0.6.12";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -49,6 +49,11 @@
       this._wheelSaveTimer = null;
       this._nativeScrollPositions = new Map();
       this._pendingScrollTop = null;
+      this._shellMounted = false;
+      this._renderedStructureKey = null;
+      this._longPressTimer = null;
+      this._longPressTarget = null;
+      this._longPressHeld = false;
       this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
     }
 
@@ -191,6 +196,7 @@
       this._viewTransformKey = null;
       this._restoreTransform(true);
       this._viewTransform = { scale: this._viewTransform.scale, x: 0, y: 0 };
+      this._saveTransform();
       this._pendingScrollTop = 0;
       this._nativeScrollPositions.set(this._transformStorageKey(), 0);
       this.render();
@@ -502,7 +508,7 @@
 
     nodes(e) {
       const connection = this.state(e.connection);
-      const controller = this.bad(connection) ? "Нет связи" : connection === "local" ? "Онлайн" : connection === "cloud" ? "Облако" : connection;
+      const controller = this.bad(connection) ? "Нет связи" : connection === "local" ? "Локально" : connection === "cloud" ? "Облако" : connection;
       const pressure = this.pressurePresentation(e);
       const cards = [
         ["mdi:memory", "Контроллер", controller, connection === "local" ? "Локальный канал" : "", e.connection, this.bad(connection) ? "bad" : "good"],
@@ -562,6 +568,10 @@
     }
 
     _cancelLongPresses() {
+      clearTimeout(this._longPressTimer);
+      this._longPressTimer = null;
+      this._longPressTarget = null;
+      this._longPressHeld = false;
       this.shadowRoot.querySelectorAll("[data-entity]").forEach((node) => {
         node.dispatchEvent(new Event("pointercancel", { bubbles: false }));
       });
@@ -612,6 +622,8 @@
             try { viewport.setPointerCapture(id); } catch (_error) { /* capture may be unavailable */ }
           }
           this._hadMultiTouch = true;
+          this._suppressClicksUntil = Date.now() + 500;
+          this._cancelLongPresses();
           beginPinch();
         }
       });
@@ -724,51 +736,154 @@
     }
 
     bindActions() {
-      this.shadowRoot.querySelector("[data-ha-menu]")?.addEventListener("click", () => this.openHaMenu());
-      this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", () => this.refreshNow());
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
       this._bindWorkspaceGestures();
-      this.shadowRoot.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
-        this._switchView(button.dataset.view || "status");
-      }));
-      this.shadowRoot.querySelectorAll("[data-go]").forEach((button) => button.addEventListener("click", () => {
-        this._switchView(button.dataset.go);
-      }));
-      this.shadowRoot.querySelector("[data-drill-back]")?.addEventListener("click", () => {
-        this._drillZone = null;
-        this.render();
+
+      this.shadowRoot.addEventListener("pointerdown", (event) => {
+        const target = event.target.closest?.("[data-entity]");
+        if (!target || target.dataset.zone || this._gesturePointers.size > 1) return;
+        clearTimeout(this._longPressTimer);
+        this._longPressHeld = false;
+        this._longPressTarget = target;
+        const entityId = target.dataset.entity;
+        this._longPressTimer = setTimeout(() => {
+          if (this._longPressTarget !== target || this._gesturePointers.size > 1) return;
+          this._longPressHeld = true;
+          this.moreInfo(entityId);
+          setTimeout(() => {
+            if (this._longPressTarget === target) {
+              this._longPressHeld = false;
+              this._longPressTarget = null;
+            }
+          }, 1000);
+        }, 550);
       });
-      this.shadowRoot.querySelectorAll("[data-zone]").forEach((button) => button.addEventListener("click", (event) => {
-        if (event.currentTarget.dataset.zone) {
-          this._view = "zones";
-          this._drillZone = Number(event.currentTarget.dataset.zone);
-          this.render();
+
+      const clearLongPress = () => {
+        clearTimeout(this._longPressTimer);
+        this._longPressTimer = null;
+        if (!this._longPressHeld) this._longPressTarget = null;
+      };
+      this.shadowRoot.addEventListener("pointerup", clearLongPress);
+      this.shadowRoot.addEventListener("pointercancel", () => {
+        clearLongPress();
+        this._longPressHeld = false;
+        this._longPressTarget = null;
+      });
+
+      this.shadowRoot.addEventListener("click", (event) => {
+        const target = event.target.closest?.("button, [data-ha-menu], [data-refresh]");
+        if (!target) return;
+        if (this._longPressHeld && target === this._longPressTarget) {
+          event.preventDefault();
+          this._longPressHeld = false;
+          this._longPressTarget = null;
+          return;
         }
-      }));
-      this.shadowRoot.querySelectorAll("[data-manual-zone]").forEach((button) => button.addEventListener("click", () => {
-        this._manualZone = Number(button.dataset.manualZone) || 1;
-        this.render();
-      }));
-      this.shadowRoot.querySelectorAll("[data-duration]").forEach((button) => button.addEventListener("click", () => {
-        this._manualDuration = Math.min(120, Math.max(1, this._manualDuration + Number(button.dataset.duration || 0)));
-        this.render();
-      }));
-      this.shadowRoot.querySelectorAll("[data-entity]").forEach((button) => {
-        if (button.dataset.zone) return;
-        let timer = null;
-        let held = false;
-        const id = button.dataset.entity;
-        const clear = () => { if (timer) clearTimeout(timer); timer = null; };
-        button.addEventListener("pointerdown", () => {
-          held = false;
-          timer = setTimeout(() => { held = true; this.moreInfo(id); }, 550);
-        });
-        button.addEventListener("pointerup", clear);
-        button.addEventListener("pointercancel", clear);
-        button.addEventListener("pointerleave", clear);
-        button.addEventListener("click", (event) => {
-          if (held) { event.preventDefault(); held = false; return; }
-          this.moreInfo(id);
-        });
+        this._longPressHeld = false;
+        this._longPressTarget = null;
+        if (target.matches("[data-ha-menu]")) { this.openHaMenu(); return; }
+        if (target.matches("[data-refresh]")) { this.refreshNow(); return; }
+        if (target.dataset.view) { this._switchView(target.dataset.view || "status"); return; }
+        if (target.dataset.go) { this._switchView(target.dataset.go); return; }
+        if (target.hasAttribute("data-drill-back")) {
+          this._drillZone = null;
+          this.render();
+          return;
+        }
+        if (target.dataset.zone) {
+          this._view = "zones";
+          this._drillZone = Number(target.dataset.zone);
+          this.render();
+          return;
+        }
+        if (target.dataset.manualZone) {
+          this._manualZone = Number(target.dataset.manualZone) || 1;
+          this.render();
+          return;
+        }
+        if (target.dataset.duration) {
+          this._manualDuration = Math.min(120, Math.max(1, this._manualDuration + Number(target.dataset.duration || 0)));
+          this.render();
+          return;
+        }
+        if (target.dataset.entity) this.moreInfo(target.dataset.entity);
+      });
+
+      viewport?.addEventListener("pointerleave", clearLongPress);
+    }
+
+    _viewContent() {
+      if (!this._hass) {
+        return `<section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section>`;
+      }
+      const e = this.entities();
+      if (this._view === "zones") return this.zonesView(e);
+      if (this._view === "program") return this.programView(e);
+      if (this._view === "manual") return this.manualView(e);
+      if (this._view === "diagnostics") return this.diagnosticsView(e);
+      return this.statusView(e);
+    }
+
+    _structureKey() {
+      if (!this._hass) return "loading";
+      return `${this._view}:${this._view === "zones" && this._drillZone ? "detail" : "root"}`;
+    }
+
+    _patchExistingTree(current, next) {
+      if (!current || !next || current.nodeType !== next.nodeType || current.nodeName !== next.nodeName) {
+        current?.replaceWith(next?.cloneNode(true));
+        return;
+      }
+      if (current.nodeType === 3) {
+        if (current.nodeValue !== next.nodeValue) current.nodeValue = next.nodeValue;
+        return;
+      }
+      if (current.nodeType !== 1) return;
+
+      for (const attribute of [...current.attributes]) {
+        if (!next.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
+      }
+      for (const attribute of [...next.attributes]) {
+        if (current.getAttribute(attribute.name) !== attribute.value) {
+          current.setAttribute(attribute.name, attribute.value);
+        }
+      }
+
+      const currentChildren = [...current.childNodes];
+      const nextChildren = [...next.childNodes];
+      const shared = Math.min(currentChildren.length, nextChildren.length);
+      for (let index = 0; index < shared; index += 1) {
+        this._patchExistingTree(currentChildren[index], nextChildren[index]);
+      }
+      for (let index = currentChildren.length - 1; index >= nextChildren.length; index -= 1) {
+        currentChildren[index].remove();
+      }
+      for (let index = currentChildren.length; index < nextChildren.length; index += 1) {
+        current.append(nextChildren[index].cloneNode(true));
+      }
+    }
+
+    _replaceWorkContent(content) {
+      const current = this.shadowRoot.querySelector("[data-work-canvas] > .content");
+      if (!current) return;
+      const template = document.createElement("template");
+      template.innerHTML = content;
+      current.replaceChildren(template.content);
+    }
+
+    _patchWorkContent(content) {
+      const current = this.shadowRoot.querySelector("[data-work-canvas] > .content");
+      if (!current) return;
+      const template = document.createElement("template");
+      template.innerHTML = `<main class="content">${content}</main>`;
+      const next = template.content.firstElementChild;
+      if (next) this._patchExistingTree(current, next);
+    }
+
+    _updateNavigationState() {
+      this.shadowRoot.querySelectorAll("[data-view]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === this._view);
       });
     }
 
@@ -871,11 +986,11 @@
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
         .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
-        /* v0.6.11: NIKAS Specialized Panel UI Standard v1.5 shell. */
+        /* v0.6.12: NikaS Specialized Panel UI Standard v1.6 shell. */
         .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
         .headerButton{width:44px;height:44px;justify-self:center;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;color:var(--text)}
         .headerButton ha-icon{--mdc-icon-size:25px}.refreshButton{color:var(--a)}
-        .headerTitle strong{font-size:21px;font-weight:800;line-height:1.05}.headerTitle small{margin-top:3px;font-size:12px;font-weight:560;color:var(--muted)}
+        .headerTitle strong{font-size:23px;font-weight:800;line-height:1.05}.headerTitle small{margin-top:3px;font-size:14px;font-weight:560;color:var(--muted)}
         .workViewport.isNative{overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}
         .workViewport.isNative .workCanvas{position:relative;left:auto;top:auto;min-height:100%;touch-action:pan-y;-webkit-user-select:auto;user-select:auto;will-change:auto}
         .workViewport.isZoomed{overflow:hidden;overscroll-behavior:none;touch-action:none}
@@ -887,9 +1002,20 @@
         @media(max-width:520px){
           .appHeader{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 2px 0}
           .headerButton{width:44px;height:44px;border-radius:16px}.headerButton ha-icon{--mdc-icon-size:25px}
-          .headerTitle strong{font-size:21px}.headerTitle small{font-size:12px}
+          .headerTitle strong{font-size:21px}.headerTitle small{font-size:13px}
           .bottomNav button{min-height:52px;border-radius:14px}.bottomNav button ha-icon{--mdc-icon-size:28px}
         }
+        /* Meaningful UI copy is 12–25 px; 10 px remains only for a redundant wiring caption. */
+        .content small,.content em,.content p{font-size:12px!important}
+        .heroHead h1,.pageIntro h2,.stepper>b{font-size:25px}
+        .connectionBadge{font-size:16px;font-weight:700;color:var(--muted);background:color-mix(in srgb,var(--muted) 10%,var(--card));border:1px solid color-mix(in srgb,var(--muted) 30%,transparent)}
+        .connectionBadge.local{color:var(--green);background:color-mix(in srgb,var(--green) 11%,var(--card));border-color:color-mix(in srgb,var(--green) 30%,transparent)}
+        .connectionBadge.cloud{color:var(--a);background:color-mix(in srgb,var(--a) 10%,var(--card));border-color:color-mix(in srgb,var(--a) 30%,transparent)}
+        .connectionWrap>small{font-size:13px!important;font-weight:600}
+        .heroPressure span{font-size:12px}.heroPressure b{font-size:14px}
+        .rainSensor span,.valveNumber,.schemaGrid .zoneText b,.schemaGrid .zoneText small,.schemaGrid .duration small,.mainlineLabel,.mainlineLabel b,.metric>small,.metric em,.statusesHead>span,.statusesCard .node>small,.statusesCard .node em,.programRow b,.diagList b{font-size:12px}
+        .controlBus span{font-size:10px}
+        @media(max-width:520px){.headerTitle strong{font-size:21px}.headerTitle small{font-size:13px}.connectionBadge{font-size:16px}.connectionWrap>small{font-size:13px!important}}
       `;
     }
 
@@ -898,25 +1024,22 @@
     _render() {
       if (!this.shadowRoot) return;
       if (!VIEWS.includes(this._view)) this._view = "status";
-      const header = this.header();
-      if (!this._hass) {
-        const loading = `<section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section>`;
-        this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this._workspace(loading)}${this.bottomNav()}</div>`;
+      this._restoreTransform(false);
+      const content = this._viewContent();
+      const structureKey = this._structureKey();
+
+      if (!this._shellMounted) {
+        this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${this.header()}${this._workspace(content)}${this.bottomNav()}</div>`;
+        this._shellMounted = true;
+        this._renderedStructureKey = structureKey;
         this.bindActions();
-        requestAnimationFrame(() => {
-          this._clampAndApplyTransform(false);
-          this._restoreNativeScroll();
-        });
-        return;
+      } else if (this._renderedStructureKey !== structureKey) {
+        this._replaceWorkContent(content);
+        this._renderedStructureKey = structureKey;
+      } else {
+        this._patchWorkContent(content);
       }
-      const e = this.entities();
-      let content = this.statusView(e);
-      if (this._view === "zones") content = this.zonesView(e);
-      else if (this._view === "program") content = this.programView(e);
-      else if (this._view === "manual") content = this.manualView(e);
-      else if (this._view === "diagnostics") content = this.diagnosticsView(e);
-      this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${header}${this._workspace(content)}${this.bottomNav()}</div>`;
-      this.bindActions();
+      this._updateNavigationState();
       requestAnimationFrame(() => {
         this._clampAndApplyTransform(false);
         this._restoreNativeScroll();

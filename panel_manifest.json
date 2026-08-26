@@ -1,7 +1,24 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.11",
-  "integration_version": "1.0.0-b005.29",
+  "panel_version": "0.6.12",
+  "integration_version": "1.0.0-b005.30",
+  "rendering": {
+    "stable_shell_dom": true,
+    "shadow_root_inner_html": "initial_mount_only",
+    "telemetry_updates": "patch_existing_nodes",
+    "preserve_on_update": ["header", "zoom_viewport", "scroll", "bottom_tab_bar"]
+  },
+  "typography": {
+    "meaningful_min_px": 12,
+    "meaningful_max_px": 25,
+    "header_wide_px": [23, 14],
+    "header_narrow_px": [21, 13]
+  },
+  "connection_indicator": {
+    "two_level_indicator_enabled": false,
+    "policy": "opt_in_only",
+    "existing_transport_badge_preserved": true
+  },
   "static_url": "/nikas-ho-sc-8w/",
   "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "asset_policy": {
