@@ -1,4 +1,4 @@
-# NikaS Specialized Panel UI Standard v1.4
+# NikaS Specialized Panel UI Standard v1.5
 
 **Status:** REQUIRED  
 **Canonical source:** `NikaSir/ha-contract-generated-ui`  

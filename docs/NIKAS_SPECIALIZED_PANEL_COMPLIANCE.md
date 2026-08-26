@@ -1,6 +1,6 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NikaS Specialized Panel UI Standard v1.4
+**Audit target:** NikaS Specialized Panel UI Standard v1.5
 **Audited main:** `6455cd2a0a9db6166de7484650b176e5587df17a`
 **Runtime inspected:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js`
 **Policy:** audit only; runtime is intentionally unchanged in this PR.
@@ -34,7 +34,7 @@ The panel already has a single transform canvas, midpoint pinch, correct scale r
 
 ## Runtime contradictions to remove in the implementation PR
 
-1. “Pan/scroll when enlarged” in the earlier v1.3 snapshot was implemented as transform pan at every scale; v1.4 requires native vertical scroll at 100% and transform pan only above 100%.
+1. “Pan/scroll when enlarged” in the earlier v1.3 snapshot was implemented as transform pan at every scale; v1.5 requires native vertical scroll at 100% and transform pan only above 100%.
 2. CSS mobile overrides shrink Header controls below the new fixed 44×44 UPS plaque.
 3. Later typography rules force Bottom labels to 11px and later colour overrides hard-code the active tab instead of theme-derived ~11%.
 4. Per-view transform persistence restores offsets on tab entry, contradicting mandatory return-to-top behaviour.
