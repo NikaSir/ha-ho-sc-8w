@@ -83,8 +83,8 @@ At or below `100%`, one-finger transform pan remains disabled and transform offs
 ## Repository and integration identity
 
 - Every integration repository must have a deliberate repository visual identity (README hero/logo and GitHub social preview/avatar where repository settings support it).
-- The Home Assistant integration icon must follow the actually supported HA/HACS branding path for its domain. A private file is not considered wired merely because it exists in the repository.
-- Preserve a square source icon and provide the required normal/high-resolution variants (`icon.png`, `icon@2x.png`) through the supported Home Assistant Brands contribution path; provide dark variants when the artwork is not theme-neutral.
+- The mandatory HACS minimum is a packaged `custom_components/<domain>/brand/icon.png`; an arbitrary image elsewhere in the repository is not sufficient.
+- Preserve an approved square source icon; provide logo/dark variants when the artwork is not theme-neutral.
 - HACS category, `hacs.json`, integration domain, manifest name and README installation steps must agree.
 - Do not invent a new brand without an approved source asset. Missing files or publication steps are recorded as compliance gaps.
 

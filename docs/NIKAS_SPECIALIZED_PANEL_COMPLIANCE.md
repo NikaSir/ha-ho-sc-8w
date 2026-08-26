@@ -29,7 +29,7 @@ The panel already has a single transform canvas, midpoint pinch, correct scale r
 | Local production assets and stable entry | PASS | Local WEBP assets, single `irrigation-panel.js`, versioned URLs, no runtime historical import. |
 | HACS/HA integration path | PASS | `hacs.json` category is installed as custom Integration; README, domain `nikas_ho_sc_8w` and manifest agree. |
 | Approved source brand asset exists | PASS | Square RGBA `custom_components/nikas_ho_sc_8w/brand/icon.png`, 256×256. |
-| Integration icon is actually wired | GAP | The private `brand/icon.png` path is not a supported HA/HACS brand delivery path. Supply approved `icon.png` and `icon@2x.png` under the Home Assistant Brands custom-integration path for domain `nikas_ho_sc_8w`; add dark variants only if the approved art is not theme-neutral. |
+| Integration icon is packaged | PASS | `custom_components/nikas_ho_sc_8w/brand/icon.png` is the supported HACS minimum and ships with the integration. Add dark/logo variants only if theme legibility requires them. |
 | Repository visual identity | GAP | README has no logo/hero reference and the repository file cannot set GitHub social preview/avatar. Reuse the approved icon (do not redraw), add a README visual, and configure the repository social preview in GitHub settings. |
 
 ## Runtime contradictions to remove in the implementation PR
