@@ -96,6 +96,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "stable_shell_dom": True,
                 "shadow_root_inner_html": "initial_mount_only",
                 "telemetry_updates": "patch_existing_nodes",
+                "view_switching": "lazy_dom_cache_and_reattach",
             },
             "typography": {
                 "meaningful_min_px": 12,

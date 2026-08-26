@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.12";
-  const ASSET_VERSION = "0.6.12";
+  const UI_VERSION = "0.6.13";
+  const ASSET_VERSION = "0.6.13";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -51,6 +51,7 @@
       this._pendingScrollTop = null;
       this._shellMounted = false;
       this._renderedStructureKey = null;
+      this._viewNodeCache = new Map();
       this._longPressTimer = null;
       this._longPressTarget = null;
       this._longPressHeld = false;
@@ -864,21 +865,42 @@
       }
     }
 
-    _replaceWorkContent(content) {
-      const current = this.shadowRoot.querySelector("[data-work-canvas] > .content");
-      if (!current) return;
+    _createWorkContent(content) {
       const template = document.createElement("template");
-      template.innerHTML = content;
-      current.replaceChildren(template.content);
+      template.innerHTML = `<main class="content">${content}</main>`;
+      return template.content.firstElementChild;
+    }
+
+    _patchContentNode(current, content) {
+      const next = this._createWorkContent(content);
+      if (current && next) this._patchExistingTree(current, next);
+    }
+
+    _reuseWorkContent(content, structureKey) {
+      const canvas = this.shadowRoot.querySelector("[data-work-canvas]");
+      const current = canvas?.querySelector(":scope > .content");
+      if (!canvas || !current) return;
+
+      if (this._renderedStructureKey) {
+        this._viewNodeCache.set(this._renderedStructureKey, current);
+      }
+
+      let next = this._viewNodeCache.get(structureKey);
+      if (next) {
+        this._patchContentNode(next, content);
+      } else {
+        next = this._createWorkContent(content);
+        if (!next) return;
+        this._viewNodeCache.set(structureKey, next);
+      }
+
+      if (next !== current) current.replaceWith(next);
     }
 
     _patchWorkContent(content) {
       const current = this.shadowRoot.querySelector("[data-work-canvas] > .content");
       if (!current) return;
-      const template = document.createElement("template");
-      template.innerHTML = `<main class="content">${content}</main>`;
-      const next = template.content.firstElementChild;
-      if (next) this._patchExistingTree(current, next);
+      this._patchContentNode(current, content);
     }
 
     _updateNavigationState() {
@@ -986,7 +1008,7 @@
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
         .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
-        /* v0.6.12: NikaS Specialized Panel UI Standard v1.6 shell. */
+        /* v0.6.13: NikaS Specialized Panel UI Standard v1.6 shell. */
         .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
         .headerButton{width:44px;height:44px;justify-self:center;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;color:var(--text)}
         .headerButton ha-icon{--mdc-icon-size:25px}.refreshButton{color:var(--a)}
@@ -1032,9 +1054,11 @@
         this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${this.header()}${this._workspace(content)}${this.bottomNav()}</div>`;
         this._shellMounted = true;
         this._renderedStructureKey = structureKey;
+        const initialContent = this.shadowRoot.querySelector("[data-work-canvas] > .content");
+        if (initialContent) this._viewNodeCache.set(structureKey, initialContent);
         this.bindActions();
       } else if (this._renderedStructureKey !== structureKey) {
-        this._replaceWorkContent(content);
+        this._reuseWorkContent(content, structureKey);
         this._renderedStructureKey = structureKey;
       } else {
         this._patchWorkContent(content);

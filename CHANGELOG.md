@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.31` / panel `0.6.13`: complete the v1.6 stable-rendering contract with a lazy DOM cache for work views. Returning to a visited tab or zone subtree reattaches and point-patches the same node instead of rebuilding it; Header, viewport, canvas and Bottom Tab Bar remain mounted.
+
 - `1.0.0-b005.30` / panel `0.6.12`: align with NikaS Specialized Panel UI Standard v1.6 — mount Header, one zoom viewport and Bottom Tab Bar once, point-patch live telemetry, and preserve scroll/gesture state without tab or screen flicker.
 - `1.0.0-b005.30` / panel `0.6.12`: use 23/14 px Header typography (21/13 narrow), enforce the 12–25 px meaningful-copy range, retain only the existing factual transport badge, and replace the redundant controller value `Онлайн` with `Локально`.
 

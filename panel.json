@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.12",
+    "dashboard_version": "0.6.13",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -46,7 +46,8 @@
       "historical_runtime_imports": false,
       "stable_shell_dom": true,
       "shadow_root_inner_html": "initial_mount_only",
-      "telemetry_updates": "patch_existing_nodes"
+      "telemetry_updates": "patch_existing_nodes",
+      "view_switching": "lazy_dom_cache_and_reattach"
     },
     "status_layout": {
       "reference": "approved_system_state_render",

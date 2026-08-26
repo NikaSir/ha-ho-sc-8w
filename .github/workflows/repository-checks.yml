@@ -131,3 +131,24 @@ jobs:
             echo "$forbidden"
             exit 1
           fi
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate HACS repository
+        uses: hacs/action@main
+        with:
+          category: integration
+          comment: false
+
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Home Assistant integration
+        uses: home-assistant/actions/hassfest@master

@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.12**.
+Current panel version: **0.6.13**.
 
 The panel follows **NikaS Specialized Panel UI Standard v1.6**:
 
@@ -51,6 +51,7 @@ It also conforms to **NikaS Integration Panel Template v1.0**.
 - two-finger double tap resets the work canvas to 100%; 97–103% snaps to 100%;
 - scale and position persist locally without nesting wrappers during HA updates.
 - Home Assistant telemetry patches existing nodes; Header, viewport, scroll position and Bottom Tab Bar are not reconstructed and do not flicker.
+- previously opened work views are retained in a lazy DOM cache and reattached on return instead of being rebuilt.
 - meaningful interface copy stays in the 12–25 px range; only a redundant schematic wiring caption uses 10 px.
 
 ### Information architecture v0.4
@@ -133,7 +134,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.12
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.13
       ↓
 <nikas-ho-sc-8w-panel>
 ```
