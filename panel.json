@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.13",
+    "dashboard_version": "0.6.14",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -60,7 +60,14 @@
     },
     "system_visualization": {
       "controller": "INKBIRD / HiOazo HO-SC-8W with LCD and Wi-Fi",
-      "production_zones": [1, 2, 3, 4, 5, 6],
+      "production_zones": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
       "zone_8": "diagnostics_only",
       "hydraulic_path": "incoming_mainline_to_manifold_to_valves_to_zones",
       "mainline_connection_side": "left_direct_to_manifold",
@@ -98,14 +105,30 @@
         "pinch_origin": "touch_midpoint",
         "native_vertical_scroll_at_100": true,
         "horizontal_scroll_at_100": false,
-        "origin_at_100": [0, 0],
+        "origin_at_100": [
+          0,
+          0
+        ],
         "one_pointer_pan_above_100_only": true,
         "pan_only_on_overflowing_axes": true,
         "clamp_after_resize": true,
         "tab_change_returns_to_top": true,
-        "snap_to_100_percent": [97, 103],
+        "snap_to_100_percent": [
+          97,
+          103
+        ],
         "persist_per_panel_client_and_view": true,
         "shell_reconciliation": "stable_dom_point_patch"
+      },
+      "rain_sensor_connection": "single_direct_line_to_controller",
+      "zone_thumbnail_content": "zone_number_and_image_only",
+      "zone_thumbnail_visuals": {
+        "1": "lawn",
+        "2": "lawn",
+        "3": "lawn",
+        "4": "flowerbed",
+        "5": "shrubs",
+        "6": "greenhouse"
       }
     }
   },

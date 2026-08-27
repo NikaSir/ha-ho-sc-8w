@@ -1,19 +1,30 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.13",
-  "integration_version": "1.0.0-b005.31",
+  "panel_version": "0.6.14",
+  "integration_version": "1.0.0-b005.32",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
     "telemetry_updates": "patch_existing_nodes",
     "view_switching": "lazy_dom_cache_and_reattach",
-    "preserve_on_update": ["header", "zoom_viewport", "scroll", "bottom_tab_bar"]
+    "preserve_on_update": [
+      "header",
+      "zoom_viewport",
+      "scroll",
+      "bottom_tab_bar"
+    ]
   },
   "typography": {
     "meaningful_min_px": 12,
     "meaningful_max_px": 25,
-    "header_wide_px": [23, 14],
-    "header_narrow_px": [21, 13]
+    "header_wide_px": [
+      23,
+      14
+    ],
+    "header_narrow_px": [
+      21,
+      13
+    ]
   },
   "connection_indicator": {
     "two_level_indicator_enabled": false,
@@ -29,17 +40,62 @@
     "external_hosts": false
   },
   "assets": [
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/ho-sc-8w-controller-v4.webp", "role": "controller"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/ho-sc-8w-controller-node-v4.webp", "role": "controller_status"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/rain-sensor-v5.webp", "role": "rain_sensor"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/valve-v2.webp", "role": "valve"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/mainline-node.webp", "role": "mainline_status"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/manifold-v1.webp", "role": "legacy_wide_manifold"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-1.webp", "role": "zone_1"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-2.webp", "role": "zone_2"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-3.webp", "role": "zone_3"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-4.webp", "role": "zone_4"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-5.webp", "role": "zone_5"},
-    {"path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-6.webp", "role": "zone_6"}
-  ]
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/ho-sc-8w-controller-v4.webp",
+      "role": "controller"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/ho-sc-8w-controller-node-v4.webp",
+      "role": "controller_status"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/rain-sensor-v5.webp",
+      "role": "rain_sensor"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/valve-v2.webp",
+      "role": "valve"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/mainline-node.webp",
+      "role": "mainline_status"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/manifold-v1.webp",
+      "role": "legacy_wide_manifold"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-1.webp",
+      "role": "zone_1"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-2.webp",
+      "role": "zone_2"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-3.webp",
+      "role": "zone_3"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-4.webp",
+      "role": "zone_4"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-5.webp",
+      "role": "zone_5"
+    },
+    {
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-6.webp",
+      "role": "zone_6"
+    }
+  ],
+  "zone_thumbnail_content": "zone_number_and_image_only",
+  "zone_thumbnail_visuals": {
+    "1": "lawn",
+    "2": "lawn",
+    "3": "lawn",
+    "4": "flowerbed",
+    "5": "shrubs",
+    "6": "greenhouse"
+  }
 }

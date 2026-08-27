@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.13";
-  const ASSET_VERSION = "0.6.13";
+  const UI_VERSION = "0.6.14";
+  const ASSET_VERSION = "0.6.14";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -11,11 +11,11 @@
     rain: assetUrl("rain-sensor-v5.webp"),
     manifold: assetUrl("manifold-v1.webp"),
     zone1: assetUrl("zone-1.webp"),
-    zone2: assetUrl("zone-2.webp"),
-    zone3: assetUrl("zone-3.webp"),
-    zone4: assetUrl("zone-4.webp"),
+    zone2: assetUrl("zone-1.webp"),
+    zone3: assetUrl("zone-1.webp"),
+    zone4: assetUrl("zone-3.webp"),
     zone5: assetUrl("zone-5.webp"),
-    zone6: assetUrl("zone-6.webp"),
+    zone6: assetUrl("zone-4.webp"),
   });
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
@@ -434,7 +434,7 @@
       return `<div class="connectionWrap"><div class="connectionBadge ${tone}"><i></i><b>${label}</b></div><small>${this.esc(this.updatedAge(e.connection))}</small><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button></div>`;
     }
     zoneIcon(zone) {
-      return ({ 1: "mdi:sprinkler", 2: "mdi:sprinkler-variant", 3: "mdi:flower", 4: "mdi:greenhouse", 5: "mdi:sprout", 6: "mdi:pine-tree" })[zone] || "mdi:water";
+      return ({ 1: "mdi:sprinkler", 2: "mdi:sprinkler", 3: "mdi:sprinkler", 4: "mdi:flower", 5: "mdi:shrub", 6: "mdi:greenhouse" })[zone] || "mdi:water";
     }
     zoneRuntime(e, zone) {
       const q = e.zones[zone];
@@ -471,15 +471,12 @@
           <span class="waterBranch ${branchTone}" aria-hidden="true"></span>
           <button class="diagramZone ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}">
             <span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span>
-            <span class="zoneText"><b>Зона ${zone}</b><small>${this.esc(z.label)}</small></span>
-            <span class="duration">${this.esc(z.duration)}<small>мин</small></span>
-            <ha-icon class="readyIcon" icon="${readyIcon}"></ha-icon>
           </button>
         </div>`;
       }).join("");
       return `<div class="systemDiagram">
         <svg class="deviceWires" viewBox="0 0 1000 380" preserveAspectRatio="none" aria-hidden="true">
-          <path class="wire rainWire" d="M 248 57 H 284 V 82 H 338"/>
+          <path class="wire rainWire" d="M 248 57 L 338 82"/>
           <path class="wire controlLead" d="M 205 82 V 110 H 82"/>
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
@@ -1038,6 +1035,13 @@
         .rainSensor span,.valveNumber,.schemaGrid .zoneText b,.schemaGrid .zoneText small,.schemaGrid .duration small,.mainlineLabel,.mainlineLabel b,.metric>small,.metric em,.statusesHead>span,.statusesCard .node>small,.statusesCard .node em,.programRow b,.diagList b{font-size:12px}
         .controlBus span{font-size:10px}
         @media(max-width:520px){.headerTitle strong{font-size:21px}.headerTitle small{font-size:13px}.connectionBadge{font-size:16px}.connectionWrap>small{font-size:13px!important}}
+        /* v0.6.14: approved zone thumbnails and simplified rain-sensor wiring. */
+        .schemaGrid .diagramZone{grid-template-rows:minmax(0,1fr);gap:0;padding:4px;overflow:hidden}
+        .schemaGrid .diagramZone .scene{width:100%;height:100%;min-height:58px;border-radius:10px;background-position:center;background-size:cover;background-repeat:no-repeat}
+        .schemaGrid .diagramZone .zoneText,.schemaGrid .diagramZone .duration,.schemaGrid .diagramZone .readyIcon{display:none!important}
+        .schemaGrid .diagramZone.running{border-color:color-mix(in srgb,var(--a) 72%,#dce1e5);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 18%,transparent)}
+        .schemaGrid .diagramZone.queued{border-color:color-mix(in srgb,var(--orange) 68%,#dce1e5);box-shadow:0 0 0 2px color-mix(in srgb,var(--orange) 16%,transparent)}
+        @media(max-width:520px){.schemaGrid .diagramZone{grid-template-rows:minmax(0,1fr);min-height:76px;padding:3px}.schemaGrid .diagramZone .scene{height:100%;min-height:68px;border-radius:8px}}
       `;
     }
 
