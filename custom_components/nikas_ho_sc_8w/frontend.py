@@ -64,6 +64,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             "parent_path": PANEL_PARENT_PATH,
             "header": {
                 "title_alignment": "viewport_center",
+                "center_action": "parent_panel_return",
                 "left_action": "home_assistant_sidebar_menu",
                 "right_action": "refresh",
                 "menu_event": "hass-toggle-menu",
