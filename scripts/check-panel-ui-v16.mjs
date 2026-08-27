@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.18"',
+  'const UI_VERSION = "0.6.20"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -50,10 +50,28 @@ for (const marker of [
   '"СЕЗОННАЯ КОРРЕКЦИЯ"',
   '<b>Зона ${zone}</b>',
   '_scheduleGestureTransform(transform)',
-  'label: "Блокирует"',
-  'label: "Не блокирует"',
+  'label: "Не учитывается"',
+  'label: "Учитывается"',
   'class="rainStatusCard ${rain.tone}"',
   '<em>по программе</em>',
+]) requireMarker(marker);
+
+for (const forbidden of [
+  'import "/nikas-ho-sc-8w/irrigation-panel.js',
+  "Система полива · UI v",
+  "Фактические параметры DP38",
+  "Игнорируется",
+]) {
+  if (source.includes(forbidden)) throw new Error(`Forbidden stale UI marker: ${forbidden}`);
+}
+
+for (const marker of [
+  "data-parent-nav",
+  ".scene1,.scene2,.scene3",
+  "zone-3.webp?v=0.6.20",
+  "zone-4.webp?v=0.6.20",
+  "detailStateList",
+  "mdi:umbrella-off-outline",
 ]) requireMarker(marker);
 
 if (source.includes('"Онлайн"')) {
