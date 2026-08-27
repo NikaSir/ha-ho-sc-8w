@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.16
-**Manifest:** integration `1.0.0-b005.34`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.20
+**Manifest:** integration `1.0.0-b005.38`
 
 ## Compliance
 
@@ -17,7 +17,7 @@
 | Hold/more-info and click guards | PASS | Second pointer/pan cancels pending holds; post-gesture clicks are suppressed; stationary hold remains. |
 | Stable DOM / no flicker | PASS | `shadowRoot.innerHTML` is used only for initial shell mounting; telemetry point-patches existing nodes while Header, viewport, scroll and Bottom Tab Bar retain identity. |
 | Lazy work-view DOM cache | PASS | Visited tab and zone structure nodes are cached by structural key, reattached on return and point-patched before display; shell and zoom owners are never replaced. |
-| Fixed UPS Header | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, 44×44 radius-16 bordered plaques, 25 px MDI icons, 23/14 typography (21/13 narrow); menu and Refresh use theme text/primary colours. |
+| Fixed UPS Header | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, 44×44 radius-16 bordered plaques, 25 px MDI icons, 23/14 typography (21/13 narrow); menu and Refresh use theme text/primary colours. The centered title returns to the configured parent panel without adding a Header Back arrow. |
 | Permanent left system menu | PASS | Header always emits composed/bubbling `hass-toggle-menu`; no Header Back action. |
 | Fixed UPS Bottom Tab Bar | PASS | Shell grid row outside viewport, safe-area padding, equal tabs, minimum 52 px, `ha-icon` 28 px, labels 12/700, theme-derived 11% active background. |
 | Meaningful typography 12–25 px | PASS | Final v0.6.13 rules raise semantic labels and values to 12 px or more and cap primary headings at 25 px; only the redundant control-wire caption remains 10 px. |
@@ -42,11 +42,14 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Phone schematic height is viewport-responsive to consume the freed first-screen space without changing Header/Bottom Tab Bar geometry.
 - Zoom/scroll engine is unchanged: one viewport/canvas, native vertical scroll at 100%, >100% axis-aware pan, two-finger reset.
 
-## UI 0.6.16 composition delta
+## UI 0.6.20 composition delta
 
 - The redundant `СОСТОЯНИЕ СИСТЕМЫ` eyebrow and control-wire caption are removed.
 - The status view is explicitly sized to the work viewport and has no native vertical scroll at 100%; long views such as Diagnostics retain native vertical scrolling.
 - Zone cards again show image, `Зона N`, factual activity state and DP38 programmed duration at the 12 px semantic-text floor.
 - Summary row is `Программа / Режим / Сезонная коррекция`; telemetry age remains represented by the connection freshness indicator rather than a duplicate card.
-- Rain sensor text reports only factual DP102 semantics: `Учитывается / Не блокирует / Нет данных`. The current wet-contact blocking state is not claimed because the integration does not expose it.
+- Rain sensor text reports only factual DP102 participation semantics: `Учитывается / Не учитывается / Нет данных`. The current wet-contact blocking state is not claimed because the integration does not expose it.
+- Zone scenes follow the accepted mapping: zones 1–3 lawn, zone 4 flowerbed, zone 5 shrubs and zone 6 greenhouse. Decorative glyph overlays are absent.
+- Every zone keeps readiness, program and rain-accounting indicators visible; a disabled rain flag is shown as a muted crossed umbrella rather than removing the indicator.
+- The production entrypoint is one self-contained bundle; the temporary `approved-v0619.js` runtime layer is removed and the loaded bundle is the one validated by CI.
 - Pinch, reset, pan, one viewport/canvas and stable DOM architecture are unchanged.
