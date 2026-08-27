@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.20"',
+  'const UI_VERSION = "0.6.21"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -68,11 +68,20 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.20",
-  "zone-4.webp?v=0.6.20",
+  "zone-3.webp?v=0.6.21",
+  "zone-4.webp?v=0.6.21",
   "detailStateList",
   "mdi:umbrella-off-outline",
+  "simplifiedDiagram",
+  "zoneLink",
+  "Ручной запуск заблокирован",
+  "Первый запуск",
+  "min-width:190px",
 ]) requireMarker(marker);
+
+for (const forbidden of ["Read-only представление", "Actions API", '<small>Доступен</small>']) {
+  if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
+}
 
 if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
