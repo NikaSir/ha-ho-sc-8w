@@ -38,7 +38,7 @@ Sidebar title: **Полив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
 Current panel version: **0.6.13**.
 
-The panel follows **NikaS Specialized Panel UI Standard v1.6**:
+The panel follows **NikaS Specialized Panel UI Standard v1.7**:
 
 It also conforms to **NikaS Integration Panel Template v1.0**.
 
@@ -112,7 +112,7 @@ The incoming water path now runs from the pressure gauge vertically upward and t
 
 ### Actual HO-SC-8W controller and readable type v0.5.8
 
-The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.6 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
+The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.7 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
 
 ### Shared-axis irrigation schematic v0.6.0
 

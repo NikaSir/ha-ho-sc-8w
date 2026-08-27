@@ -1,6 +1,6 @@
 # HO-SC-8W specialized-panel app shell
 
-The integration implements **NikaS Specialized Panel UI Standard v1.6** for iPhone Pro Max portrait first, with tablet and desktop as secondary adaptations.
+The integration implements **NikaS Specialized Panel UI Standard v1.7** for iPhone Pro Max portrait first, with tablet and desktop as secondary adaptations.
 
 ## Stable shell
 

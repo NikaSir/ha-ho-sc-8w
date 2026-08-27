@@ -47,6 +47,9 @@ jobs:
             python -m compileall -q custom_components
           fi
 
+      - name: Enforce NikaS UI standard v1.7
+        run: python scripts/check_nikas_ui_standard.py
+
       - name: Validate production panel bundle and local assets
         shell: bash
         run: |

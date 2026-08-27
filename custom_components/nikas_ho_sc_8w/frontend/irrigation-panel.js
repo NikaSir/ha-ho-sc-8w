@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.22";
-  const ASSET_VERSION = "0.6.22";
+  const UI_VERSION = "0.6.23";
+  const ASSET_VERSION = "0.6.23";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -24,6 +24,38 @@
   const VIEW_SCALE_SNAP_MIN = 0.97;
   const VIEW_SCALE_SNAP_MAX = 1.03;
   const VIEW_STATE_PREFIX = "nikas_ho_sc_8w.view_transform.v2";
+  const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+  const RETURN_ROUTE_KEY = "nikas.ho_sc_8w.return_route.v1";
+  const SAFE_DEFAULT_ROUTE = "/dashboard-actions";
+  const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"];
+
+  function safeReturnRoute(value) {
+    if (!value) return null;
+    try {
+      const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
+      if (url.origin !== window.location.origin) return null;
+      const allowed = SAFE_ROUTE_PREFIXES.some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
+      return allowed ? `${url.pathname}${url.search}${url.hash}` : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function resolveReturnRoute(panel) {
+    const current = new URL(window.location.href);
+    const explicit = safeReturnRoute(current.searchParams.get("return_to") || current.searchParams.get("from"));
+    let handedOff = null;
+    let saved = null;
+    try {
+      handedOff = safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY));
+      sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+      saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
+    } catch (_error) {}
+    const configured = safeReturnRoute(panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path);
+    const route = explicit || handedOff || saved || safeReturnRoute(document.referrer) || configured || SAFE_DEFAULT_ROUTE;
+    try { sessionStorage.setItem(RETURN_ROUTE_KEY, route); } catch (_error) {}
+    return route;
+  }
 
   class HOSC8WPanel extends HTMLElement {
     constructor() {
@@ -52,6 +84,7 @@
       this._nativeScrollPositions = new Map();
       this._pendingScrollTop = null;
       this._shellMounted = false;
+      this._returnRoute = null;
       this._renderedStructureKey = null;
       this._viewNodeCache = new Map();
       this._longPressTimer = null;
@@ -291,7 +324,7 @@
       }));
     }
     navigateParent() {
-      const path = this._panel?.config?.parent_path || "/dashboard-actions";
+      const path = safeReturnRoute(this._returnRoute) || SAFE_DEFAULT_ROUTE;
       if (window.location.pathname === path) return;
       window.history.pushState(null, "", path);
       window.dispatchEvent(new Event("location-changed"));
@@ -423,7 +456,7 @@
     header() {
       return `<header class="appHeader">
         <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-        <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
+        <button class="headerTitle" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
         <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
       </header>`;
     }
@@ -968,7 +1001,7 @@
     styles() {
       return `
         :host{--a:var(--primary-color,#079bd0);--green:#1fa647;--orange:#f59e0b;--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#fafafa);--text:var(--primary-text-color,#151515);--muted:var(--secondary-text-color,#6f6f72);--line:color-mix(in srgb,var(--text) 14%,transparent);--soft:color-mix(in srgb,var(--card) 94%,var(--text) 6%);--surface:color-mix(in srgb,var(--card) 91%,var(--text) 9%);--diagram:color-mix(in srgb,var(--card) 96%,var(--a) 4%);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger:var(--error-color,#d84040);color-scheme:light dark;display:block;min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,sans-serif}
-        *{box-sizing:border-box}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}.app{max-width:920px;margin:0 auto;padding:0 14px calc(106px + env(safe-area-inset-bottom));min-height:100vh}.appHeader{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:56px minmax(0,1fr) 56px;align-items:center;gap:10px;min-height:80px;padding:calc(9px + env(safe-area-inset-top)) 0 8px;background:color-mix(in srgb,var(--bg) 97%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid color-mix(in srgb,var(--text) 6%,transparent)}.headerButton{display:grid;place-items:center;width:56px;height:56px;padding:0;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 6px 18px #0000000c;cursor:pointer}.headerButton ha-icon{--mdc-icon-size:30px}.refreshButton{color:var(--a)}.headerTitle{text-align:center;min-width:0}.headerTitle strong{display:block;font-size:25px;line-height:1;letter-spacing:-.04em}.headerTitle small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.content{padding-top:12px}
+        *{box-sizing:border-box}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}.app{max-width:920px;margin:0 auto;padding:0 14px calc(106px + env(safe-area-inset-bottom));min-height:100vh}.appHeader{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:56px minmax(0,1fr) 56px;align-items:center;gap:10px;min-height:80px;padding:calc(9px + env(safe-area-inset-top)) 0 8px;background:color-mix(in srgb,var(--bg) 97%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid color-mix(in srgb,var(--text) 6%,transparent)}.headerButton{display:grid;place-items:center;width:56px;height:56px;padding:0;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 6px 18px #0000000c;cursor:pointer}.headerButton ha-icon{--mdc-icon-size:30px}.refreshButton{color:var(--a)}.headerTitle{display:block;text-align:center;min-width:0;min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 6px 18px #0000000c;cursor:pointer}.headerTitle:active{transform:scale(.985)}.headerTitle strong{display:block;font-size:25px;line-height:1;letter-spacing:-.04em}.headerTitle small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.content{padding-top:12px}
         .hero,.sectionCard,.detailCard,.zoneCard,.programList,.summaryGrid,.manualCard,.diagList,.lab{background:var(--card);border:1px solid var(--line);box-shadow:0 8px 26px #00000012}.hero{padding:18px;border-radius:28px;background:linear-gradient(145deg,var(--card) 0%,var(--card) 78%,var(--diagram) 100%)}.hero.ready{border-color:color-mix(in srgb,var(--green) 28%,var(--line))}.hero.active{border-color:color-mix(in srgb,var(--a) 48%,var(--line))}.hero.warning{border-color:color-mix(in srgb,var(--orange) 48%,var(--line))}.hero.unknown{border-color:color-mix(in srgb,var(--muted) 40%,var(--line))}.heroHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.heroHead>div:first-child{min-width:0}.heroHead small,.sectionTitle,.pageIntro>small{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.11em}.heroHead h1{margin:7px 0 5px;font-size:32px;line-height:.98;letter-spacing:-.05em;color:var(--text)}.heroHead p{margin:0;color:var(--muted);font-size:14px}.connectionWrap{text-align:right;flex:0 0 auto}.connectionBadge{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:99px;background:var(--soft);font-size:14px}.connectionBadge i{width:10px;height:10px;border-radius:50%;background:var(--muted)}.connectionBadge.local{background:var(--green-soft);color:var(--green)}.connectionBadge.local i{background:var(--green)}.connectionBadge.cloud{background:var(--accent-soft);color:var(--a)}.connectionBadge.cloud i{background:var(--a)}.connectionWrap>small{display:block;margin-top:6px;color:var(--muted);font-size:8px}
         .systemDiagram{position:relative;height:395px;margin-top:16px;border-radius:24px;background:linear-gradient(180deg,var(--diagram),var(--soft));border:1px solid var(--line);overflow:hidden;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent)}.pipes{position:absolute;inset:0;width:100%;height:100%}.pipe{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.pipe.idle{stroke:color-mix(in srgb,var(--muted) 48%,transparent)}.pipe.run,.pipe.supply{stroke:var(--a)}.pipe.queue{stroke:var(--orange)}.pipe.sensor{stroke:var(--muted);stroke-width:3;stroke-dasharray:8 7}.controller{position:absolute;z-index:2;left:2.5%;top:25%;width:20%;height:49%;padding:0;border:1px solid #bdc7d0;border-radius:15px;background:linear-gradient(145deg,#ffffff 0%,#e8edf1 62%,#d6dde3 100%);box-shadow:0 10px 22px #00000028,inset 1px 1px 0 #fff;overflow:hidden}.controller .cap{height:13%;border-bottom:1px solid #c3ccd4;background:linear-gradient(#fff,#e7ebef)}.controller .body{height:74%;display:grid;place-items:center;align-content:center;gap:10px;color:#3e4953}.controller .body b{font-size:12px}.controller .body small{font-size:7px;color:#75818b}.controller .body>i{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px #1fa64726,0 0 9px #1fa64777}.controller .ports{height:13%;display:flex;justify-content:center;gap:20px;border-top:1px solid #bdc7d0;background:#d9e0e6}.controller .ports i{width:10px;height:12px;background:#34414b;border-radius:0 0 4px 4px}.controllerCheck{position:absolute;z-index:3;left:17.4%;top:22%;display:grid;place-items:center;width:31px;height:31px;border-radius:50%;background:var(--green);color:#fff;box-shadow:0 5px 11px #0003}.controllerCheck.bad{background:var(--muted)}.controllerCheck ha-icon{--mdc-icon-size:19px}.manifold{position:absolute;z-index:2;left:25%;top:38%;width:34%;height:30%}.valves{position:absolute;left:2%;right:2%;top:0;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.valve{display:grid;justify-items:center;color:var(--text)}.valve b{font-size:8px;margin-bottom:2px}.valve i{width:17px;height:53px;border-radius:7px;background:linear-gradient(#53616b 0 18%,#2f3a43 19% 38%,#12181d 39% 100%);border:1px solid #0c1014;box-shadow:inset 0 8px 0 #64727d,0 3px 5px #0005}.valve em{width:8px;height:14px;margin-top:-2px;border-radius:0 0 3px 3px;background:#72808b}.valve.running i{box-shadow:inset 0 8px 0 #2d7b98,0 0 0 2px #079bd099,0 0 12px #079bd055}.valve.queued i{box-shadow:inset 0 8px 0 #977628,0 0 0 2px #f59e0b88}.rail{position:absolute;left:0;right:0;top:55%;height:20px;border-radius:10px;background:linear-gradient(#59636b 0%,#313a41 42%,#181e23 100%);border:1px solid #11181d;box-shadow:0 5px 12px #0005,inset 0 1px 0 #ffffff26}.rainSensor{position:absolute;z-index:3;left:49%;top:3%;display:grid;grid-template-columns:34px auto;align-items:center;gap:7px;padding:7px 10px;border:0;background:transparent;color:var(--muted);text-align:left}.rainSensor ha-icon{color:var(--muted);--mdc-icon-size:28px}.rainSensor span{font-size:8px;line-height:1.1}.zoneStack{position:absolute;z-index:2;right:2%;top:7%;width:35.5%;display:grid;gap:6px}.diagramZone{display:grid;grid-template-columns:51px minmax(0,1fr) auto 17px;align-items:center;gap:7px;min-height:51px;padding:5px 7px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);text-align:left;box-shadow:0 4px 10px #00000018}.diagramZone.running{border-color:color-mix(in srgb,var(--a) 72%,var(--line));background:var(--accent-soft)}.diagramZone.queued{border-color:color-mix(in srgb,var(--orange) 68%,var(--line));background:var(--orange-soft)}.diagramZone.off{filter:saturate(.72)}.diagramZone.unknown{border-style:dashed}.scene{display:grid;place-items:center;width:51px;height:40px;border-radius:9px;color:white;text-shadow:0 1px 3px #0008;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff26}.scene ha-icon{--mdc-icon-size:23px}.scene1,.scene2{background:linear-gradient(180deg,#55bfe8 0 42%,#65c74d 43% 100%)}.scene3{background:linear-gradient(145deg,#5fa44d,#ec658d 50%,#704b35)}.scene4{background:linear-gradient(145deg,#58b2da,#d8efeb 53%,#48974f)}.scene5{background:linear-gradient(145deg,#84b950,#60452f)}.scene6{background:linear-gradient(145deg,#5aabd8,#328d50 58%,#66432d)}.zoneText{min-width:0}.zoneText b{display:block;font-size:10.5px;line-height:1;color:var(--text)}.zoneText small{display:block;margin-top:3px;overflow:hidden;color:var(--muted);font-size:7px;white-space:nowrap;text-overflow:ellipsis}.duration{font-size:12px;font-weight:850;text-align:right;color:var(--text)}.duration small{display:block;font-size:6px;color:var(--muted)}.readyIcon{color:var(--green);--mdc-icon-size:15px}.mainlineDevice{position:absolute;z-index:2;left:44.5%;bottom:6.5%;display:grid;place-items:center;width:64px;height:36px;border-radius:14px;background:var(--surface);border:2px solid var(--muted);color:var(--a);box-shadow:0 4px 10px #0003}.mainlineDevice ha-icon{--mdc-icon-size:24px}.mainlineLabel{position:absolute;z-index:3;left:39%;bottom:0.5%;display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:8px;color:var(--muted);box-shadow:0 2px 6px #0002}.mainlineLabel b{color:var(--text);font-size:9px}
         .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.metric{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:8px;min-height:72px;padding:9px;border:1px solid var(--line);border-radius:18px;background:#fff;text-align:left}.metric ha-icon{color:var(--muted);--mdc-icon-size:29px}.metric small{display:block;color:var(--muted);font-size:7px;line-height:1.1}.metric b{display:block;margin-top:3px;font-size:14px;line-height:1.05}.metric em{display:block;margin-top:3px;color:var(--muted);font-size:7px;font-style:normal}.metric.good b,.metric.good ha-icon{color:var(--green)}.metric.water ha-icon{color:var(--a)}.metric.active b,.metric.active ha-icon{color:var(--a)}
@@ -1064,7 +1097,7 @@
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
         .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
-        /* v0.6.13: NikaS Specialized Panel UI Standard v1.6 shell. */
+        /* v0.6.13: NikaS Specialized Panel UI Standard v1.7 shell. */
         .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
         .headerButton{width:44px;height:44px;justify-self:center;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;color:var(--text)}
         .headerButton ha-icon{--mdc-icon-size:25px}.refreshButton{color:var(--a)}
@@ -1164,6 +1197,7 @@
       const structureKey = this._structureKey();
 
       if (!this._shellMounted) {
+        this._returnRoute = resolveReturnRoute(this);
         this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${this.header()}${this._workspace(content)}${this.bottomNav()}</div>`;
         this._shellMounted = true;
         this._renderedStructureKey = structureKey;
@@ -1198,7 +1232,7 @@ const baseStyles = p.styles;
 p.header = function headerV0622() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v0.6.22</small></button>
+    <button class="headerTitle" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v0.6.23</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
 };
@@ -1440,7 +1474,7 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
 
 p.styles = function stylesV0622() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.22 full DP38 schedule presentation */
+    /* UI v0.6.23 full DP38 schedule presentation */
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
     .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:25%!important;transform:none!important}
     .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:23%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
@@ -1451,7 +1485,7 @@ p.styles = function stylesV0622() {
     .diagramZone{overflow:hidden}.schemaGrid .diagramZone{grid-template-rows:minmax(48px,1fr) auto auto auto!important;gap:4px!important;padding:6px 5px 7px!important}
     .schemaGrid .scene{height:100%!important;min-height:48px}.schemaGrid .zoneText small,.schemaGrid .duration em,.schemaGrid .readyIcon{display:none!important}
     .zoneIndicators{display:grid;grid-template-columns:repeat(3,minmax(15px,1fr));align-items:center;justify-items:center;gap:3px;width:100%;min-width:0;margin-top:1px;overflow:visible}.zoneIndicators ha-icon{display:block;min-width:15px;--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
-    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.22')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.22')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.22')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.22')!important}.scene>ha-icon{display:none!important}
+    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.23')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.23')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.23')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.23')!important}.scene>ha-icon{display:none!important}
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
     .zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:96px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}
     .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}

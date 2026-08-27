@@ -5,7 +5,7 @@ const source = fs.readFileSync(panelPath, "utf8");
 
 const count = (pattern) => [...source.matchAll(pattern)].length;
 const requireMarker = (marker) => {
-  if (!source.includes(marker)) throw new Error(`Missing UI v1.6 marker: ${marker}`);
+  if (!source.includes(marker)) throw new Error(`Missing UI v1.7 marker: ${marker}`);
 };
 
 if (count(/shadowRoot\.innerHTML\s*=/g) !== 1) {
@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.22"',
+  'const UI_VERSION = "0.6.23"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -68,8 +68,8 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.22",
-  "zone-4.webp?v=0.6.22",
+  "zone-3.webp?v=0.6.23",
+  "zone-4.webp?v=0.6.23",
   "detailStateList",
   "mdi:umbrella-off-outline",
   "simplifiedDiagram",
@@ -100,7 +100,7 @@ if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
 }
 
-console.log("HO-SC-8W UI standard v1.6 contract verified");
+console.log("HO-SC-8W UI standard v1.7 contract verified");
 
 if (source.includes("${this.nodes(e)}")) {
   throw new Error("Status strip must not be rendered on the status view");

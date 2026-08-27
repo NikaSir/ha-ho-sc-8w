@@ -97,3 +97,6 @@ All notable project changes are recorded here.
 - Initial GitHub repository bootstrap and project boundary documentation.
 
 > Historical integration/frontend versions are preserved in Git history; current production artifacts do not depend on them at runtime.
+# 1.0.0-b005.41 / UI 0.6.23
+
+- Add the NikaS UI Standard v1.7 clickable two-line Header title plaque and explicit source-base-panel return handoff; browser-history navigation remains forbidden.

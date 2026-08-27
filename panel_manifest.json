@@ -1,7 +1,13 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.22",
-  "integration_version": "1.0.0-b005.40",
+  "panel_version": "0.6.23",
+  "integration_version": "1.0.0-b005.41",
+  "ui_standard": "1.7",
+  "header": {
+    "center_action": "return_to_source_base_panel",
+    "source_route_handoff_key": "nikas.specialized.source_route.v1",
+    "browser_history_back_allowed": false
+  },
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
