@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.17";
-  const ASSET_VERSION = "0.6.17";
+  const UI_VERSION = "0.6.18";
+  const ASSET_VERSION = "0.6.18";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -369,10 +369,10 @@
     }
     rainPresentation(e) {
       const value = this.state(e.rain);
-      if (this.bad(value)) return { label: "Нет данных", tone: "unknown" };
-      if (["enabled", "true", "on"].includes(String(value))) return { label: "Блокирует", tone: "blocked" };
-      if (["disabled", "false", "off"].includes(String(value))) return { label: "Не блокирует", tone: "clear" };
-      return { label: "Нет данных", tone: "unknown" };
+      if (this.bad(value)) return { label: "Нет данных", detail: "Состояние неизвестно", tone: "unknown", icon: "mdi:help-circle" };
+      if (["enabled", "true", "on"].includes(String(value))) return { label: "Не блокирует", detail: "Полив разрешён", tone: "clear", icon: "mdi:check-circle" };
+      if (["disabled", "false", "off"].includes(String(value))) return { label: "Блокирует", detail: "Полив запрещён", tone: "blocked", icon: "mdi:alert-circle" };
+      return { label: "Нет данных", detail: "Состояние неизвестно", tone: "unknown", icon: "mdi:help-circle" };
     }
     starts(attrs) { return Array.isArray(attrs.start_times) ? attrs.start_times.filter(Boolean) : []; }
     compactStarts(attrs) {
@@ -469,10 +469,12 @@
         tone = "offline";
       }
       const pressure = this.pressurePresentation(e);
+      const rain = this.rainPresentation(e);
       const pressureEntity = e.pressure ? ` data-entity="${this.esc(e.pressure)}"` : "";
+      const rainEntity = e.rain ? ` data-entity="${this.esc(e.rain)}"` : "";
       const connectionEntity = e.connection ? ` data-entity="${this.esc(e.connection)}"` : "";
       const aria = `${label}. ${freshness}`;
-      return `<div class="connectionWrap"><button class="systemConnection ${tone}" data-connection-indicator${connectionEntity} aria-label="${this.esc(aria)}"><span class="systemConnectionMain"><i></i><b>${label}</b></span><small class="freshness ${freshnessTone}">${freshness}</small></button><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button></div>`;
+      return `<div class="connectionWrap"><button class="systemConnection ${tone}" data-connection-indicator${connectionEntity} aria-label="${this.esc(aria)}"><span class="systemConnectionMain"><i></i><b>${label}</b></span><small class="freshness ${freshnessTone}">${freshness}</small></button><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button><button class="rainStatusCard ${rain.tone}"${rainEntity}><span class="rainStatusPhoto" aria-hidden="true"></span><span class="rainStatusText"><b>Датчик дождя</b><strong>${this.esc(rain.label)}</strong><small>${this.esc(rain.detail)}</small></span><ha-icon icon="${rain.icon}"></ha-icon></button></div>`;
     }
     zoneIcon(zone) {
       return ({ 1: "mdi:sprinkler", 2: "mdi:sprinkler", 3: "mdi:sprinkler", 4: "mdi:flower", 5: "mdi:shrub", 6: "mdi:greenhouse" })[zone] || "mdi:water";
@@ -513,19 +515,16 @@
           <button class="diagramZone ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}">
             <span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span>
             <span class="zoneText"><b>Зона ${zone}</b><small>${this.esc(z.label)}</small></span>
-            <span class="duration"><b>${this.esc(z.duration)}</b><small>мин</small></span>
+            <span class="duration"><span><b>${this.esc(z.duration)}</b><small>мин</small></span><em>по программе</em></span>
             <ha-icon class="readyIcon" icon="${readyIcon}"></ha-icon>
           </button>
         </div>`;
       }).join("");
-      const rain = this.rainPresentation(e);
       return `<div class="systemDiagram">
         <svg class="deviceWires" viewBox="0 0 1000 380" preserveAspectRatio="none" aria-hidden="true">
-          <path class="wire rainWire" d="M 294 50 H 452"/>
           <path class="wire controlLead" d="M 205 82 V 108 H 84"/>
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
-        <button class="rainSensor ${rain.tone}" data-entity="${this.esc(e.rain)}"><span class="rainSensorText"><b>Датчик дождя</b><small>${this.esc(rain.label)}</small></span></button>
         <div class="controlBus" aria-hidden="true"></div>
         <div class="manifoldRail" aria-hidden="true"></div>
         <div class="supplyLine" aria-hidden="true"></div>
@@ -1127,6 +1126,14 @@
         /* v0.6.17 smooth pinch */
         .workCanvas{will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-origin:0 0}
         .rainSensor.blocked .rainSensorText small{color:var(--orange)}.rainSensor.clear .rainSensorText small{color:var(--green)}
+        /* v0.6.18 approved rain card under pressure; no rain wire in schematic. */
+        .rainStatusCard{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) 22px;align-items:center;gap:7px;width:100%;min-height:62px;padding:6px 8px;border:1px solid color-mix(in srgb,var(--muted) 24%,transparent);border-radius:14px;background:var(--card);text-align:left;box-shadow:none}
+        .rainStatusCard.clear{background:color-mix(in srgb,var(--green) 8%,var(--card));border-color:color-mix(in srgb,var(--green) 24%,transparent)}.rainStatusCard.blocked{background:color-mix(in srgb,var(--orange) 8%,var(--card));border-color:color-mix(in srgb,var(--orange) 35%,transparent)}
+        .rainStatusPhoto{display:block;width:30px;height:48px;background:transparent url("${APPROVED_VISUALS.rain}") center/contain no-repeat}.rainStatusText{display:grid;gap:1px;min-width:0}.rainStatusText b{font-size:11px;line-height:1.05;color:var(--muted)}.rainStatusText strong{font-size:13px;line-height:1.05;color:var(--green);white-space:nowrap}.rainStatusText small{font-size:11px!important;line-height:1.05;color:var(--muted);white-space:nowrap}.rainStatusCard.blocked .rainStatusText strong,.rainStatusCard.blocked>ha-icon{color:var(--orange)}.rainStatusCard.clear>ha-icon{color:var(--green)}.rainStatusCard.unknown .rainStatusText strong,.rainStatusCard.unknown>ha-icon{color:var(--muted)}.rainStatusCard>ha-icon{--mdc-icon-size:20px}
+        .statusScreen .systemDiagram{margin-top:5px}.controller{top:3%;height:24%}.controlBus{top:31%}.schemaGrid{top:30%}.manifoldRail{top:48%}.supplyLine{top:calc(48% + 7px)}
+        .schemaGrid .diagramZone .zoneText small{color:var(--green)!important;font-weight:700}.schemaGrid .diagramZone.running .zoneText small{color:var(--a)!important}.schemaGrid .diagramZone.queued .zoneText small{color:var(--orange)!important}.schemaGrid .diagramZone.off .zoneText small,.schemaGrid .diagramZone.unknown .zoneText small{color:var(--muted)!important}
+        .schemaGrid .diagramZone .duration{display:grid!important;gap:2px;align-content:start}.schemaGrid .diagramZone .duration>span{display:flex;align-items:baseline;gap:3px}.schemaGrid .diagramZone .duration em{display:block;font-size:9px;font-style:normal;font-weight:500;line-height:1;color:var(--muted);white-space:nowrap}
+        @media(max-width:520px){.rainStatusCard{grid-template-columns:30px minmax(0,1fr) 20px;min-height:58px;padding:5px 7px;gap:6px}.rainStatusPhoto{width:27px;height:44px}.rainStatusText b{font-size:10px}.rainStatusText strong{font-size:12px}.rainStatusText small{font-size:10px!important}.statusScreen .systemDiagram{margin-top:4px}.controller{top:3%;height:24%}.controlBus{top:31%}.schemaGrid{top:30%}.manifoldRail{top:48%}.supplyLine{top:calc(48% + 6px)}.schemaGrid .diagramZone .duration em{font-size:8px}}
       `;
     }
 
