@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.15",
+    "dashboard_version": "0.6.16",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -54,7 +54,8 @@
       "sections": [
         "system_state",
         "connection_and_pressure",
-        "program_mode_telemetry",
+        "controller_rain_and_informative_zone_schematic",
+        "program_mode_seasonal_adjustment",
         "primary_actions"
       ]
     },
@@ -75,7 +76,7 @@
       "rain_sensor_path": "direct_horizontal_midline_to_controller",
       "water_passes_through_controller": false,
       "zone_routing": "orthogonal_vertical_one_to_one",
-      "mobile_layout": "viewport_filled_without_status_strip",
+      "mobile_layout": "status_fits_work_viewport_without_scroll_at_100",
       "manifold_layout": "single_six_column_grid_with_shared_valve_pipe_zone_axes",
       "mainline_pressure_presentation": "text_only_two_decimal_bar_value_below_connection_status",
       "mainline_state": "sensor.nikas_h2000_pro_voda_na_poliv_2",
@@ -135,7 +136,7 @@
         "shell_reconciliation": "stable_dom_point_patch"
       },
       "rain_sensor_connection": "direct_horizontal_midline_to_controller",
-      "zone_thumbnail_content": "zone_number_and_image_only",
+      "zone_thumbnail_content": "image_zone_number_activity_program_duration",
       "zone_thumbnail_visuals": {
         "1": "lawn",
         "2": "lawn",
@@ -143,7 +144,16 @@
         "4": "flowerbed",
         "5": "shrubs",
         "6": "greenhouse"
-      }
+      },
+      "rain_sensor_state_semantics": "dp102_follow_enabled_or_bypassed_current_wet_contact_not_exposed",
+      "control_wire_caption": false,
+      "status_scroll_at_100": false,
+      "long_views_native_vertical_scroll_at_100": true,
+      "summary_cards": [
+        "program",
+        "mode",
+        "seasonal_adjustment"
+      ]
     }
   },
   "ownership": {
