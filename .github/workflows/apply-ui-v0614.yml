@@ -29,6 +29,16 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Correct staged patch metadata path
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("scripts/apply-ui-v0614.py")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace('p["standards"]["header"]', 'data["standards"]["header"]')
+          path.write_text(text, encoding="utf-8")
+          PY
+
       - name: Apply deterministic rebuild
         run: python scripts/apply-ui-v0614.py
 
