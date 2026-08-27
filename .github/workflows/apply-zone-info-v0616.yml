@@ -20,10 +20,17 @@ jobs:
       - name: Apply composition patch
         run: python scripts/apply_zone_info_v0616.py
 
-      - name: Tighten first-screen guards
+      - name: Remove legacy first-screen copy and tighten guards
         run: |
           python - <<'PY'
           from pathlib import Path
+
+          panel = Path('custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js')
+          source = panel.read_text(encoding='utf-8')
+          source = source.replace('<small>СОСТОЯНИЕ СИСТЕМЫ</small>', '')
+          source = source.replace('<span>Провод управления клапанами</span>', '')
+          panel.write_text(source, encoding='utf-8')
+
           path = Path('scripts/check-panel-ui-v16.mjs')
           text = path.read_text(encoding='utf-8')
           text = text.replace(
