@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.20";
-  const ASSET_VERSION = "0.6.20";
+  const UI_VERSION = "0.6.21";
+  const ASSET_VERSION = "0.6.21";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -571,7 +571,7 @@
       return `<section class="quickActions"><div class="modeGrid">
         <button class="mode ${operation === "Auto" ? "active" : ""}" data-entity="${this.esc(e.operation)}"><ha-icon icon="mdi:play"></ha-icon><b>Полив</b><small>${operation === "Auto" ? "Авто" : this.esc(this.human("operation", operation))}</small></button>
         <button class="mode disabled" disabled><ha-icon icon="mdi:pause-circle-outline"></ha-icon><b>Пауза</b><small>Недоступно</small></button>
-        <button class="mode manualAction" data-go="manual"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>Доступен</small></button>
+        <button class="mode disabled" disabled><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>Недоступен</small></button>
       </div></section>`;
     }
     statusView(e) { return `<div class="statusScreen">${this.hero(e)}${this.metrics(e)}${this.currentMode(e)}</div>`; }
@@ -591,16 +591,19 @@
     }
     programView(e) {
       const seasonal = this.state(e.seasonal);
-      const rain = this.state(e.rain);
+      const rain = this.rainPresentation(e);
+      const firstStart = Array.from({ length: 6 }, (_, i) => i + 1)
+        .flatMap((zone) => this.starts(this.zoneRuntime(e, zone).attrs))
+        .sort()[0] || "—";
       const zoneRows = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
         const z = this.zoneRuntime(e, zone);
         return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span>Зона ${zone}</span><b>${this.esc(z.start)} · ${this.esc(z.duration)} мин</b><ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
-      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Read-only представление программы контроллера.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><button data-entity="${this.esc(e.seasonal)}"><small>Сезон</small><b>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</b></button><button data-entity="${this.esc(e.rain)}"><small>Дождь</small><b>${this.esc(this.human("rain", rain))}</b></button><button data-entity="${this.esc(e.cache)}"><small>Кэш DP38</small><b>${this.esc(this.human("cache", this.state(e.cache)))}</b></button></section><section class="programList">${zoneRows}</section>`;
+      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Текущая программа контроллера доступна для просмотра.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><button data-entity="${this.esc(e.seasonal)}"><small>Сезон</small><b>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</b></button><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
     manualView(e) {
-      const zoneButtons = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => `<button class="manualZone ${this._manualZone === zone ? "active" : ""}" data-manual-zone="${zone}">${zone}<small>Зона ${zone}</small></button>`).join("");
-      return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Подготовка запуска</h2><p>Команда запуска остаётся закрытой до проверенного Actions API.</p></div><section class="manualCard"><div class="manualZones">${zoneButtons}</div><div class="stepper"><button data-duration="-1"><ha-icon icon="mdi:minus"></ha-icon></button><b>${this._manualDuration}<small> мин</small></b><button data-duration="1"><ha-icon icon="mdi:plus"></ha-icon></button></div><button class="lockedStart" disabled><ha-icon icon="mdi:lock-outline"></ha-icon>Запуск пока недоступен</button></section>`;
+      const operation = this.human("operation", this.state(e.operation));
+      return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Управление недоступно</h2><p>Запуск зон из панели пока не поддерживается.</p></div><section class="manualCard manualUnavailable"><div class="manualLock"><ha-icon icon="mdi:lock-outline"></ha-icon><h3>Ручной запуск заблокирован</h3><p>Автоматическая программа продолжает работать независимо от панели.</p></div><div class="manualFacts"><div><small>Текущий режим</small><b>${this.esc(operation)}</b></div><div><small>Рабочие зоны</small><b>1–6</b></div><div><small>Управление</small><b>Только просмотр</b></div></div></section>`;
     }
     diagnosticsView(e) {
       const rows = [
@@ -1185,10 +1188,10 @@ if (!Panel) throw new Error("HO-SC-8W base panel is not registered");
 const p = Panel.prototype;
 const baseStyles = p.styles;
 
-p.header = function headerV0620() {
+p.header = function headerV0621() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v0.6.20</small></button>
+    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v0.6.21</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
 };
@@ -1221,32 +1224,31 @@ p.connectionIndicator = function connectionIndicatorV0619(e) {
   return `<div class="connectionWrap connectionOnly"><button class="systemConnection ${tone}" data-connection-indicator${entity} aria-label="${this.esc(`${label}. ${freshness}`)}"><span class="systemConnectionMain"><i></i><b>${label}</b></span><small class="freshness ${freshnessTone}">${freshness}</small></button></div>`;
 };
 
-p._zoneIndicators = function zoneIndicatorsV0619(z) {
+p._zoneIndicators = function zoneIndicatorsV0621(z) {
   const configured = this.state(z.q.schedule) === "configured";
   const rain = z.attrs.rain_sensor_follow;
   const readyIcon = z.tone === "running" ? "mdi:water" : z.tone === "queued" ? "mdi:clock-outline" : z.tone === "unknown" ? "mdi:help-circle" : z.tone === "off" ? "mdi:minus-circle" : "mdi:check-circle";
   const readyClass = z.tone === "unknown" || z.tone === "off" ? "off" : "on";
   const programClass = configured ? "on" : "off";
   const rainClass = rain === true ? "on" : rain === false ? "off" : "unknown";
-  const rainIcon = rain === false ? "mdi:umbrella-off-outline" : rain === true ? "mdi:umbrella" : "mdi:help-circle-outline";
+  const rainIcon = rain === true ? "mdi:umbrella" : "mdi:umbrella-off-outline";
+  const rainTitle = rain === true ? "Датчик дождя учитывается" : rain === false ? "Датчик дождя не учитывается" : "Нет данных об учёте датчика дождя";
   return `<span class="zoneIndicators" aria-label="Готовность, участие в программе, учёт датчика дождя">
     <ha-icon class="${readyClass}" icon="${readyIcon}" title="Готовность зоны"></ha-icon>
     <ha-icon class="${programClass}" icon="mdi:calendar-check" title="Участие в программе"></ha-icon>
-    <ha-icon class="${rainClass}" icon="${rainIcon}" title="Учёт датчика дождя"></ha-icon>
+    <ha-icon class="${rainClass}" icon="${rainIcon}" title="${rainTitle}"></ha-icon>
   </span>`;
 };
 
-p.irrigationDiagram = function irrigationDiagramV0619(e) {
+p.irrigationDiagram = function irrigationDiagramV0621(e) {
   const active = this.zoneSet(this.state(e.active));
   const queued = this.zoneSet(this.state(e.queued));
   const columns = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
     const z = this.zoneRuntime(e, zone);
-    const valveTone = active.has(String(zone)) ? "running" : queued.has(String(zone)) ? "queued" : "";
     const branchTone = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
     return `<div class="schemaColumn" data-axis="${zone}">
       <span class="valveNumber">${zone}</span>
-      <span class="valvePhoto ${valveTone}" aria-hidden="true"></span>
-      <span class="waterBranch ${branchTone}" aria-hidden="true"></span>
+      <span class="zoneLink ${branchTone}" aria-hidden="true"></span>
       <button class="diagramZone ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}">
         <span class="scene scene${zone}" aria-hidden="true"></span>
         <span class="zoneText"><b>Зона ${zone}</b></span>
@@ -1255,12 +1257,10 @@ p.irrigationDiagram = function irrigationDiagramV0619(e) {
       </button>
     </div>`;
   }).join("");
-  return `<div class="systemDiagram approvedDiagram">
+  return `<div class="systemDiagram approvedDiagram simplifiedDiagram">
     <button class="controller" data-entity="${this.esc(e.connection)}" aria-label="Контроллер HO-SC-8W"></button>
     <div class="controllerDrop" aria-hidden="true"></div>
     <div class="controlBus" aria-hidden="true"></div>
-    <div class="manifoldRail" aria-hidden="true"></div>
-    <div class="supplyLine" aria-hidden="true"></div>
     <div class="schemaGrid">${columns}</div>
   </div>`;
 };
@@ -1431,27 +1431,30 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   }, { passive: false });
 };
 
-p.styles = function stylesV0620() {
+p.styles = function stylesV0621() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.20 approved mobile composition */
+    /* UI v0.6.21 simplified status composition */
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
-    .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:23%!important;transform:none!important}
-    .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:21%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
-    .approvedDiagram .controlBus{top:29%!important}
-    .approvedDiagram .schemaGrid{top:26%!important;bottom:5%!important}
+    .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:25%!important;transform:none!important}
+    .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:23%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
+    .approvedDiagram .controlBus{top:31%!important}
+    .approvedDiagram .schemaGrid{top:28%!important;bottom:3%!important}
+    .simplifiedDiagram .manifoldRail,.simplifiedDiagram .supplyLine,.simplifiedDiagram .valvePhoto,.simplifiedDiagram .waterBranch{display:none!important}
+    .simplifiedDiagram .schemaColumn{grid-template-rows:28px 15% minmax(0,1fr)!important}.simplifiedDiagram .schemaColumn::before{display:none!important}.zoneLink{display:block;justify-self:center;width:4px;height:100%;border-radius:4px;background:#0a95df}.zoneLink.run{background:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 18%,transparent)}.zoneLink.queue{background:var(--orange)}
     .diagramZone{overflow:hidden}.schemaGrid .diagramZone{grid-template-rows:minmax(48px,1fr) auto auto auto!important;gap:4px!important;padding:6px 5px 7px!important}
     .schemaGrid .scene{height:100%!important;min-height:48px}.schemaGrid .zoneText small,.schemaGrid .duration em,.schemaGrid .readyIcon{display:none!important}
-    .zoneIndicators{display:flex;align-items:center;justify-content:space-between;gap:3px;width:100%;margin-top:1px}.zoneIndicators ha-icon{--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
-    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.20')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.20')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.20')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.20')!important}.scene>ha-icon{display:none!important}
+    .zoneIndicators{display:flex;align-items:center;justify-content:space-between;gap:3px;width:100%;margin-top:1px}.zoneIndicators ha-icon{flex:0 0 auto;--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
+    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.21')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.21')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.21')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.21')!important}.scene>ha-icon{display:none!important}
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
     .zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;gap:9px}.zoneCard .zoneIndicators ha-icon{--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}
-    .headerTitle{appearance:none;border:0;background:transparent;padding:4px 8px;border-radius:14px;cursor:pointer}.headerTitle:active{background:var(--accent-soft)}
+    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:active{background:var(--accent-soft)}
+    .manualUnavailable{display:grid;gap:18px;min-height:390px;align-content:start}.manualLock{display:grid;justify-items:center;padding:24px 18px 20px;border-radius:20px;background:var(--soft);text-align:center}.manualLock>ha-icon{--mdc-icon-size:48px;color:var(--muted)}.manualLock h3{margin:12px 0 6px;font-size:21px}.manualLock p{max-width:390px;margin:0;color:var(--muted);font-size:14px!important;line-height:1.35}.manualFacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.manualFacts>div{padding:13px 10px;border-radius:15px;background:var(--soft);text-align:center}.manualFacts small,.manualFacts b{display:block;font-size:13px}.manualFacts b{margin-top:4px}
     .detailCard{min-height:430px}.detailHead{display:grid;grid-template-columns:112px minmax(0,1fr)!important}.detailHead .scene{width:112px!important;height:96px!important}.detailHead h2{font-size:25px}.detailGrid{margin-top:20px}.detailGrid small,.detailGrid b{font-size:14px}.detailGrid b{margin-top:6px}.detailStateList{display:grid;gap:8px;margin-top:18px}.detailStateList>div{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;padding:11px 13px;border-radius:15px;background:var(--soft)}.detailStateList ha-icon{--mdc-icon-size:27px;color:var(--green)}.detailStateList ha-icon.off,.detailStateList ha-icon.unknown{color:var(--muted)}.detailStateList small,.detailStateList b{display:block;font-size:13px}.detailStateList b{margin-top:2px}.detailNote{margin:16px 2px 0!important;font-size:12px!important}
     @media(max-width:520px){
-      .approvedDiagram{aspect-ratio:388/390!important;margin-top:0!important}.approvedDiagram .controller{left:35%!important;width:30%!important;height:24%!important}.approvedDiagram .controllerDrop{top:22%;height:8%}.approvedDiagram .schemaGrid{top:25%!important;bottom:3%!important}.schemaColumn{grid-template-rows:26px 32% 8% minmax(0,1fr)!important}.schemaGrid .diagramZone{min-height:122px!important}.schemaGrid .scene{min-height:52px!important}.schemaGrid .zoneIndicators ha-icon{--mdc-icon-size:14px}
+      .approvedDiagram{aspect-ratio:388/365!important;margin-top:0!important}.approvedDiagram .controller{left:35%!important;width:30%!important;height:27%!important}.approvedDiagram .controllerDrop{top:24%;height:8%}.approvedDiagram .controlBus{top:32%!important}.approvedDiagram .schemaGrid{top:29%!important;bottom:2%!important}.simplifiedDiagram .schemaColumn{grid-template-rows:26px 14% minmax(0,1fr)!important}.schemaGrid .diagramZone{min-height:142px!important}.schemaGrid .scene{min-height:66px!important}.schemaGrid .zoneIndicators ha-icon{--mdc-icon-size:14px}
       .infraRow{grid-template-columns:.95fr 1.25fr;gap:6px}.infraRow .heroPressure,.infraRow .rainStatusCard{min-height:62px}.infraRow .heroPressure{grid-template-columns:28px minmax(0,1fr);padding:7px}.infraRow .heroPressure>ha-icon{--mdc-icon-size:25px}.infraRow .heroPressure b{font-size:17px}.infraRow .rainStatusCard{grid-template-columns:34px minmax(0,1fr) 20px;padding:6px}.infraRow .rainStatusPhoto{width:31px;height:39px}.infraRow .rainStatusText strong{font-size:13px}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}
       .zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{gap:6px}.zoneCard .zoneIndicators ha-icon{--mdc-icon-size:19px}
-      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}
+      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualFacts{grid-template-columns:1fr}.manualUnavailable{min-height:380px}
     }
   `;
 };
