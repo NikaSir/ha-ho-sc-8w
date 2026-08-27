@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.13
-**Manifest:** integration `1.0.0-b005.33`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.16
+**Manifest:** integration `1.0.0-b005.34`
 
 ## Compliance
 
@@ -41,3 +41,12 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Rain sensor moved away from the controller and linked by one direct horizontal midline.
 - Phone schematic height is viewport-responsive to consume the freed first-screen space without changing Header/Bottom Tab Bar geometry.
 - Zoom/scroll engine is unchanged: one viewport/canvas, native vertical scroll at 100%, >100% axis-aware pan, two-finger reset.
+
+## UI 0.6.16 composition delta
+
+- The redundant `СОСТОЯНИЕ СИСТЕМЫ` eyebrow and control-wire caption are removed.
+- The status view is explicitly sized to the work viewport and has no native vertical scroll at 100%; long views such as Diagnostics retain native vertical scrolling.
+- Zone cards again show image, `Зона N`, factual activity state and DP38 programmed duration at the 12 px semantic-text floor.
+- Summary row is `Программа / Режим / Сезонная коррекция`; telemetry age remains represented by the connection freshness indicator rather than a duplicate card.
+- Rain sensor text reports only factual DP102 semantics: `Учитывается / Не блокирует / Нет данных`. The current wet-contact blocking state is not claimed because the integration does not expose it.
+- Pinch, reset, pan, one viewport/canvas and stable DOM architecture are unchanged.

@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.15"',
+  'const UI_VERSION = "0.6.16"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -46,7 +46,11 @@ for (const marker of [
   '"Данные устарели"',
   '"Нет связи"',
   'class="statusScreen"',
-  'd="M 286 48 H 455"',
+  "statusFitsViewport",
+  '"СЕЗОННАЯ КОРРЕКЦИЯ"',
+  '<b>Зона ${zone}</b>',
+  'class="rainSensor ${rain.tone}"',
+  'd="M 294 50 H 452"',
 ]) requireMarker(marker);
 
 if (source.includes('"Онлайн"')) {
@@ -57,4 +61,14 @@ console.log("HO-SC-8W UI standard v1.6 contract verified");
 
 if (source.includes("${this.nodes(e)}")) {
   throw new Error("Status strip must not be rendered on the status view");
+}
+
+if (source.includes("<small>СОСТОЯНИЕ СИСТЕМЫ</small>")) {
+  throw new Error("Redundant system-state eyebrow must be absent from the first screen");
+}
+if (source.includes("<span>Провод управления клапанами</span>")) {
+  throw new Error("Control-wire caption must be removed from the first screen");
+}
+if (source.includes('"ТЕЛЕМЕТРИЯ"')) {
+  throw new Error("Telemetry age summary card must be replaced by seasonal adjustment");
 }

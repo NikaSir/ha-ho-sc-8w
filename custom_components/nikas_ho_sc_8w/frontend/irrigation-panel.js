@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.15";
-  const ASSET_VERSION = "0.6.15";
+  const UI_VERSION = "0.6.16";
+  const ASSET_VERSION = "0.6.16";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -359,6 +359,13 @@
       if (this.bad(value)) return "Нет данных";
       return String(value);
     }
+    rainPresentation(e) {
+      const value = this.state(e.rain);
+      if (this.bad(value)) return { label: "Нет данных", tone: "unknown" };
+      if (["enabled", "true", "on"].includes(String(value))) return { label: "Учитывается", tone: "armed" };
+      if (["disabled", "false", "off"].includes(String(value))) return { label: "Не блокирует", tone: "bypass" };
+      return { label: String(value), tone: "unknown" };
+    }
     starts(attrs) { return Array.isArray(attrs.start_times) ? attrs.start_times.filter(Boolean) : []; }
     compactStarts(attrs) {
       const starts = this.starts(attrs);
@@ -471,7 +478,7 @@
       const isActive = active.has(String(zone));
       const isQueued = queued.has(String(zone));
       let tone = "ready", label = this.zoneStateText(state);
-      if (isActive) { tone = "running"; label = `Полив · ${this.state(q.remaining)} мин`; }
+      if (isActive) { tone = "running"; label = "Полив"; }
       else if (isQueued) { tone = "queued"; label = "В очереди"; }
       else if (state === "disabled") tone = "off";
       else if (this.bad(state)) tone = "unknown";
@@ -490,24 +497,28 @@
         const z = this.zoneRuntime(e, zone);
         const valveTone = active.has(String(zone)) ? "running" : queued.has(String(zone)) ? "queued" : "";
         const branchTone = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
-        const readyIcon = z.tone === "unknown" ? "mdi:help-circle" : z.tone === "off" ? "mdi:minus-circle" : "mdi:check-circle";
+        const readyIcon = z.tone === "running" ? "mdi:water" : z.tone === "queued" ? "mdi:clock-outline" : z.tone === "unknown" ? "mdi:help-circle" : z.tone === "off" ? "mdi:minus-circle" : "mdi:check-circle";
         return `<div class="schemaColumn" data-axis="${zone}">
           <span class="valveNumber">${zone}</span>
           <span class="valvePhoto ${valveTone}" aria-hidden="true"></span>
           <span class="waterBranch ${branchTone}" aria-hidden="true"></span>
           <button class="diagramZone ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}">
             <span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span>
+            <span class="zoneText"><b>Зона ${zone}</b><small>${this.esc(z.label)}</small></span>
+            <span class="duration"><b>${this.esc(z.duration)}</b><small>мин</small></span>
+            <ha-icon class="readyIcon" icon="${readyIcon}"></ha-icon>
           </button>
         </div>`;
       }).join("");
+      const rain = this.rainPresentation(e);
       return `<div class="systemDiagram">
         <svg class="deviceWires" viewBox="0 0 1000 380" preserveAspectRatio="none" aria-hidden="true">
-          <path class="wire rainWire" d="M 286 48 H 455"/>
-          <path class="wire controlLead" d="M 205 82 V 110 H 82"/>
+          <path class="wire rainWire" d="M 294 50 H 452"/>
+          <path class="wire controlLead" d="M 205 82 V 108 H 84"/>
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
-        <button class="rainSensor" data-entity="${this.esc(e.rain)}"><ha-icon icon="mdi:access-point"></ha-icon><span>Датчик<br>дождя</span></button>
-        <div class="controlBus"><span>Провод управления клапанами</span></div>
+        <button class="rainSensor ${rain.tone}" data-entity="${this.esc(e.rain)}"><span class="rainSensorText"><b>Датчик дождя</b><small>${this.esc(rain.label)}</small></span></button>
+        <div class="controlBus" aria-hidden="true"></div>
         <div class="manifoldRail" aria-hidden="true"></div>
         <div class="supplyLine" aria-hidden="true"></div>
         <div class="schemaGrid">${columns}</div>
@@ -520,14 +531,14 @@
       const nextStart = this.zoneRuntime(e, 1).start;
       const data = [
         ["mdi:calendar-blank-outline", "ПРОГРАММА", nextStart, "Следующий полив", e.zones[1].schedule, "water"],
-        ["mdi:autorenew", "РЕЖИМ", this.human("operation", operation), this.bad(seasonal) ? "Сезон · —" : `Сезон · ${seasonal} %`, e.operation, operation === "Auto" ? "active" : ""],
-        ["mdi:signal", "ТЕЛЕМЕТРИЯ", this.updatedValue(e.connection), "Последнее обновление", e.connection, "good"],
+        ["mdi:autorenew", "РЕЖИМ", this.human("operation", operation), this.human("irrigation", this.state(e.irrigation)), e.operation, operation === "Auto" ? "active" : ""],
+        ["mdi:percent-outline", "СЕЗОННАЯ КОРРЕКЦИЯ", this.bad(seasonal) ? "—" : `${seasonal} %`, "Текущая поправка", e.seasonal, this.bad(seasonal) ? "" : "active"],
       ];
       return `<div class="metrics">${data.map(([icon, label, value, note, id, tone]) => `<button class="metric ${tone}" data-entity="${this.esc(id)}"><small>${label}</small><div><ha-icon icon="${icon}"></ha-icon><span><b>${this.esc(value)}</b><em>${this.esc(note)}</em></span></div></button>`).join("")}</div>`;
     }
     hero(e) {
       const status = this.systemStatus(e);
-      return `<section class="hero ${status.tone}"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionIndicator(e)}</div>${this.irrigationDiagram(e)}</section>`;
+      return `<section class="hero ${status.tone}"><div class="heroHead"><div class="heroStatus"><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionIndicator(e)}</div>${this.irrigationDiagram(e)}</section>`;
     }
 
     nodes(e) {
@@ -839,7 +850,7 @@
 
     _viewContent() {
       if (!this._hass) {
-        return `<section class="hero unknown"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section>`;
+        return `<section class="hero unknown"><div class="heroHead"><div><h1>Загрузка данных…</h1><p>Ожидание Home Assistant</p></div></div><div class="systemDiagram"></div></section>`;
       }
       const e = this.entities();
       if (this._view === "zones") return this.zonesView(e);
@@ -930,6 +941,8 @@
       this.shadowRoot.querySelectorAll("[data-view]").forEach((button) => {
         button.classList.toggle("active", button.dataset.view === this._view);
       });
+      const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
+      if (viewport) viewport.classList.toggle("statusFitsViewport", this._view === "status");
     }
 
     styles() {
@@ -1083,6 +1096,30 @@
           .controlBus{top:29%}.controlBus span{left:50%;right:auto;bottom:9px;transform:translateX(-50%)}
           .manifoldRail{top:46.5%}.supplyLine{top:calc(46.5% + 7px)}.schemaGrid{top:24%;bottom:3%;gap:5px}.schemaColumn{grid-template-rows:26px 35% 9% minmax(0,1fr)}
         }
+        /* v0.6.16: informative zone cards, compact schematic and fit-without-scroll status view. */
+        .workViewport.isNative .workCanvas{height:100%}
+        .workViewport.isNative .workCanvas>.content{height:100%;min-height:100%;padding-bottom:4px}
+        .workViewport.isNative.statusFitsViewport{overflow-y:hidden}
+        .workViewport.isNative .statusScreen{height:100%;min-height:0;overflow:hidden;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:6px}
+        .statusScreen .hero{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);padding:10px 12px 9px}
+        .statusScreen .heroHead{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px}
+        .heroStatus{min-width:0;padding-top:1px}.heroStatus h1{margin:0 0 4px;font-size:25px;line-height:1;letter-spacing:-.045em}.heroStatus p{margin:0;font-size:12px;line-height:1.2}
+        .connectionWrap{display:flex;flex-direction:column;align-items:stretch;gap:5px;min-width:146px}.systemConnection{min-width:146px;padding:6px 9px;border-radius:14px}.systemConnectionMain{gap:7px}.systemConnectionMain i{width:9px;height:9px}.systemConnectionMain b{font-size:16px}.systemConnection .freshness{margin-left:16px;font-size:13px!important}.heroPressure{width:100%;margin:0;padding:4px 7px;border-radius:11px;justify-content:space-between}.heroPressure span{font-size:12px}.heroPressure b{font-size:14px}
+        .statusScreen .systemDiagram{height:auto;min-height:0;aspect-ratio:auto;margin-top:6px;border-radius:19px}
+        .controller{left:1%;top:2%;width:28%;height:22%}.rainSensor{left:44%;top:2%;width:52%;height:22%;padding:0;border:0;background:transparent url("${APPROVED_VISUALS.rain}") left center/auto 52% no-repeat;color:var(--muted);text-align:left}.rainSensor .rainSensorText{position:absolute;left:30%;top:50%;display:grid;gap:3px;transform:translateY(-50%);white-space:nowrap}.rainSensor .rainSensorText b{font-size:12px;font-weight:750;line-height:1.05}.rainSensor .rainSensorText small{font-size:12px!important;font-weight:650;line-height:1.05;color:var(--muted)}.rainSensor.armed .rainSensorText small{color:var(--a)}.rainSensor.bypass .rainSensorText small{color:var(--green)}
+        .controlBus{top:28%;left:8.33%;right:8.33%}.controlBus span{display:none!important}.manifoldRail{top:47%}.supplyLine{top:calc(47% + 7px)}
+        .schemaGrid{top:27%;bottom:1.5%;gap:5px}.schemaColumn{grid-template-rows:24px 30% 7% minmax(0,1fr)}.schemaColumn::before{top:10px;height:28px}.valveNumber{width:23px;height:23px;font-size:12px}.valvePhoto{width:112%;background-size:contain}.waterBranch{height:100%}
+        .schemaGrid .diagramZone{position:relative;display:grid!important;grid-template-columns:1fr;grid-template-rows:40px auto auto;align-content:start;gap:3px;height:100%;min-height:0;padding:4px 4px 5px;border-radius:10px;overflow:hidden;text-align:left}.schemaGrid .diagramZone .scene{display:block!important;width:100%;height:40px;min-height:0;border-radius:7px}.schemaGrid .diagramZone .zoneText{display:block!important;min-width:0;line-height:1.05}.schemaGrid .diagramZone .zoneText b{display:block;font-size:12px;line-height:1.05;white-space:nowrap}.schemaGrid .diagramZone .zoneText small{display:block;margin-top:2px;font-size:12px!important;line-height:1.05;white-space:normal;overflow:visible}.schemaGrid .diagramZone .duration{display:flex!important;align-items:baseline;gap:3px;margin-top:1px;color:var(--text);text-align:left}.schemaGrid .diagramZone .duration b{font-size:16px;font-weight:850;line-height:1}.schemaGrid .diagramZone .duration small{display:inline!important;font-size:12px!important;color:var(--muted)}.schemaGrid .diagramZone .readyIcon{display:block!important;position:absolute;right:3px;top:4px;--mdc-icon-size:14px;color:var(--green);filter:drop-shadow(0 1px 2px #fff)}.schemaGrid .diagramZone.running .readyIcon{color:var(--a)}.schemaGrid .diagramZone.queued .readyIcon{color:var(--orange)}.schemaGrid .diagramZone.off .readyIcon,.schemaGrid .diagramZone.unknown .readyIcon{color:var(--muted)}
+        .statusScreen .metrics{margin-top:0;gap:5px}.statusScreen .metric{min-height:86px;padding:8px 7px;border-radius:16px}.statusScreen .metric>small{font-size:12px!important;line-height:1.05;min-height:25px}.statusScreen .metric>div{grid-template-columns:31px minmax(0,1fr);gap:6px}.statusScreen .metric>div>ha-icon{--mdc-icon-size:29px}.statusScreen .metric b{font-size:17px}.statusScreen .metric em{font-size:12px!important;line-height:1.05}
+        .statusScreen .quickActions{margin-top:0}.statusScreen .quickActions .modeGrid{gap:5px}.statusScreen .quickActions .mode{min-height:88px;padding:6px;border-radius:16px}.statusScreen .quickActions .mode ha-icon{--mdc-icon-size:29px}.statusScreen .quickActions .mode b{font-size:14px}.statusScreen .quickActions .mode small{font-size:12px!important}
+        @media(max-width:520px){
+          .statusScreen .hero{padding:8px 10px 7px}.statusScreen .heroHead{gap:6px}.heroStatus h1{font-size:24px}.heroStatus p{font-size:12px}.connectionWrap{min-width:144px}.systemConnection{min-width:144px;padding:5px 8px}.heroPressure{padding:3px 6px}
+          .statusScreen .systemDiagram{height:auto;min-height:0;margin-top:5px}.controller{left:.5%;top:2%;width:28.5%;height:22%}.rainSensor{left:43%;top:2%;width:54%;height:22%;background-size:auto 50%}.rainSensor .rainSensorText{left:29%}
+          .controlBus{top:28%}.manifoldRail{top:47%;height:18px}.supplyLine{top:calc(47% + 6px);height:5px}.schemaGrid{top:27%;bottom:1%;gap:4px}.schemaColumn{grid-template-rows:23px 29% 7% minmax(0,1fr)}.schemaColumn::before{top:10px;height:27px}.valvePhoto{width:116%}
+          .schemaGrid .diagramZone{grid-template-rows:37px auto auto;gap:2px;padding:3px 3px 4px;border-radius:9px}.schemaGrid .diagramZone .scene{height:37px;border-radius:6px}.schemaGrid .diagramZone .zoneText b,.schemaGrid .diagramZone .zoneText small{font-size:12px!important}.schemaGrid .diagramZone .duration b{font-size:15px}.schemaGrid .diagramZone .duration small{font-size:12px!important}.schemaGrid .diagramZone .readyIcon{right:2px;top:3px;--mdc-icon-size:13px}
+          .statusScreen .metric{min-height:82px;padding:7px 6px}.statusScreen .metric>small{min-height:24px}.statusScreen .metric>div{grid-template-columns:28px minmax(0,1fr);gap:5px}.statusScreen .metric>div>ha-icon{--mdc-icon-size:27px}.statusScreen .metric b{font-size:16px}.statusScreen .quickActions .mode{min-height:84px;padding:5px}.statusScreen .quickActions .mode ha-icon{--mdc-icon-size:27px}
+        }
+
       `;
     }
 

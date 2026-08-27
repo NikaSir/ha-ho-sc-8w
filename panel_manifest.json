@@ -1,7 +1,7 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.15",
-  "integration_version": "1.0.0-b005.33",
+  "panel_version": "0.6.16",
+  "integration_version": "1.0.0-b005.34",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -100,7 +100,7 @@
       "role": "zone_6"
     }
   ],
-  "zone_thumbnail_content": "zone_number_and_image_only",
+  "zone_thumbnail_content": "image_zone_number_activity_program_duration",
   "zone_thumbnail_visuals": {
     "1": "lawn",
     "2": "lawn",
@@ -109,6 +109,15 @@
     "5": "shrubs",
     "6": "greenhouse"
   },
-  "status_layout": "system_state_connection_pressure_schematic_summary_actions_no_status_strip",
-  "rain_sensor_connection": "direct_horizontal_midline_to_controller"
+  "status_layout": "system_state_connection_pressure_informative_zones_program_mode_seasonal_actions_fit_without_scroll",
+  "rain_sensor_connection": "direct_horizontal_midline_to_controller",
+  "status_scroll_at_100": false,
+  "long_views_native_vertical_scroll_at_100": true,
+  "summary_cards": [
+    "program",
+    "mode",
+    "seasonal_adjustment"
+  ],
+  "control_wire_caption": false,
+  "rain_sensor_state_semantics": "dp102_follow_enabled_or_bypassed_current_wet_contact_not_exposed"
 }
