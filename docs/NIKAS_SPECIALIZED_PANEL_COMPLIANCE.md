@@ -2,7 +2,7 @@
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
 **Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.13
-**Manifest:** integration `1.0.0-b005.31`
+**Manifest:** integration `1.0.0-b005.33`
 
 ## Compliance
 
@@ -21,7 +21,7 @@
 | Permanent left system menu | PASS | Header always emits composed/bubbling `hass-toggle-menu`; no Header Back action. |
 | Fixed UPS Bottom Tab Bar | PASS | Shell grid row outside viewport, safe-area padding, equal tabs, minimum 52 px, `ha-icon` 28 px, labels 12/700, theme-derived 11% active background. |
 | Meaningful typography 12–25 px | PASS | Final v0.6.13 rules raise semantic labels and values to 12 px or more and cap primary headings at 25 px; only the redundant control-wire caption remains 10 px. |
-| Optional two-level indicator | PASS | Not enabled without a repository request. The existing factual single-line transport badge is preserved; no freshness row was invented. |
+| Optional two-level indicator | PASS | Explicitly enabled for HO-SC-8W: canonical transport/freshness vocabulary, 16/13 typography, status tint, stable subtree and point-patched updates. |
 | Machine-readable contract agrees | PASS | `panel.json` and registration declare native scroll at 100, fixed origin, >100-only axis pan, resize clamp and tab-top reset. |
 | Repository validation | PASS | Local syntax, JSON, Python and asset checks pass; CI now runs the repository contract guard, HACS Action and Home Assistant Hassfest for every pull request. |
 | Approved icon source preserved | PASS | Existing 256×256 RGBA `custom_components/nikas_ho_sc_8w/brand/icon.png` is unchanged and now shown in README. |
@@ -32,3 +32,12 @@
 ## Required phone check
 
 At 100% verify native scrolling on Diagnostics, no horizontal/top displacement and immediate tap/hold response. Above 100% verify only necessary axes pan and every release/resize remains clamped. Confirm Header and Bottom navigation stay fixed and match UPS.
+
+## UI 0.6.15 composition delta
+
+- Status strip removed from the first screen.
+- Standard two-level connection/freshness indicator enabled by explicit product request.
+- Pressure remains compact in the hero; duplicate status cards are absent.
+- Rain sensor moved away from the controller and linked by one direct horizontal midline.
+- Phone schematic height is viewport-responsive to consume the freed first-screen space without changing Header/Bottom Tab Bar geometry.
+- Zoom/scroll engine is unchanged: one viewport/canvas, native vertical scroll at 100%, >100% axis-aware pan, two-finger reset.

@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.14";
-  const ASSET_VERSION = "0.6.14";
+  const UI_VERSION = "0.6.15";
+  const ASSET_VERSION = "0.6.15";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -425,13 +425,39 @@
       if (operation === "OFF") return { tone: "off", title: "Система выключена", sub: "Контроллер находится в режиме OFF" };
       return { tone: "ready", title: "Система готова", sub: "Автополив работает штатно" };
     }
-    connectionBadge(e) {
+    connectionIndicator(e) {
       const value = this.state(e.connection);
-      const label = value === "local" ? "Локально" : value === "cloud" ? "Облако" : "Нет данных";
-      const tone = value === "local" ? "local" : value === "cloud" ? "cloud" : "unknown";
+      const attrs = this.attrs(e.connection);
+      const exists = Boolean(e.connection && this.states()[e.connection]);
+      const stale = attrs.online === false || Number(attrs.fail_count || 0) > 0;
+      let label = "Нет данных";
+      let tone = "unknown";
+      let freshness = "Нет данных";
+      let freshnessTone = "nodata";
+      if (exists && value === "local") {
+        label = "Локально";
+        tone = "ok";
+        freshness = stale ? "Данные устарели" : "Данные актуальны";
+        freshnessTone = stale ? "stale" : "current";
+      } else if (exists && value === "cloud") {
+        label = "Облако";
+        tone = "ok";
+        freshness = stale ? "Данные устарели" : "Данные актуальны";
+        freshnessTone = stale ? "stale" : "current";
+      } else if (exists && value === "reserve") {
+        label = "Резерв";
+        tone = "reserve";
+        freshness = stale ? "Данные устарели" : "Данные актуальны";
+        freshnessTone = stale ? "stale" : "current";
+      } else if (exists && value === "unavailable") {
+        label = "Нет связи";
+        tone = "offline";
+      }
       const pressure = this.pressurePresentation(e);
       const pressureEntity = e.pressure ? ` data-entity="${this.esc(e.pressure)}"` : "";
-      return `<div class="connectionWrap"><div class="connectionBadge ${tone}"><i></i><b>${label}</b></div><small>${this.esc(this.updatedAge(e.connection))}</small><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button></div>`;
+      const connectionEntity = e.connection ? ` data-entity="${this.esc(e.connection)}"` : "";
+      const aria = `${label}. ${freshness}`;
+      return `<div class="connectionWrap"><button class="systemConnection ${tone}" data-connection-indicator${connectionEntity} aria-label="${this.esc(aria)}"><span class="systemConnectionMain"><i></i><b>${label}</b></span><small class="freshness ${freshnessTone}">${freshness}</small></button><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button></div>`;
     }
     zoneIcon(zone) {
       return ({ 1: "mdi:sprinkler", 2: "mdi:sprinkler", 3: "mdi:sprinkler", 4: "mdi:flower", 5: "mdi:shrub", 6: "mdi:greenhouse" })[zone] || "mdi:water";
@@ -476,7 +502,7 @@
       }).join("");
       return `<div class="systemDiagram">
         <svg class="deviceWires" viewBox="0 0 1000 380" preserveAspectRatio="none" aria-hidden="true">
-          <path class="wire rainWire" d="M 248 57 L 338 82"/>
+          <path class="wire rainWire" d="M 286 48 H 455"/>
           <path class="wire controlLead" d="M 205 82 V 110 H 82"/>
         </svg>
         <button class="controller" data-entity="${this.esc(e.connection)}"><div class="cap"></div><div class="body"><b>HO-SC-8W</b><i></i><small>INKBIRD / HiOazo</small></div><div class="ports"><i></i><i></i></div></button>
@@ -501,7 +527,7 @@
     }
     hero(e) {
       const status = this.systemStatus(e);
-      return `<section class="hero ${status.tone}"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionBadge(e)}</div>${this.irrigationDiagram(e)}</section>`;
+      return `<section class="hero ${status.tone}"><div class="heroHead"><div><small>СОСТОЯНИЕ СИСТЕМЫ</small><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionIndicator(e)}</div>${this.irrigationDiagram(e)}</section>`;
     }
 
     nodes(e) {
@@ -524,7 +550,7 @@
         <button class="mode manualAction" data-go="manual"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>Доступен</small></button>
       </div></section>`;
     }
-    statusView(e) { return `${this.hero(e)}${this.metrics(e)}${this.currentMode(e)}${this.nodes(e)}`; }
+    statusView(e) { return `<div class="statusScreen">${this.hero(e)}${this.metrics(e)}${this.currentMode(e)}</div>`; }
 
     zoneDetail(e, zone) {
       const z = this.zoneRuntime(e, zone);
@@ -1042,6 +1068,21 @@
         .schemaGrid .diagramZone.running{border-color:color-mix(in srgb,var(--a) 72%,#dce1e5);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 18%,transparent)}
         .schemaGrid .diagramZone.queued{border-color:color-mix(in srgb,var(--orange) 68%,#dce1e5);box-shadow:0 0 0 2px color-mix(in srgb,var(--orange) 16%,transparent)}
         @media(max-width:520px){.schemaGrid .diagramZone{grid-template-rows:minmax(0,1fr);min-height:76px;padding:3px}.schemaGrid .diagramZone .scene{height:100%;min-height:68px;border-radius:8px}}
+        /* v0.6.15: standard connection indicator, no status strip, filled phone composition. */
+        .statusScreen{display:block;min-width:0}
+        .systemConnection{display:grid;gap:2px;min-width:168px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--muted) 30%,transparent);border-radius:16px;background:color-mix(in srgb,var(--muted) 9%,var(--card));color:var(--muted);text-align:left;box-shadow:none}
+        .systemConnectionMain{display:flex;align-items:center;gap:8px;min-width:0}.systemConnectionMain i{display:block;flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:currentColor}.systemConnectionMain b{font-size:16px;font-weight:700;line-height:1.05;white-space:nowrap}.systemConnection .freshness{display:block;margin-left:18px;color:var(--muted);font-size:13px!important;font-weight:600;line-height:1.1;white-space:nowrap}
+        .systemConnection.ok{color:var(--green);background:color-mix(in srgb,var(--green) 10%,var(--card));border-color:color-mix(in srgb,var(--green) 30%,transparent)}.systemConnection.reserve{color:var(--orange);background:color-mix(in srgb,var(--orange) 10%,var(--card));border-color:color-mix(in srgb,var(--orange) 30%,transparent)}.systemConnection.offline{color:var(--danger);background:color-mix(in srgb,var(--danger) 9%,var(--card));border-color:color-mix(in srgb,var(--danger) 30%,transparent)}.systemConnection .freshness.stale{color:var(--orange)}.systemConnection.offline .freshness,.systemConnection .freshness.nodata{color:var(--muted)}
+        .connectionWrap{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left}.heroPressure{width:100%;margin:0;justify-content:space-between;padding:5px 9px;border-radius:12px}
+        .statusScreen .hero{display:flex;flex-direction:column;min-height:0}.statusScreen .systemDiagram{height:clamp(410px,50dvh,520px);aspect-ratio:auto;margin-top:10px}.statusScreen .metrics{margin-top:7px}.statusScreen .quickActions{margin-top:7px}
+        .controller{left:1%;top:2%;width:28%;height:21%}.rainSensor{left:45.5%;top:2%;width:27%;height:21%;background-position:left center;background-size:auto 48%}.rainSensor span{left:43%;top:36%}.controlBus{top:29%;left:8.33%;right:8.33%}.controlBus span{left:50%;right:auto;bottom:9px;transform:translateX(-50%)}
+        @media(max-width:520px){
+          .heroHead{align-items:flex-start;gap:8px}.heroHead>div:first-child{padding-top:2px}.systemConnection{min-width:158px;padding:7px 10px;border-radius:15px}.systemConnectionMain{gap:7px}.systemConnectionMain i{width:9px;height:9px}.systemConnectionMain b{font-size:16px}.systemConnection .freshness{margin-left:16px;font-size:13px!important}.heroPressure{padding:4px 7px}
+          .statusScreen .systemDiagram{height:clamp(420px,52dvh,470px);aspect-ratio:auto;margin-top:8px}.statusScreen .metrics{margin-top:6px}.statusScreen .quickActions{margin-top:6px}.statusScreen .metric{min-height:106px}.statusScreen .quickActions .mode{min-height:104px}
+          .controller{left:.5%;top:2%;width:28.5%;height:21%}.rainSensor{left:45.5%;top:2%;width:28%;height:21%;background-size:auto 48%}.rainSensor span{left:43%;top:36%}
+          .controlBus{top:29%}.controlBus span{left:50%;right:auto;bottom:9px;transform:translateX(-50%)}
+          .manifoldRail{top:46.5%}.supplyLine{top:calc(46.5% + 7px)}.schemaGrid{top:24%;bottom:3%;gap:5px}.schemaColumn{grid-template-rows:26px 35% 9% minmax(0,1fr)}
+        }
       `;
     }
 

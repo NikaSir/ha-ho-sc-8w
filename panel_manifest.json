@@ -1,7 +1,7 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.14",
-  "integration_version": "1.0.0-b005.32",
+  "panel_version": "0.6.15",
+  "integration_version": "1.0.0-b005.33",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -27,9 +27,20 @@
     ]
   },
   "connection_indicator": {
-    "two_level_indicator_enabled": false,
-    "policy": "opt_in_only",
-    "existing_transport_badge_preserved": true
+    "two_level_indicator_enabled": true,
+    "transport": [
+      "Локально",
+      "Облако",
+      "Резерв",
+      "Нет связи",
+      "Нет данных"
+    ],
+    "freshness": [
+      "Данные актуальны",
+      "Данные устарели",
+      "Нет данных"
+    ],
+    "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
   "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
@@ -97,5 +108,7 @@
     "4": "flowerbed",
     "5": "shrubs",
     "6": "greenhouse"
-  }
+  },
+  "status_layout": "system_state_connection_pressure_schematic_summary_actions_no_status_strip",
+  "rain_sensor_connection": "direct_horizontal_midline_to_controller"
 }

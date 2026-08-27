@@ -147,6 +147,7 @@ class HOSC8WConnectionMode(HOSC8WEntity, SensorEntity):
             "selected_preference": self.coordinator.api.connection_preference,
             "active_transport": self.coordinator.api.active_transport,
             "fail_count": self.coordinator.api.fail_count,
+            "online": self.coordinator.api.device.online,
             "cloud_available": self.coordinator.api.has_cloud,
             "device_model": "HO-SC-8W",
             "tuya_protocol": "3.3",
