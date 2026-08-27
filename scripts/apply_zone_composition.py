@@ -54,6 +54,15 @@ css_patch = '''        @media(max-width:520px){.headerTitle strong{font-size:21p
 text = replace_once(text, css_marker, css_patch)
 panel_path.write_text(text, encoding="utf-8")
 
+check_path = Path("scripts/check-panel-ui-v16.mjs")
+check_text = check_path.read_text(encoding="utf-8")
+check_text = replace_once(
+    check_text,
+    'const UI_VERSION = "0.6.13"',
+    f'const UI_VERSION = "{PANEL_VERSION}"',
+)
+check_path.write_text(check_text, encoding="utf-8")
+
 const_path = Path("custom_components/nikas_ho_sc_8w/const.py")
 const_text = const_path.read_text(encoding="utf-8")
 const_text = replace_once(
