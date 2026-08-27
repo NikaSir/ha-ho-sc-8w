@@ -65,6 +65,10 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "title_alignment": "viewport_center",
                 "left_action": "home_assistant_sidebar_menu",
                 "right_action": "refresh",
+                "center_action": "return_to_source_base_panel",
+                "center_style": "clickable_plaque",
+                "center_chevron": False,
+                "source_return_resolution": ["query_from", "history_state_from", "parent_path"],
                 "menu_event": "hass-toggle-menu",
             },
             "navigation": {
@@ -120,6 +124,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "mainline_pressure_presentation": "text_only_two_decimal_bar_value_below_connection_status",
                 "theme_strategy": "fixed_light_reference_dark_theme_deferred",
                 "production_zones": [1, 2, 3, 4, 5, 6],
+                "zone_thumbnails": {1: "lawn", 2: "lawn", 3: "lawn", 4: "flowerbed", 5: "shrubs", 6: "greenhouse"},
                 "mainline_state_source_verified": True,
                 "mainline_entity_resolution": "sensor.nikas_h2000_pro_voda_na_poliv_2_then_bar_fallback",
                 "zone_8_diagnostics_only": True,

@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.13"',
+  'const UI_VERSION = "0.6.14"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -40,6 +40,8 @@ for (const marker of [
   "VIEW_SCALE_SNAP_MAX = 1.03",
   "this._suppressClicksUntil = Date.now() + 500",
   'this._showScaleToast("Масштаб 100%")',
+  'data-parent-navigation',
+  '1: "Газон", 2: "Газон", 3: "Газон", 4: "Цветник", 5: "Кусты", 6: "Теплица"',
 ]) requireMarker(marker);
 
 if (source.includes('"Онлайн"')) {

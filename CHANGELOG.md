@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.32` / panel `0.6.14`: apply the latest specialized-panel Header rule with a centered source-return plaque and map zone thumbnails to 1–3 lawn, 4 flowerbed, 5 shrubs and 6 greenhouse. Preserve the v1.6 stable shell, single transform viewport, DP38 read-only program and fail-closed telemetry.
+
 - `1.0.0-b005.31` / panel `0.6.13`: complete the v1.6 stable-rendering contract with a lazy DOM cache for work views. Returning to a visited tab or zone subtree reattaches and point-patches the same node instead of rebuilding it; Header, viewport, canvas and Bottom Tab Bar remain mounted. Add HACS/Hassfest validation and declare config-entry-only setup explicitly.
 
 - `1.0.0-b005.30` / panel `0.6.12`: align with NikaS Specialized Panel UI Standard v1.6 — mount Header, one zoom viewport and Bottom Tab Bar once, point-patch live telemetry, and preserve scroll/gesture state without tab or screen flicker.

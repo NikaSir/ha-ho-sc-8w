@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.13";
-  const ASSET_VERSION = "0.6.13";
+  const UI_VERSION = "0.6.14";
+  const ASSET_VERSION = "0.6.14";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -55,6 +55,7 @@
       this._longPressTimer = null;
       this._longPressTarget = null;
       this._longPressHeld = false;
+      this._refreshBusy = false;
       this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
     }
 
@@ -282,19 +283,51 @@
         composed: true,
       }));
     }
+
+    _parentPath() {
+      const configured = this._panel?.config?.parent_path;
+      try {
+        const url = new URL(window.location.href);
+        const from = url.searchParams.get("from") || url.searchParams.get("return_to");
+        if (from?.startsWith("/dashboard-")) return from;
+      } catch (_error) {
+        // Fall through to History API state and configured parent path.
+      }
+      const stateFrom = window.history.state?.from || window.history.state?.return_to;
+      if (typeof stateFrom === "string" && stateFrom.startsWith("/dashboard-")) return stateFrom;
+      return configured || "/dashboard-actions";
+    }
+
+    goParent() {
+      const target = this._parentPath();
+      if (!target || target === window.location.pathname) return;
+      window.history.pushState(null, "", target);
+      window.dispatchEvent(new Event("location-changed"));
+    }
     async refreshNow() {
-      if (!this._hass?.callService) return;
+      if (!this._hass?.callService || this._refreshBusy) return;
+      const button = this.shadowRoot.querySelector("[data-refresh]");
+      this._refreshBusy = true;
+      if (button) {
+        button.disabled = true;
+        button.classList.add("busy");
+      }
       const e = this.entities();
       const ids = [
         e.connection, e.operation, e.irrigation, e.active, e.queued,
         e.rain, e.pressure, e.seasonal, e.timerError, e.cache,
         ...Object.values(e.zones).flatMap((z) => [z.remaining, z.elapsed, z.schedule]),
       ].filter((id, index, all) => id && this.states()[id] && all.indexOf(id) === index);
-      if (!ids.length) return;
       try {
-        await this._hass.callService("homeassistant", "update_entity", { entity_id: ids });
+        if (ids.length) await this._hass.callService("homeassistant", "update_entity", { entity_id: ids });
       } catch (_err) {
         // The panel remains factual if forced refresh is unsupported.
+      } finally {
+        this._refreshBusy = false;
+        if (button) {
+          button.disabled = false;
+          button.classList.remove("busy");
+        }
       }
     }
 
@@ -398,7 +431,7 @@
     header() {
       return `<header class="appHeader">
         <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-        <div class="headerTitle"><strong>HO-SC-8W</strong><small>Система полива · UI v${UI_VERSION}</small></div>
+        <button class="headerTitle" data-parent-navigation aria-label="Вернуться в исходную базовую панель"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
         <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
       </header>`;
     }
@@ -433,8 +466,11 @@
       const pressureEntity = e.pressure ? ` data-entity="${this.esc(e.pressure)}"` : "";
       return `<div class="connectionWrap"><div class="connectionBadge ${tone}"><i></i><b>${label}</b></div><small>${this.esc(this.updatedAge(e.connection))}</small><button class="heroPressure"${pressureEntity}><span>Давление полива</span><b class="${pressure.tone}">${this.esc(pressure.value)}</b></button></div>`;
     }
+    zoneType(zone) {
+      return ({ 1: "Газон", 2: "Газон", 3: "Газон", 4: "Цветник", 5: "Кусты", 6: "Теплица" })[zone] || "Зона";
+    }
     zoneIcon(zone) {
-      return ({ 1: "mdi:sprinkler", 2: "mdi:sprinkler-variant", 3: "mdi:flower", 4: "mdi:greenhouse", 5: "mdi:sprout", 6: "mdi:pine-tree" })[zone] || "mdi:water";
+      return ({ 1: "mdi:grass", 2: "mdi:grass", 3: "mdi:grass", 4: "mdi:flower", 5: "mdi:sprout", 6: "mdi:greenhouse" })[zone] || "mdi:water";
     }
     zoneRuntime(e, zone) {
       const q = e.zones[zone];
@@ -532,27 +568,27 @@
     zoneDetail(e, zone) {
       const z = this.zoneRuntime(e, zone);
       const a = z.attrs;
-      return `<button class="inlineBack" data-drill-back><ha-icon icon="mdi:arrow-left"></ha-icon>Зоны</button><section class="detailCard"><div class="detailHead"><span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span><div><small>ЗОНА ${zone}</small><h2>${this.esc(z.label)}</h2></div></div><div class="detailGrid"><div><small>Длительность</small><b>${this.esc(z.duration)} мин</b></div><div><small>Старт</small><b>${this.esc(z.start)}</b></div><div><small>Цикл</small><b>${this.esc(this.cycleText(a))}</b></div><div><small>Дождь</small><b>${a.rain_sensor_follow === true ? "Учитывать" : a.rain_sensor_follow === false ? "Игнорировать" : "—"}</b></div></div><p>Фактические параметры DP38. Редактирование и raw-write из панели отсутствуют.</p></section>`;
+      return `<button class="inlineBack" data-drill-back><ha-icon icon="mdi:arrow-left"></ha-icon>Зоны</button><section class="detailCard"><div class="detailHead"><span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span><div><small>ЗОНА ${zone} · ${this.zoneType(zone).toUpperCase()}</small><h2>${this.esc(z.label)}</h2></div></div><div class="detailGrid"><div><small>Длительность</small><b>${this.esc(z.duration)} мин</b></div><div><small>Старт</small><b>${this.esc(z.start)}</b></div><div><small>Цикл</small><b>${this.esc(this.cycleText(a))}</b></div><div><small>Дождь</small><b>${a.rain_sensor_follow === true ? "Учитывать" : a.rain_sensor_follow === false ? "Игнорировать" : "—"}</b></div></div><p>Фактические параметры DP38. Редактирование и raw-write из панели отсутствуют.</p></section>`;
     }
     zonesView(e) {
       if (this._drillZone) return this.zoneDetail(e, this._drillZone);
       const cards = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
         const z = this.zoneRuntime(e, zone);
-        return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span><span><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(z.start)} · ${this.esc(z.duration)} мин</em></span><ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
+        return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}"><ha-icon icon="${this.zoneIcon(zone)}"></ha-icon></span><span><small>ЗОНА ${zone} · ${this.zoneType(zone).toUpperCase()}</small><b>${this.esc(z.label)}</b><em>${this.esc(z.start)} · ${this.esc(z.duration)} мин</em></span><ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
-      return `<div class="pageIntro"><small>ЗОНЫ 1–6</small><h2>Рабочие зоны</h2><p>Фактическое состояние и программа каждого канала.</p></div><div class="zoneCards">${cards}</div>`;
+      return `<div class="pageIntro"><small>ЗОНЫ 1–6</small><h2>Рабочие зоны</h2><p>1–3 газон · 4 цветник · 5 кусты · 6 теплица.</p></div><div class="zoneCards">${cards}</div>`;
     }
     programView(e) {
       const seasonal = this.state(e.seasonal);
       const rain = this.state(e.rain);
       const zoneRows = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
         const z = this.zoneRuntime(e, zone);
-        return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span>Зона ${zone}</span><b>${this.esc(z.start)} · ${this.esc(z.duration)} мин</b><ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
+        return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span>Зона ${zone} · ${this.zoneType(zone)}</span><b>${this.esc(z.start)} · ${this.esc(z.duration)} мин</b><ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
       return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Read-only представление программы контроллера.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><button data-entity="${this.esc(e.seasonal)}"><small>Сезон</small><b>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</b></button><button data-entity="${this.esc(e.rain)}"><small>Дождь</small><b>${this.esc(this.human("rain", rain))}</b></button><button data-entity="${this.esc(e.cache)}"><small>Кэш DP38</small><b>${this.esc(this.human("cache", this.state(e.cache)))}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
     manualView(e) {
-      const zoneButtons = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => `<button class="manualZone ${this._manualZone === zone ? "active" : ""}" data-manual-zone="${zone}">${zone}<small>Зона ${zone}</small></button>`).join("");
+      const zoneButtons = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => `<button class="manualZone ${this._manualZone === zone ? "active" : ""}" data-manual-zone="${zone}">${zone}<small>${this.zoneType(zone)}</small></button>`).join("");
       return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Подготовка запуска</h2><p>Команда запуска остаётся закрытой до проверенного Actions API.</p></div><section class="manualCard"><div class="manualZones">${zoneButtons}</div><div class="stepper"><button data-duration="-1"><ha-icon icon="mdi:minus"></ha-icon></button><b>${this._manualDuration}<small> мин</small></b><button data-duration="1"><ha-icon icon="mdi:plus"></ha-icon></button></div><button class="lockedStart" disabled><ha-icon icon="mdi:lock-outline"></ha-icon>Запуск пока недоступен</button></section>`;
     }
     diagnosticsView(e) {
@@ -784,6 +820,7 @@
         this._longPressHeld = false;
         this._longPressTarget = null;
         if (target.matches("[data-ha-menu]")) { this.openHaMenu(); return; }
+        if (target.matches("[data-parent-navigation]")) { this.goParent(); return; }
         if (target.matches("[data-refresh]")) { this.refreshNow(); return; }
         if (target.dataset.view) { this._switchView(target.dataset.view || "status"); return; }
         if (target.dataset.go) { this._switchView(target.dataset.go); return; }
@@ -1038,6 +1075,11 @@
         .rainSensor span,.valveNumber,.schemaGrid .zoneText b,.schemaGrid .zoneText small,.schemaGrid .duration small,.mainlineLabel,.mainlineLabel b,.metric>small,.metric em,.statusesHead>span,.statusesCard .node>small,.statusesCard .node em,.programRow b,.diagList b{font-size:12px}
         .controlBus span{font-size:10px}
         @media(max-width:520px){.headerTitle strong{font-size:21px}.headerTitle small{font-size:13px}.connectionBadge{font-size:16px}.connectionWrap>small{font-size:13px!important}}
+        /* v0.6.14: source-return Header plaque and requested zone scene mapping. */
+        .headerTitle{display:grid;place-items:center;align-content:center;width:min(100%,286px);min-height:44px;justify-self:center;padding:5px 12px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;text-align:center;cursor:pointer}
+        .headerTitle strong{display:block}.headerTitle small{display:block}
+        .refreshButton.busy ha-icon{animation:nikasRefreshSpin .9s linear infinite}@keyframes nikasRefreshSpin{to{transform:rotate(360deg)}}
+        .scene1{background-image:url("${APPROVED_VISUALS.zone1}")}.scene2{background-image:url("${APPROVED_VISUALS.zone2}")}.scene3{background-image:url("${APPROVED_VISUALS.zone1}");background-position:62% center}.scene4{background-image:url("${APPROVED_VISUALS.zone3}")}.scene5{background-image:url("${APPROVED_VISUALS.zone5}")}.scene6{background-image:url("${APPROVED_VISUALS.zone4}")}
       `;
     }
 
