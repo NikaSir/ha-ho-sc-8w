@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.20
-**Manifest:** integration `1.0.0-b005.38`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.21
+**Manifest:** integration `1.0.0-b005.39`
 
 ## Compliance
 
@@ -42,7 +42,7 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Phone schematic height is viewport-responsive to consume the freed first-screen space without changing Header/Bottom Tab Bar geometry.
 - Zoom/scroll engine is unchanged: one viewport/canvas, native vertical scroll at 100%, >100% axis-aware pan, two-finger reset.
 
-## UI 0.6.20 composition delta
+## UI 0.6.21 composition delta
 
 - The redundant `СОСТОЯНИЕ СИСТЕМЫ` eyebrow and control-wire caption are removed.
 - The status view is explicitly sized to the work viewport and has no native vertical scroll at 100%; long views such as Diagnostics retain native vertical scrolling.
@@ -52,4 +52,7 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Zone scenes follow the accepted mapping: zones 1–3 lawn, zone 4 flowerbed, zone 5 shrubs and zone 6 greenhouse. Decorative glyph overlays are absent.
 - Every zone keeps readiness, program and rain-accounting indicators visible; a disabled rain flag is shown as a muted crossed umbrella rather than removing the indicator.
 - The production entrypoint is one self-contained bundle; the temporary `approved-v0619.js` runtime layer is removed and the loaded bundle is the one validated by CI.
+- The status view no longer renders photorealistic valves or a manifold. A compact control topology preserves controller-to-zone relationships and live active/queued emphasis without decorative plumbing.
+- Every production zone retains three indicators. Missing rain-accounting data uses a muted crossed umbrella instead of collapsing the third slot.
+- Program uses user-facing Russian copy and keeps DP38 cache state in Diagnostics. Manual control is explicitly unavailable until its command path is verified.
 - Pinch, reset, pan, one viewport/canvas and stable DOM architecture are unchanged.
