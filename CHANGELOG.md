@@ -6,6 +6,10 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.38` / panel `0.6.20`: consolidate the approved mobile UI into the single production `irrigation-panel.js` bundle, remove the runtime patch import and synchronize panel metadata and automated guards.
+- `1.0.0-b005.38` / panel `0.6.20`: restore the accepted zone scenes (1–3 lawn, 4 flowerbed, 5 shrubs, 6 greenhouse), remove decorative glyph overlays, keep all three factual zone indicators visible and expand the zone detail view.
+- `1.0.0-b005.38` / panel `0.6.20`: make the centered Header title a return plaque, remove the redundant product subtitle and report DP102 only as rain-sensor participation (`Учитывается / Не учитывается`) without claiming the unexposed wet-contact state.
+
 - `1.0.0-b005.31` / panel `0.6.13`: complete the v1.6 stable-rendering contract with a lazy DOM cache for work views. Returning to a visited tab or zone subtree reattaches and point-patches the same node instead of rebuilding it; Header, viewport, canvas and Bottom Tab Bar remain mounted. Add HACS/Hassfest validation and declare config-entry-only setup explicitly.
 
 - `1.0.0-b005.30` / panel `0.6.12`: align with NikaS Specialized Panel UI Standard v1.6 — mount Header, one zoom viewport and Bottom Tab Bar once, point-patch live telemetry, and preserve scroll/gesture state without tab or screen flicker.

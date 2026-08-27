@@ -8,9 +8,10 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.18",
+    "dashboard_version": "0.6.20",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
+      "header_center": "parent_panel_return_title",
       "header_menu_event": "hass-toggle-menu",
       "header_right": "refresh",
       "header_grid": "52px_minmax_52px_48px_narrow",
