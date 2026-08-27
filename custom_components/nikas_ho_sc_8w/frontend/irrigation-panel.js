@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.16";
-  const ASSET_VERSION = "0.6.16";
+  const UI_VERSION = "0.6.17";
+  const ASSET_VERSION = "0.6.17";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -47,6 +47,8 @@
       this._scaleToastTimer = null;
       this._resizeBound = false;
       this._wheelSaveTimer = null;
+      this._transformFrame = 0;
+      this._pendingTransform = null;
       this._nativeScrollPositions = new Map();
       this._pendingScrollTop = null;
       this._shellMounted = false;
@@ -151,10 +153,16 @@
       const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
       const canvas = this.shadowRoot.querySelector("[data-work-canvas]");
       if (canvas) canvas.style.transform = this._transformCss();
-      if (viewport) {
-        viewport.classList.toggle("isZoomed", this._viewTransform.scale > 1);
-        viewport.classList.toggle("isNative", this._viewTransform.scale <= 1);
-      }
+      if (viewport) { viewport.classList.toggle("isZoomed", this._viewTransform.scale > 1); viewport.classList.toggle("isNative", this._viewTransform.scale <= 1); }
+    }
+    _scheduleGestureTransform(transform) {
+      this._pendingTransform = transform;
+      if (this._transformFrame) return;
+      this._transformFrame = requestAnimationFrame(() => {
+        this._transformFrame = 0;
+        if (!this._pendingTransform) return;
+        this._viewTransform = this._pendingTransform; this._pendingTransform = null; this._clampAndApplyTransform(false);
+      });
     }
 
     _clampAndApplyTransform(persist = false) {
@@ -362,9 +370,9 @@
     rainPresentation(e) {
       const value = this.state(e.rain);
       if (this.bad(value)) return { label: "Нет данных", tone: "unknown" };
-      if (["enabled", "true", "on"].includes(String(value))) return { label: "Учитывается", tone: "armed" };
-      if (["disabled", "false", "off"].includes(String(value))) return { label: "Не блокирует", tone: "bypass" };
-      return { label: String(value), tone: "unknown" };
+      if (["enabled", "true", "on"].includes(String(value))) return { label: "Блокирует", tone: "blocked" };
+      if (["disabled", "false", "off"].includes(String(value))) return { label: "Не блокирует", tone: "clear" };
+      return { label: "Нет данных", tone: "unknown" };
     }
     starts(attrs) { return Array.isArray(attrs.start_times) ? attrs.start_times.filter(Boolean) : []; }
     compactStarts(attrs) {
@@ -676,13 +684,8 @@
           const mid = midpoint(points[0], points[1]);
           const nextScale = this._clampScale(start.scale * distance(points[0], points[1]) / start.distance);
           if (Math.abs(nextScale - start.scale) > 0.008 || Math.hypot(mid.x - start.midX, mid.y - start.midY) > 4) this._gestureMoved = true;
-          this._viewTransform = {
-            scale: nextScale,
-            x: mid.x - start.contentX * nextScale,
-            y: mid.y - start.contentY * nextScale,
-          };
+          this._scheduleGestureTransform({ scale: nextScale, x: mid.x - start.contentX * nextScale, y: mid.y - start.contentY * nextScale });
           this._cancelLongPresses();
-          this._clampAndApplyTransform(false);
           return;
         }
         const start = this._gestureStart;
@@ -702,11 +705,12 @@
         }
         if (!this._gestureMoved) return;
         event.preventDefault();
-        this._viewTransform = { ...this._viewTransform, x: start.x + dx, y: start.y + dy };
-        this._clampAndApplyTransform(false);
+        this._scheduleGestureTransform({ ...this._viewTransform, x: start.x + dx, y: start.y + dy });
       }, { passive: false });
 
       const finishPointer = (event) => {
+        if (this._pendingTransform) { this._viewTransform = this._pendingTransform; this._pendingTransform = null; }
+        if (this._transformFrame) { cancelAnimationFrame(this._transformFrame); this._transformFrame = 0; }
         if (!this._gesturePointers.has(event.pointerId)) return;
         this._gesturePointers.delete(event.pointerId);
         try { viewport.releasePointerCapture(event.pointerId); } catch (_error) { /* capture may already be released */ }
@@ -1120,6 +1124,9 @@
           .statusScreen .metric{min-height:82px;padding:7px 6px}.statusScreen .metric>small{min-height:24px}.statusScreen .metric>div{grid-template-columns:28px minmax(0,1fr);gap:5px}.statusScreen .metric>div>ha-icon{--mdc-icon-size:27px}.statusScreen .metric b{font-size:16px}.statusScreen .quickActions .mode{min-height:84px;padding:5px}.statusScreen .quickActions .mode ha-icon{--mdc-icon-size:27px}
         }
 
+        /* v0.6.17 smooth pinch */
+        .workCanvas{will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-origin:0 0}
+        .rainSensor.blocked .rainSensorText small{color:var(--orange)}.rainSensor.clear .rainSensorText small{color:var(--green)}
       `;
     }
 
