@@ -1,0 +1,46 @@
+name: Apply HO-SC-8W status layout v0.6.15
+
+on:
+  push:
+    branches:
+      - sol/ho-sc-8w-status-layout-v0615
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/ho-sc-8w-status-layout-v0615
+          fetch-depth: 0
+
+      - name: Apply composition patch
+        run: python scripts/apply_status_layout_v0615.py
+
+      - name: Validate patched panel
+        run: |
+          node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js
+          node scripts/check-panel-ui-v16.mjs
+          python -m compileall -q custom_components/nikas_ho_sc_8w
+          python -m json.tool panel.json >/dev/null
+          python -m json.tool panel_manifest.json >/dev/null
+          python -m json.tool custom_components/nikas_ho_sc_8w/manifest.json >/dev/null
+
+      - name: Commit result
+        run: |
+          git config user.name "NikaS UI Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/apply-status-layout-v0615.yml scripts/apply_status_layout_v0615.py
+          git add custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js \
+                  custom_components/nikas_ho_sc_8w/sensor.py \
+                  custom_components/nikas_ho_sc_8w/const.py \
+                  custom_components/nikas_ho_sc_8w/manifest.json \
+                  custom_components/nikas_ho_sc_8w/frontend.py \
+                  panel.json panel_manifest.json \
+                  scripts/check-panel-ui-v16.mjs \
+                  docs/NIKAS_SPECIALIZED_PANEL_COMPLIANCE.md
+          git commit -m "Recompose HO-SC-8W first screen and connection indicator"
+          git push origin HEAD:sol/ho-sc-8w-status-layout-v0615
