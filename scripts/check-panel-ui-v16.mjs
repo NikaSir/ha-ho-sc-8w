@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.13"',
+  'const UI_VERSION = "0.6.14"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
