@@ -57,7 +57,7 @@ jobs:
 
       - name: Remove one-shot rebuild machinery
         run: |
-          git rm scripts/apply-ui-v0614.py
+          git rm -f scripts/apply-ui-v0614.py
           git rm .github/workflows/apply-ui-v0614.yml
 
       - name: Commit rebuilt panel
