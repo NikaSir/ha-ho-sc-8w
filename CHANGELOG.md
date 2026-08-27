@@ -6,6 +6,10 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.39` / panel `0.6.21`: remove the photorealistic valve row and black manifold from the status screen; retain a compact controller-to-six-zone topology with numbered nodes, thin links and live active/queued colour states.
+- `1.0.0-b005.39` / panel `0.6.21`: keep the rain-accounting indicator visible for every production zone, including missing data; give the centered parent-return title a visible plaque treatment.
+- `1.0.0-b005.39` / panel `0.6.21`: replace developer-facing Program and Manual copy, move DP38 cache detail back to Diagnostics, and report manual control as unavailable until a verified command path exists.
+
 - `1.0.0-b005.38` / panel `0.6.20`: consolidate the approved mobile UI into the single production `irrigation-panel.js` bundle, remove the runtime patch import and synchronize panel metadata and automated guards.
 - `1.0.0-b005.38` / panel `0.6.20`: restore the accepted zone scenes (1–3 lawn, 4 flowerbed, 5 shrubs, 6 greenhouse), remove decorative glyph overlays, keep all three factual zone indicators visible and expand the zone detail view.
 - `1.0.0-b005.38` / panel `0.6.20`: make the centered Header title a return plaque, remove the redundant product subtitle and report DP102 only as rain-sensor participation (`Учитывается / Не учитывается`) without claiming the unexposed wet-contact state.
