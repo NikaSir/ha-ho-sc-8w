@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.21
-**Manifest:** integration `1.0.0-b005.39`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.22
+**Manifest:** integration `1.0.0-b005.40`
 
 ## Compliance
 
@@ -42,7 +42,7 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Phone schematic height is viewport-responsive to consume the freed first-screen space without changing Header/Bottom Tab Bar geometry.
 - Zoom/scroll engine is unchanged: one viewport/canvas, native vertical scroll at 100%, >100% axis-aware pan, two-finger reset.
 
-## UI 0.6.21 composition delta
+## UI 0.6.22 composition delta
 
 - The redundant `СОСТОЯНИЕ СИСТЕМЫ` eyebrow and control-wire caption are removed.
 - The status view is explicitly sized to the work viewport and has no native vertical scroll at 100%; long views such as Diagnostics retain native vertical scrolling.
@@ -55,4 +55,6 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - The status view no longer renders photorealistic valves or a manifold. A compact control topology preserves controller-to-zone relationships and live active/queued emphasis without decorative plumbing.
 - Every production zone retains three indicators. Missing rain-accounting data uses a muted crossed umbrella instead of collapsing the third slot.
 - Program uses user-facing Russian copy and keeps DP38 cache state in Diagnostics. Manual control is explicitly unavailable until its command path is verified.
+- All one-to-six DP38 start times are rendered explicitly on Program, Zones and zone-detail views. The UI no longer replaces additional times with a `+N` counter; time chips wrap and the native 100% scroll path carries the taller content.
+- The status summary labels the earliest configured time as `Первый запуск`, not as a computed next irrigation event. Every compact zone card reserves three fixed indicator columns, so unknown rain-accounting data cannot collapse the third icon.
 - Pinch, reset, pan, one viewport/canvas and stable DOM architecture are unchanged.
