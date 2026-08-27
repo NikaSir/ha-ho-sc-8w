@@ -1,6 +1,6 @@
 (() => {
-  const UI_VERSION = "0.6.21";
-  const ASSET_VERSION = "0.6.21";
+  const UI_VERSION = "0.6.22";
+  const ASSET_VERSION = "0.6.22";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -381,10 +381,14 @@
       return { label: "Нет данных", detail: "Состояние неизвестно", tone: "unknown", icon: "mdi:help-circle" };
     }
     starts(attrs) { return Array.isArray(attrs.start_times) ? attrs.start_times.filter(Boolean) : []; }
-    compactStarts(attrs) {
+    fullStarts(attrs) {
       const starts = this.starts(attrs);
-      if (!starts.length) return "—";
-      return starts.length === 1 ? starts[0] : `${starts[0]} +${starts.length - 1}`;
+      return starts.length ? starts.join(" · ") : "—";
+    }
+    startChips(starts, className = "startTimes") {
+      const values = starts.length ? starts : ["Нет запусков"];
+      const label = starts.length ? `Запуски: ${starts.join(", ")}` : "Запуски не установлены";
+      return `<span class="${className}" aria-label="${this.esc(label)}">${values.map((value) => `<span>${this.esc(value)}</span>`).join("")}</span>`;
     }
     cycleText(attrs) {
       const mode = attrs.calendar_mode || attrs.cycle_mode || "—";
@@ -501,7 +505,8 @@
       return {
         q, tone, label,
         duration: attrs.duration_min ?? attrs.duration_minutes ?? "—",
-        start: this.compactStarts(attrs),
+        starts: this.starts(attrs),
+        start: this.fullStarts(attrs),
         attrs,
       };
     }
@@ -541,9 +546,11 @@
     metrics(e) {
       const seasonal = this.state(e.seasonal);
       const operation = this.state(e.operation);
-      const nextStart = this.zoneRuntime(e, 1).start;
+      const firstStart = Array.from({ length: 6 }, (_, i) => i + 1)
+        .flatMap((zone) => this.zoneRuntime(e, zone).starts)
+        .sort()[0] || "—";
       const data = [
-        ["mdi:calendar-blank-outline", "ПРОГРАММА", nextStart, "Следующий полив", e.zones[1].schedule, "water"],
+        ["mdi:calendar-blank-outline", "ПРОГРАММА", firstStart, "Первый запуск", e.zones[1].schedule, "water"],
         ["mdi:autorenew", "РЕЖИМ", this.human("operation", operation), this.human("irrigation", this.state(e.irrigation)), e.operation, operation === "Auto" ? "active" : ""],
         ["mdi:percent-outline", "СЕЗОННАЯ КОРРЕКЦИЯ", this.bad(seasonal) ? "—" : `${seasonal} %`, "Текущая поправка", e.seasonal, this.bad(seasonal) ? "" : "active"],
       ];
@@ -597,7 +604,7 @@
         .sort()[0] || "—";
       const zoneRows = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
         const z = this.zoneRuntime(e, zone);
-        return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span>Зона ${zone}</span><b>${this.esc(z.start)} · ${this.esc(z.duration)} мин</b><ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
+        return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="programZone"><b>Зона ${zone}</b><small>${this.esc(z.duration)} мин</small></span>${this.startChips(z.starts, "programTimes")}<ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
       return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Текущая программа контроллера доступна для просмотра.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><button data-entity="${this.esc(e.seasonal)}"><small>Сезон</small><b>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</b></button><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
@@ -1188,10 +1195,10 @@ if (!Panel) throw new Error("HO-SC-8W base panel is not registered");
 const p = Panel.prototype;
 const baseStyles = p.styles;
 
-p.header = function headerV0621() {
+p.header = function headerV0622() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v0.6.21</small></button>
+    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v0.6.22</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
 };
@@ -1224,7 +1231,7 @@ p.connectionIndicator = function connectionIndicatorV0619(e) {
   return `<div class="connectionWrap connectionOnly"><button class="systemConnection ${tone}" data-connection-indicator${entity} aria-label="${this.esc(`${label}. ${freshness}`)}"><span class="systemConnectionMain"><i></i><b>${label}</b></span><small class="freshness ${freshnessTone}">${freshness}</small></button></div>`;
 };
 
-p._zoneIndicators = function zoneIndicatorsV0621(z) {
+p._zoneIndicators = function zoneIndicatorsV0622(z) {
   const configured = this.state(z.q.schedule) === "configured";
   const rain = z.attrs.rain_sensor_follow;
   const readyIcon = z.tone === "running" ? "mdi:water" : z.tone === "queued" ? "mdi:clock-outline" : z.tone === "unknown" ? "mdi:help-circle" : z.tone === "off" ? "mdi:minus-circle" : "mdi:check-circle";
@@ -1285,17 +1292,17 @@ p.zonesView = function zonesViewV0619(e) {
   if (this._drillZone) return this.zoneDetail(e, this._drillZone);
   const cards = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
     const z = this.zoneRuntime(e, zone);
-    return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(z.start)} · ${this.esc(z.duration)} мин</em></span>${this._zoneIndicators(z)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
+    return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(z.duration)} мин</em><span class="zoneCardTimes">${this.esc(z.start)}</span></span>${this._zoneIndicators(z)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
   }).join("");
   return `<div class="pageIntro"><small>ЗОНЫ 1–6</small><h2>Рабочие зоны</h2><p>Фактическое состояние и программа каждого канала.</p></div><div class="zoneCards">${cards}</div>`;
 };
 
-p.zoneDetail = function zoneDetailV0619(e, zone) {
+p.zoneDetail = function zoneDetailV0622(e, zone) {
   const z = this.zoneRuntime(e, zone);
   const a = z.attrs;
   const configured = this.state(z.q.schedule) === "configured";
   const rainLabel = a.rain_sensor_follow === true ? "Учитывается" : a.rain_sensor_follow === false ? "Не учитывается" : "Нет данных";
-  return `<button class="inlineBack" data-drill-back><ha-icon icon="mdi:arrow-left"></ha-icon>Зоны</button><section class="detailCard"><div class="detailHead"><span class="scene scene${zone}" aria-hidden="true"></span><div><small>ЗОНА ${zone}</small><h2>${this.esc(z.label)}</h2></div></div><div class="detailGrid"><div><small>Длительность</small><b>${this.esc(z.duration)} мин</b></div><div><small>Старт</small><b>${this.esc(z.start)}</b></div><div><small>Цикл</small><b>${this.esc(this.cycleText(a))}</b></div><div><small>Датчик дождя</small><b>${rainLabel}</b></div></div><div class="detailStateList"><div><ha-icon class="${z.tone === "unknown" || z.tone === "off" ? "off" : "on"}" icon="mdi:check-circle"></ha-icon><span><small>Состояние зоны</small><b>${this.esc(z.label)}</b></span></div><div><ha-icon class="${configured ? "on" : "off"}" icon="mdi:calendar-check"></ha-icon><span><small>Автоматическая программа</small><b>${configured ? "Участвует" : "Не участвует"}</b></span></div><div><ha-icon class="${a.rain_sensor_follow === true ? "on" : a.rain_sensor_follow === false ? "off" : "unknown"}" icon="${a.rain_sensor_follow === false ? "mdi:umbrella-off-outline" : a.rain_sensor_follow === true ? "mdi:umbrella" : "mdi:help-circle-outline"}"></ha-icon><span><small>Контроль датчика дождя</small><b>${rainLabel}</b></span></div></div><p class="detailNote">Параметры программы доступны только для просмотра.</p></section>`;
+  return `<button class="inlineBack" data-drill-back><ha-icon icon="mdi:arrow-left"></ha-icon>Зоны</button><section class="detailCard"><div class="detailHead"><span class="scene scene${zone}" aria-hidden="true"></span><div><small>ЗОНА ${zone}</small><h2>${this.esc(z.label)}</h2></div></div><div class="detailGrid"><div><small>Длительность</small><b>${this.esc(z.duration)} мин</b></div><div class="detailStarts"><small>Время запуска</small>${this.startChips(z.starts, "detailStartTimes")}</div><div><small>Цикл</small><b>${this.esc(this.cycleText(a))}</b></div><div><small>Датчик дождя</small><b>${rainLabel}</b></div></div><div class="detailStateList"><div><ha-icon class="${z.tone === "unknown" || z.tone === "off" ? "off" : "on"}" icon="mdi:check-circle"></ha-icon><span><small>Состояние зоны</small><b>${this.esc(z.label)}</b></span></div><div><ha-icon class="${configured ? "on" : "off"}" icon="mdi:calendar-check"></ha-icon><span><small>Автоматическая программа</small><b>${configured ? "Участвует" : "Не участвует"}</b></span></div><div><ha-icon class="${a.rain_sensor_follow === true ? "on" : a.rain_sensor_follow === false ? "off" : "unknown"}" icon="${a.rain_sensor_follow === true ? "mdi:umbrella" : "mdi:umbrella-off-outline"}"></ha-icon><span><small>Контроль датчика дождя</small><b>${rainLabel}</b></span></div></div><p class="detailNote">Параметры программы доступны только для просмотра.</p></section>`;
 };
 
 p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
@@ -1431,9 +1438,9 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   }, { passive: false });
 };
 
-p.styles = function stylesV0621() {
+p.styles = function stylesV0622() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.21 simplified status composition */
+    /* UI v0.6.22 full DP38 schedule presentation */
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
     .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:25%!important;transform:none!important}
     .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:23%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
@@ -1443,17 +1450,18 @@ p.styles = function stylesV0621() {
     .simplifiedDiagram .schemaColumn{grid-template-rows:28px 15% minmax(0,1fr)!important}.simplifiedDiagram .schemaColumn::before{display:none!important}.zoneLink{display:block;justify-self:center;width:4px;height:100%;border-radius:4px;background:#0a95df}.zoneLink.run{background:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 18%,transparent)}.zoneLink.queue{background:var(--orange)}
     .diagramZone{overflow:hidden}.schemaGrid .diagramZone{grid-template-rows:minmax(48px,1fr) auto auto auto!important;gap:4px!important;padding:6px 5px 7px!important}
     .schemaGrid .scene{height:100%!important;min-height:48px}.schemaGrid .zoneText small,.schemaGrid .duration em,.schemaGrid .readyIcon{display:none!important}
-    .zoneIndicators{display:flex;align-items:center;justify-content:space-between;gap:3px;width:100%;margin-top:1px}.zoneIndicators ha-icon{flex:0 0 auto;--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
-    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.21')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.21')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.21')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.21')!important}.scene>ha-icon{display:none!important}
+    .zoneIndicators{display:grid;grid-template-columns:repeat(3,minmax(15px,1fr));align-items:center;justify-items:center;gap:3px;width:100%;min-width:0;margin-top:1px;overflow:visible}.zoneIndicators ha-icon{display:block;min-width:15px;--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
+    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.22')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.22')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.22')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.22')!important}.scene>ha-icon{display:none!important}
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
-    .zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;gap:9px}.zoneCard .zoneIndicators ha-icon{--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}
+    .zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:96px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}
+    .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}
     .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:active{background:var(--accent-soft)}
     .manualUnavailable{display:grid;gap:18px;min-height:390px;align-content:start}.manualLock{display:grid;justify-items:center;padding:24px 18px 20px;border-radius:20px;background:var(--soft);text-align:center}.manualLock>ha-icon{--mdc-icon-size:48px;color:var(--muted)}.manualLock h3{margin:12px 0 6px;font-size:21px}.manualLock p{max-width:390px;margin:0;color:var(--muted);font-size:14px!important;line-height:1.35}.manualFacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.manualFacts>div{padding:13px 10px;border-radius:15px;background:var(--soft);text-align:center}.manualFacts small,.manualFacts b{display:block;font-size:13px}.manualFacts b{margin-top:4px}
     .detailCard{min-height:430px}.detailHead{display:grid;grid-template-columns:112px minmax(0,1fr)!important}.detailHead .scene{width:112px!important;height:96px!important}.detailHead h2{font-size:25px}.detailGrid{margin-top:20px}.detailGrid small,.detailGrid b{font-size:14px}.detailGrid b{margin-top:6px}.detailStateList{display:grid;gap:8px;margin-top:18px}.detailStateList>div{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;padding:11px 13px;border-radius:15px;background:var(--soft)}.detailStateList ha-icon{--mdc-icon-size:27px;color:var(--green)}.detailStateList ha-icon.off,.detailStateList ha-icon.unknown{color:var(--muted)}.detailStateList small,.detailStateList b{display:block;font-size:13px}.detailStateList b{margin-top:2px}.detailNote{margin:16px 2px 0!important;font-size:12px!important}
     @media(max-width:520px){
       .approvedDiagram{aspect-ratio:388/365!important;margin-top:0!important}.approvedDiagram .controller{left:35%!important;width:30%!important;height:27%!important}.approvedDiagram .controllerDrop{top:24%;height:8%}.approvedDiagram .controlBus{top:32%!important}.approvedDiagram .schemaGrid{top:29%!important;bottom:2%!important}.simplifiedDiagram .schemaColumn{grid-template-rows:26px 14% minmax(0,1fr)!important}.schemaGrid .diagramZone{min-height:142px!important}.schemaGrid .scene{min-height:66px!important}.schemaGrid .zoneIndicators ha-icon{--mdc-icon-size:14px}
       .infraRow{grid-template-columns:.95fr 1.25fr;gap:6px}.infraRow .heroPressure,.infraRow .rainStatusCard{min-height:62px}.infraRow .heroPressure{grid-template-columns:28px minmax(0,1fr);padding:7px}.infraRow .heroPressure>ha-icon{--mdc-icon-size:25px}.infraRow .heroPressure b{font-size:17px}.infraRow .rainStatusCard{grid-template-columns:34px minmax(0,1fr) 20px;padding:6px}.infraRow .rainStatusPhoto{width:31px;height:39px}.infraRow .rainStatusText strong{font-size:13px}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}
-      .zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{gap:6px}.zoneCard .zoneIndicators ha-icon{--mdc-icon-size:19px}
+      .zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important;min-height:100px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{grid-template-columns:repeat(3,19px);gap:5px}.zoneCard .zoneIndicators ha-icon{min-width:19px;--mdc-icon-size:19px}.programRow{grid-template-columns:68px minmax(0,1fr) 18px!important;min-height:76px!important;padding:9px 11px!important}.programTimes{gap:4px}.programTimes>span,.detailStartTimes>span{min-height:27px;padding:4px 7px}
       .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualFacts{grid-template-columns:1fr}.manualUnavailable{min-height:380px}
     }
   `;

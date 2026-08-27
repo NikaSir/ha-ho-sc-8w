@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.21"',
+  'const UI_VERSION = "0.6.22"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -68,8 +68,8 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.21",
-  "zone-4.webp?v=0.6.21",
+  "zone-3.webp?v=0.6.22",
+  "zone-4.webp?v=0.6.22",
   "detailStateList",
   "mdi:umbrella-off-outline",
   "simplifiedDiagram",
@@ -77,9 +77,22 @@ for (const marker of [
   "Ручной запуск заблокирован",
   "Первый запуск",
   "min-width:190px",
+  "fullStarts(attrs)",
+  'starts.join(" · ")',
+  'this.startChips(z.starts, "programTimes")',
+  'this.startChips(z.starts, "detailStartTimes")',
+  'class="zoneCardTimes"',
+  "grid-template-columns:repeat(3,minmax(15px,1fr))",
 ]) requireMarker(marker);
 
-for (const forbidden of ["Read-only представление", "Actions API", '<small>Доступен</small>']) {
+for (const forbidden of [
+  "Read-only представление",
+  "Actions API",
+  '<small>Доступен</small>',
+  "compactStarts",
+  "Следующий полив",
+  '${starts[0]} +${starts.length - 1}',
+]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
 }
 

@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.40` / panel `0.6.22`: render every DP38 start time explicitly across Program, Zones and zone detail; replace the `first +N` abbreviation with wrapping time chips that support all six schedule slots.
+- `1.0.0-b005.40` / panel `0.6.22`: label the status summary as the first configured start rather than an unverified next event, and reserve three fixed zone-indicator columns so missing rain data remains visible.
+
 - `1.0.0-b005.39` / panel `0.6.21`: remove the photorealistic valve row and black manifold from the status screen; retain a compact controller-to-six-zone topology with numbered nodes, thin links and live active/queued colour states.
 - `1.0.0-b005.39` / panel `0.6.21`: keep the rain-accounting indicator visible for every production zone, including missing data; give the centered parent-return title a visible plaque treatment.
 - `1.0.0-b005.39` / panel `0.6.21`: replace developer-facing Program and Manual copy, move DP38 cache detail back to Diagnostics, and report manual control as unavailable until a verified command path exists.
