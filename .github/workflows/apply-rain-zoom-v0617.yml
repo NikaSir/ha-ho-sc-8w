@@ -1,0 +1,33 @@
+name: Apply HO-SC-8W rain and zoom v0.6.17
+on:
+  push:
+    branches: [sol/ho-sc-8w-rain-zoom-v0617]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/ho-sc-8w-rain-zoom-v0617
+          fetch-depth: 0
+      - run: python scripts/apply_rain_zoom_v0617.py
+      - name: Validate
+        run: |
+          node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js
+          node scripts/check-panel-ui-v16.mjs
+          python -m compileall -q custom_components/nikas_ho_sc_8w
+          python - <<'PY'
+          import json
+          for p in ['panel.json','panel_manifest.json','custom_components/nikas_ho_sc_8w/manifest.json']:
+              json.load(open(p))
+          PY
+      - name: Commit
+        run: |
+          git config user.name "NikaS UI Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/apply-rain-zoom-v0617.yml scripts/apply_rain_zoom_v0617.py
+          git add custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js custom_components/nikas_ho_sc_8w/const.py custom_components/nikas_ho_sc_8w/manifest.json panel.json panel_manifest.json scripts/check-panel-ui-v16.mjs
+          git commit -m "Smooth HO-SC-8W pinch and clarify rain state"
+          git push origin HEAD:sol/ho-sc-8w-rain-zoom-v0617
