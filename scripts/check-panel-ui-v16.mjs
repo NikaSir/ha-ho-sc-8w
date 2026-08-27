@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.16"',
+  'const UI_VERSION = "0.6.17"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -51,6 +51,9 @@ for (const marker of [
   '<b>Зона ${zone}</b>',
   'class="rainSensor ${rain.tone}"',
   'd="M 294 50 H 452"',
+  '_scheduleGestureTransform(transform)',
+  'label: "Блокирует"',
+  'label: "Не блокирует"',
 ]) requireMarker(marker);
 
 if (source.includes('"Онлайн"')) {
