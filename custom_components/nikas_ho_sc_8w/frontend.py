@@ -27,7 +27,8 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_panel(hass: HomeAssistant) -> None:
     """Serve and register the self-contained integration-owned irrigation panel."""
     frontend_dir = Path(__file__).parent / "frontend"
-    bundle_file = frontend_dir / Path(PANEL_JS_URL).name
+    bundle_relative = PANEL_JS_URL.removeprefix(f"{PANEL_STATIC_URL}/")
+    bundle_file = frontend_dir / bundle_relative
 
     if not bundle_file.is_file():
         _LOGGER.warning("HO-SC-8W panel bundle is missing: %s", bundle_file)
