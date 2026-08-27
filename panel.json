@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.14",
+    "dashboard_version": "0.6.15",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_menu_event": "hass-toggle-menu",
@@ -53,9 +53,9 @@
       "reference": "approved_system_state_render",
       "sections": [
         "system_state",
+        "connection_and_pressure",
         "program_mode_telemetry",
-        "primary_actions",
-        "statuses"
+        "primary_actions"
       ]
     },
     "system_visualization": {
@@ -72,10 +72,10 @@
       "hydraulic_path": "incoming_mainline_to_manifold_to_valves_to_zones",
       "mainline_connection_side": "left_direct_to_manifold",
       "electrical_path": "controller_to_valve_actuators",
-      "rain_sensor_path": "rain_sensor_to_controller",
+      "rain_sensor_path": "direct_horizontal_midline_to_controller",
       "water_passes_through_controller": false,
       "zone_routing": "orthogonal_vertical_one_to_one",
-      "mobile_layout": "approved_light_reference_with_12px_meaningful_copy_floor",
+      "mobile_layout": "viewport_filled_without_status_strip",
       "manifold_layout": "single_six_column_grid_with_shared_valve_pipe_zone_axes",
       "mainline_pressure_presentation": "text_only_two_decimal_bar_value_below_connection_status",
       "mainline_state": "sensor.nikas_h2000_pro_voda_na_poliv_2",
@@ -89,9 +89,23 @@
         "schematic_redundant_annotation_px": 10
       },
       "connection_indicator": {
-        "two_level_indicator_enabled": false,
-        "policy": "opt_in_only",
-        "existing_transport_badge_preserved": true
+        "two_level_indicator_enabled": true,
+        "policy": "explicit_product_request",
+        "transport": [
+          "Локально",
+          "Облако",
+          "Резерв",
+          "Нет связи",
+          "Нет данных"
+        ],
+        "freshness": [
+          "Данные актуальны",
+          "Данные устарели",
+          "Нет данных"
+        ],
+        "main_font_px": 16,
+        "freshness_font_px": 13,
+        "stable_dom": true
       },
       "content_zoom": {
         "engine": "native_scroll_100_transform_pan_above_100_v3",
@@ -120,7 +134,7 @@
         "persist_per_panel_client_and_view": true,
         "shell_reconciliation": "stable_dom_point_patch"
       },
-      "rain_sensor_connection": "single_direct_line_to_controller",
+      "rain_sensor_connection": "direct_horizontal_midline_to_controller",
       "zone_thumbnail_content": "zone_number_and_image_only",
       "zone_thumbnail_visuals": {
         "1": "lawn",

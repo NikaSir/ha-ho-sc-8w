@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.14"',
+  'const UI_VERSION = "0.6.15"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -40,6 +40,13 @@ for (const marker of [
   "VIEW_SCALE_SNAP_MAX = 1.03",
   "this._suppressClicksUntil = Date.now() + 500",
   'this._showScaleToast("Масштаб 100%")',
+  'class="systemConnection ${tone}"',
+  'data-connection-indicator',
+  '"Данные актуальны"',
+  '"Данные устарели"',
+  '"Нет связи"',
+  'class="statusScreen"',
+  'd="M 286 48 H 455"',
 ]) requireMarker(marker);
 
 if (source.includes('"Онлайн"')) {
@@ -47,3 +54,7 @@ if (source.includes('"Онлайн"')) {
 }
 
 console.log("HO-SC-8W UI standard v1.6 contract verified");
+
+if (source.includes("${this.nodes(e)}")) {
+  throw new Error("Status strip must not be rendered on the status view");
+}
