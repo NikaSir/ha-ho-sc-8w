@@ -16,7 +16,8 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.30"',
+  '<strong>Автополив</strong>',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -40,6 +41,17 @@ for (const marker of [
   "VIEW_SCALE_SNAP_MAX = 1.03",
   "this._suppressClicksUntil = Date.now() + 500",
   'this._showScaleToast("Масштаб 100%")',
+  ":host{position:fixed;inset:0",
+  ".app{position:absolute;inset:0",
+  "overscroll-behavior:none",
+  ".appHeader{position:relative;top:auto;z-index:60;touch-action:none}",
+  "touch-action:none}",
+  "viewport.scrollTop <= 0",
+  "viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1",
+  "(atTop && deltaY > 0) || (atBottom && deltaY < 0)",
+  'viewport.addEventListener("touchmove"',
+  "event.touches[0].clientY - nativeTouchY",
+  "{ passive: false }",
   "handedOffRaw !== null",
   "handedOffAtRaw !== null",
   "handedOffAge >= 0",
@@ -68,6 +80,7 @@ for (const forbidden of [
   "Фактические параметры DP38",
   "Игнорируется",
   "sensor.nikas_h2000_pro_voda_na_poliv_2",
+  "<strong>HO-SC-8W</strong>",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden stale UI marker: ${forbidden}`);
 }
@@ -100,7 +113,7 @@ for (const marker of [
   'class="zoneCardTimes"',
   'class="programSeasonEditor',
   'class="programSeasonControls"',
-  "rule 1.17 rebuild",
+  "viewport-locked chrome",
   "max-width:1280px",
   "grid-template-columns:repeat(3,minmax(15px,1fr))",
 ]) requireMarker(marker);
