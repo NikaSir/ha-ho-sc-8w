@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29";
+const NIKAS_HO_SC_8W_UI_VERSION = "0.6.30";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -642,7 +642,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     header() {
       return `<header class="appHeader">
         <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-        <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
+        <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>Автополив</strong><small>UI v${UI_VERSION}</small></button>
         <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
       </header>`;
     }
@@ -1326,15 +1326,15 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
           .quickActions .modeGrid{gap:5px}.quickActions .mode{min-height:100px;padding:7px}.quickActions .mode ha-icon{--mdc-icon-size:31px}
           .statusesCard{margin-top:7px;padding:9px}.statusesHead{margin-bottom:6px}.statusesCard .nodeGrid{gap:5px}.statusesCard .node{grid-template-rows:auto 42px auto;min-height:132px;padding:7px 4px;border-radius:15px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{width:46px;height:42px}.statusesCard .node>ha-icon{--mdc-icon-size:34px}.statusesCard .node b{font-size:13px}
         }
-        :host{height:100vh;height:100dvh;min-height:0;overflow:hidden}
-        .app{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-width:920px;height:100vh;height:100dvh;min-height:0;margin:0 auto;padding:0 14px;overflow:hidden}
-        .appHeader{position:relative;top:auto;z-index:60}
+        :host{position:fixed;inset:0;display:block;width:auto;height:auto;min-width:0;min-height:0;overflow:hidden;overscroll-behavior:none}
+        .app{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-width:920px;height:auto;min-height:0;margin:0 auto;padding:0 14px;overflow:hidden;overscroll-behavior:none}
+        .appHeader{position:relative;top:auto;z-index:60;touch-action:none}
         .workViewport{position:relative;min-width:0;min-height:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--bg)}
         .workCanvas{position:absolute;left:0;top:0;width:100%;min-height:100%;transform-origin:0 0;will-change:transform;touch-action:none;-webkit-user-select:none;user-select:none}
         .workCanvas .content{padding-top:5px;padding-bottom:18px}
         .scaleToast{position:absolute;z-index:80;left:50%;bottom:18px;transform:translate(-50%,12px);padding:8px 13px;border-radius:99px;background:#111d;color:#fff;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
-        .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
+        .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));touch-action:none}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
         /* v0.6.13: NikaS Specialized Panel UI Standard v1.6 shell. */
         .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
@@ -1471,7 +1471,7 @@ const baseStyles = p.styles;
 p.header = function headerV0624() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small></button>
+    <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>Автополив</strong><small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
 };
@@ -1594,6 +1594,7 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   const viewport = this.shadowRoot.querySelector("[data-work-viewport]");
   if (!viewport || viewport.dataset.zoomV0619 === "1") return;
   viewport.dataset.zoomV0619 = "1";
+  let nativeTouchY = null;
   const point = (event) => {
     const rect = viewport.getBoundingClientRect();
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
@@ -1664,7 +1665,14 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
     }
     const start = this._gestureStart;
     if (start?.type === "native") {
-      if (Math.hypot(current.x - start.point.x, current.y - start.point.y) > 4) { this._gestureMoved = true; this._cancelLongPresses(); }
+      const deltaY = current.y - start.point.y;
+      const atTop = viewport.scrollTop <= 0;
+      const atBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1;
+      if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
+        event.preventDefault();
+        return;
+      }
+      if (Math.hypot(current.x - start.point.x, deltaY) > 4) { this._gestureMoved = true; this._cancelLongPresses(); }
       return;
     }
     if (!start || start.type !== "pan" || this._viewTransform.scale <= 1) return;
@@ -1707,6 +1715,21 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   };
   viewport.addEventListener("pointerup", finishPointer);
   viewport.addEventListener("pointercancel", finishPointer);
+  viewport.addEventListener("touchstart", (event) => {
+    nativeTouchY = event.touches.length === 1 && this._viewTransform.scale <= 1
+      ? event.touches[0].clientY
+      : null;
+  }, { passive: true });
+  viewport.addEventListener("touchmove", (event) => {
+    if (nativeTouchY === null || event.touches.length !== 1 || this._viewTransform.scale > 1) return;
+    const deltaY = event.touches[0].clientY - nativeTouchY;
+    const atTop = viewport.scrollTop <= 0;
+    const atBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1;
+    if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) event.preventDefault();
+  }, { passive: false });
+  const clearNativeTouch = () => { nativeTouchY = null; };
+  viewport.addEventListener("touchend", clearNativeTouch, { passive: true });
+  viewport.addEventListener("touchcancel", clearNativeTouch, { passive: true });
   viewport.addEventListener("click", (event) => {
     if (Date.now() < this._suppressClicksUntil) { event.preventDefault(); event.stopImmediatePropagation(); }
   }, true);
@@ -1725,7 +1748,7 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
 
 p.styles = function stylesV0628() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.29 rule 1.17 rebuild: program-owned seasonal write and uniform zone times */
+    /* UI v0.6.30: canonical Autowatering identity and viewport-locked chrome */
     .app{width:min(100%,1280px);max-width:1280px}
     .bottomNavInner{max-width:1280px}
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}

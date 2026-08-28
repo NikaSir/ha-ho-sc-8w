@@ -1,14 +1,14 @@
 {
   "panel": {
     "id": "irrigation",
-    "title": "Полив",
+    "title": "Автополив",
     "path": "/dashboard-irrigation",
     "parent_path": "/dashboard-actions/home",
     "icon": "mdi:sprinkler",
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.29",
+    "dashboard_version": "0.6.30",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -176,7 +176,11 @@
           103
         ],
         "persist_per_panel_client_and_view": true,
-        "shell_reconciliation": "stable_dom_point_patch"
+        "shell_reconciliation": "stable_dom_point_patch",
+        "viewport_locked_host": true,
+        "outer_document_scroll_owner": false,
+        "scroll_boundary_guard": "prevent_default_at_top_and_bottom",
+        "fixed_chrome_touch_action": "none"
       },
       "reference_canvas_px": [
         1280,

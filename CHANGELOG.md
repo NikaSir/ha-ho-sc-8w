@@ -6,6 +6,10 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.48` / panel `0.6.30`: adopt the approved user-facing name `Автополив` in the panel Header, Home Assistant sidebar and panel/navigation metadata while retaining `HO-SC-8W` as the physical controller model.
+- `1.0.0-b005.48` / panel `0.6.30`: lock the panel host to the viewport, keep Header and Bottom Tab Bar outside the only scroll owner, and prevent native work-area gestures from chaining into Home Assistant at the top and bottom boundaries.
+- `1.0.0-b005.48` / panel `0.6.30`: preserve the field-confirmed seasonal adjustment and corrected local manual-start protocol from b005.47 without changing controller writes.
+
 - `1.0.0-b005.47` / panel `0.6.29`: fix physical IIC-800 local manual starts. DP101 now enters and confirms `Manual` before DP45, and requested durations are encoded in DP45 bytes 2–17 as required by the controller. The fail-safe `OFF` remains active only when the corrected start is not confirmed by DP101/107/108.
 
 - `1.0.0-b005.46` / panel `0.6.29`: require a complete, finite and non-future source-route hand-off before the Header return plaque can consume it; orphaned route/timestamp values now fail closed to the saved/configured safe route.
