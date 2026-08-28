@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.44` / panel `0.6.26`: render zone artwork at its complete intrinsic aspect ratio on the Zones list and zone-detail screens; secondary thumbnails now use centered `contain` sizing instead of exposing a 62×62 fragment of the original 512×512 background.
+- `1.0.0-b005.44` / panel `0.6.26`: derive secondary zone-asset cache keys from the single UI version constant so the artwork and production bundle cannot drift to different browser-cache revisions.
+
 - `1.0.0-b005.43` / panel `0.6.25`: replace the low-resolution landscape crops with sharp square zone thumbnails designed for 62 px cards: lawn sprinkler for zones 1–3, explicit flowers for zone 4, shrub drip irrigation for zone 5 and a close greenhouse for zone 6.
 - `1.0.0-b005.43` / panel `0.6.25`: replace the ambiguous muted folded umbrella with a recognizable open outline umbrella when rain accounting is disabled; reserve the help-circle outline for missing data.
 

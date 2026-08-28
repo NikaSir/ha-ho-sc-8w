@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "0.6.25";
+const NIKAS_HO_SC_8W_UI_VERSION = "0.6.26";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -1456,9 +1456,9 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   }, { passive: false });
 };
 
-p.styles = function stylesV0625() {
+p.styles = function stylesV0626() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.25 readable zone imagery and rain indicator */
+    /* UI v0.6.26 readable zone imagery and rain indicator */
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
     .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:25%!important;transform:none!important}
     .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:23%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
@@ -1469,7 +1469,8 @@ p.styles = function stylesV0625() {
     .diagramZone{overflow:hidden}.schemaGrid .diagramZone{grid-template-rows:minmax(48px,1fr) auto auto auto!important;gap:4px!important;padding:6px 5px 7px!important}
     .schemaGrid .scene{height:100%!important;min-height:48px}.schemaGrid .zoneText small,.schemaGrid .duration em,.schemaGrid .readyIcon{display:none!important}
     .zoneIndicators{display:grid;grid-template-columns:repeat(3,minmax(15px,1fr));align-items:center;justify-items:center;gap:3px;width:100%;min-width:0;margin-top:1px;overflow:visible}.zoneIndicators ha-icon{display:block;min-width:15px;--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
-    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-lawn-v2.webp?v=0.6.25')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-flowers-v2.webp?v=0.6.25')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-shrubs-v2.webp?v=0.6.25')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-greenhouse-v2.webp?v=0.6.25')!important}.scene>ha-icon{display:none!important}
+    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-lawn-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-flowers-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-shrubs-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-greenhouse-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene>ha-icon{display:none!important}
+    .zoneCard .scene,.detailHead .scene{background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;background-color:color-mix(in srgb,var(--card) 92%,var(--text) 8%)}
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
     .zoneCards{padding-bottom:64px}.zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:88px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}.zoneCardTimes.muted{color:var(--muted);font-weight:500}
     .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}
