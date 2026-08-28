@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28";
+const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -52,10 +52,16 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     let handedOff = null;
     let saved = null;
     try {
+      const handedOffRaw = sessionStorage.getItem(SOURCE_ROUTE_KEY);
       const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
       const handedOffAt = Number(handedOffAtRaw);
-      const handedOffFresh = handedOffAtRaw === null || (Number.isFinite(handedOffAt) && Date.now() - handedOffAt <= 30_000);
-      handedOff = handedOffFresh ? safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY)) : null;
+      const handedOffAge = Date.now() - handedOffAt;
+      const handedOffFresh = handedOffRaw !== null
+        && handedOffAtRaw !== null
+        && Number.isFinite(handedOffAt)
+        && handedOffAge >= 0
+        && handedOffAge <= 30_000;
+      handedOff = handedOffFresh ? safeReturnRoute(handedOffRaw) : null;
       sessionStorage.removeItem(SOURCE_ROUTE_KEY);
       sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
       saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
@@ -295,8 +301,6 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       return related?.[0] || null;
     }
     pressureEntity() {
-      const exactEntityId = "sensor.nikas_h2000_pro_voda_na_poliv_2";
-      if (this.states()[exactEntityId]) return exactEntityId;
       const irrigationWater = Object.entries(this.states()).find(([entityId, value]) => {
         if (!entityId.startsWith("sensor.")) return false;
         const haystack = `${this.normalizedLabel(entityId)} ${this.normalizedLabel(value?.attributes?.friendly_name)}`;
@@ -368,6 +372,30 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       return entryId ? { config_entry_id: entryId } : {};
     }
 
+    commandBusy() {
+      return this._manualBusy || this._seasonalBusy;
+    }
+
+    integrationServiceAvailable(service) {
+      return Boolean(this._hass?.callService && this._hass?.services?.nikas_ho_sc_8w?.[service]);
+    }
+
+    controllerStateAvailable() {
+      const entities = this.entities();
+      return !this.bad(this.state(entities.connection)) && !this.bad(this.state(entities.operation));
+    }
+
+    commandAvailable(service) {
+      return !this.commandBusy() && this.integrationServiceAvailable(service) && this.controllerStateAvailable();
+    }
+
+    rejectUnavailableCommand(service) {
+      if (this.commandBusy()) return true;
+      if (this.integrationServiceAvailable(service) && this.controllerStateAvailable()) return false;
+      this.notify("Команда недоступна: Home Assistant не подтвердил сервис или состояние контроллера");
+      return true;
+    }
+
     serviceError(error, fallback) {
       return error?.message || error?.body?.message || fallback;
     }
@@ -408,7 +436,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async startManualQueue() {
-      if (this._manualBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("start_manual_queue")) return;
       const selected = this.selectedManualZones();
       if (!selected.length) {
         this.notify("Добавьте хотя бы одну зону в очередь");
@@ -438,7 +466,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async stopManual() {
-      if (this._manualBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("stop_manual")) return;
       if (!window.confirm("Остановить ручной полив?\n\nКонтроллер перейдёт в режим OFF.")) return;
       this._manualBusy = true;
       this.render();
@@ -455,7 +483,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async resumeAutomatic() {
-      if (this._manualBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("resume_automatic")) return;
       if (!window.confirm("Вернуть автоматический режим полива?")) return;
       this._manualBusy = true;
       this.render();
@@ -472,7 +500,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async applySeasonalAdjustment() {
-      if (this._seasonalBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("set_seasonal_adjustment")) return;
       const input = this.shadowRoot.querySelector("[data-season-value]");
       const value = Number(input?.value ?? this._seasonalDraft);
       if (!Number.isInteger(value) || value < -90 || value > 100 || value % 10 !== 0) {
@@ -789,6 +817,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     programView(e) {
       const seasonal = this.state(e.seasonal);
       const rain = this.rainPresentation(e);
+      const seasonalCommandAvailable = this.commandAvailable("set_seasonal_adjustment") && !this.bad(seasonal);
       const seasonalValue = this._seasonalDraft === null
         ? (this.bad(seasonal) ? "" : seasonal)
         : this._seasonalDraft;
@@ -799,7 +828,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
         const z = this.zoneRuntime(e, zone);
         return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="programZone"><b>Зона ${zone}</b><small>${this.esc(z.duration)} мин</small></span>${this.startChips(z.starts, "programTimes")}<ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
-      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Программа зон доступна для просмотра. Сезонная коррекция изменяется отдельно с подтверждением.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><div class="programSeasonEditor ${this.bad(seasonal) ? "" : "active"}"><small>Сезон</small><span class="programSeasonControls"><label class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов"><b>%</b></label><button data-season-apply ${this._seasonalBusy ? "disabled" : ""}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
+      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Программа зон доступна для просмотра. Сезонная коррекция изменяется отдельно с подтверждением.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><div class="programSeasonEditor ${this.bad(seasonal) ? "" : "active"}"><small>Сезон</small><span class="programSeasonControls"><label class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов" ${seasonalCommandAvailable ? "" : "disabled"}><b>%</b></label><button data-season-apply ${seasonalCommandAvailable ? "" : "disabled"}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
     manualView(e) {
       const operationRaw = this.state(e.operation);
@@ -808,6 +837,9 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       const active = [...this.zoneSet(this.state(e.active))].map(Number).filter(Boolean).sort((a, b) => a - b);
       const pending = [...this.zoneSet(this.state(e.queued))].map(Number).filter(Boolean).sort((a, b) => a - b);
       const selected = this.selectedManualZones();
+      const startAvailable = this.commandAvailable("start_manual_queue");
+      const stopAvailable = this.commandAvailable("stop_manual");
+      const resumeAvailable = this.commandAvailable("resume_automatic");
       const selectedSet = new Set(selected);
       const zoneButtons = Array.from({ length: 6 }, (_, index) => index + 1).map((zone) => {
         const order = selected.indexOf(zone) + 1;
@@ -820,13 +852,13 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       const pendingText = pending.length ? `Далее: ${pending.join(" → ")}` : "Очередь контроллера пуста";
       return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Очередь зон</h2><p>Выберите зоны и задайте отдельное время каждой.</p></div><section class="manualCard manualQueueCard">
         <div class="manualRuntime ${watering ? "running" : "idle"}"><ha-icon icon="${watering ? "mdi:water" : "mdi:playlist-check"}"></ha-icon><span><small>Текущий режим · ${this.esc(operation)}</small><b>${watering ? this.esc(runningText) : "Готово к настройке"}</b><em>${watering ? this.esc(pendingText) : "Выполнение по возрастанию номера зоны"}</em></span></div>
-        ${watering ? `<div class="manualRunningActions"><button class="stopManual" data-manual-stop ${this._manualBusy ? "disabled" : ""}><ha-icon icon="mdi:stop-circle-outline"></ha-icon>${this._manualBusy ? "Проверка…" : "Остановить"}</button>${!active.length && !pending.length && operationKey !== "auto" ? `<button class="resumeAuto" data-resume-auto ${this._manualBusy ? "disabled" : ""}>Вернуть Авто</button>` : ""}</div>` : ""}
+        ${watering ? `<div class="manualRunningActions"><button class="stopManual" data-manual-stop ${stopAvailable ? "" : "disabled"}><ha-icon icon="mdi:stop-circle-outline"></ha-icon>${this._manualBusy ? "Проверка…" : "Остановить"}</button>${!active.length && !pending.length && operationKey !== "auto" ? `<button class="resumeAuto" data-resume-auto ${resumeAvailable ? "" : "disabled"}>Вернуть Авто</button>` : ""}</div>` : ""}
         <div class="manualZones" aria-label="Выбор зон">${zoneButtons}</div>
         <div class="manualQueueHead"><span>Очередь</span><b>${selected.length ? `${selected.length} зон · ${total} мин` : "Не выбрана"}</b></div>
         <div class="manualQueueList">${queueRows || `<div class="manualEmpty"><ha-icon icon="mdi:gesture-tap"></ha-icon><span>Нажмите на зоны выше, чтобы добавить их в очередь</span></div>`}</div>
-        <button class="manualStart" data-manual-start ${!selected.length || watering || this._manualBusy ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span><b>${this._manualBusy ? "Проверка контроллера…" : "Запустить очередь"}</b><small>${selected.length ? `${selected.length} зон · ${total} мин` : "Сначала выберите зоны"}</small></span></button>
-        ${operationKey === "off" && !active.length && !pending.length ? `<button class="resumeAuto standalone" data-resume-auto ${this._manualBusy ? "disabled" : ""}>Вернуть автоматический режим</button>` : ""}
-        <p class="manualNote">Команда отправляется только после подтверждения. Успех показывается после чтения DP101, DP107 и DP108.</p>
+        <button class="manualStart" data-manual-start ${!selected.length || watering || !startAvailable ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span><b>${this._manualBusy ? "Проверка контроллера…" : "Запустить очередь"}</b><small>${selected.length ? `${selected.length} зон · ${total} мин` : "Сначала выберите зоны"}</small></span></button>
+        ${operationKey === "off" && !active.length && !pending.length ? `<button class="resumeAuto standalone" data-resume-auto ${resumeAvailable ? "" : "disabled"}>Вернуть автоматический режим</button>` : ""}
+        <p class="manualNote">${this.controllerStateAvailable() ? "Команда отправляется только после подтверждения. Успех показывается после чтения DP101, DP107 и DP108." : "Управление отключено: нет подтверждённого состояния контроллера."}</p>
       </section>`;
     }
     diagnosticsView(e) {
@@ -1693,7 +1725,7 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
 
 p.styles = function stylesV0628() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.28 rule 1.17 rebuild: program-owned seasonal write and uniform zone times */
+    /* UI v0.6.29 rule 1.17 rebuild: program-owned seasonal write and uniform zone times */
     .app{width:min(100%,1280px);max-width:1280px}
     .bottomNavInner{max-width:1280px}
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
@@ -1711,7 +1743,7 @@ p.styles = function stylesV0628() {
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
     .zoneCards{padding-bottom:64px}.zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:96px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-size:12px!important;font-style:normal;line-height:1.2}.zoneCardTimes{display:block;margin-top:5px;color:var(--text);font-size:14px;font-weight:750;line-height:1.25;white-space:normal}.zoneCardTimes.muted{color:var(--muted);font-size:12px;font-weight:500}
     .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}
-    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:focus-visible{outline:2px solid var(--a);outline-offset:2px}.headerTitle:active{background:var(--accent-soft)}
+    .headerTitle{appearance:none;justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--text);cursor:pointer}.headerTitle strong{font-size:23px;font-weight:800;line-height:1.05;letter-spacing:.08em}.headerTitle small{margin-top:3px;font-size:14px;font-weight:560;line-height:1.2;letter-spacing:.01em}.headerTitle:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}.headerTitle:active{background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05);transform:scale(.985)}
     .summaryGrid>.programSeasonEditor{display:grid;gap:7px;padding:10px;border:0;border-radius:14px;background:var(--soft);text-align:left}.programSeasonEditor>small{display:block;color:var(--muted);font-size:12px}.programSeasonControls{display:grid;grid-template-columns:minmax(62px,.75fr) minmax(88px,1.25fr);align-items:center;gap:6px}.seasonalInput{display:grid;grid-template-columns:minmax(0,1fr) 20px;align-items:center;width:100%;min-height:38px;padding:0 7px;border:1px solid var(--line);border-radius:10px;background:var(--card)}.seasonalInput input{width:100%;min-width:0;padding:4px 0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:16px;font-weight:800;line-height:1;text-align:right}.seasonalInput b{margin:0!important;color:var(--muted)!important;font-size:12px!important}.programSeasonControls>button{min-height:38px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--a) 50%,var(--line));border-radius:10px;background:var(--accent-soft);color:var(--a);font-size:12px;font-weight:750;line-height:1;text-align:center}.programSeasonControls>button:disabled{opacity:.58}.seasonalInput:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}
     .manualQueueCard{display:grid;gap:12px;padding:14px}.manualRuntime{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;padding:12px;border-radius:16px;background:var(--soft)}.manualRuntime>ha-icon{--mdc-icon-size:32px;color:var(--muted)}.manualRuntime.running{background:var(--accent-soft)}.manualRuntime.running>ha-icon{color:var(--a)}.manualRuntime span{display:grid;gap:2px;min-width:0}.manualRuntime small,.manualRuntime b,.manualRuntime em{display:block}.manualRuntime b{font-size:15px}.manualRuntime em{color:var(--muted);font-style:normal}.manualZones{gap:7px}.manualZone{min-height:72px;padding:7px;border-color:var(--line);background:var(--soft)}.manualZone span{font-size:21px;line-height:1}.manualZone small{margin-top:5px;line-height:1.05;text-align:center}.manualQueueHead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px}.manualQueueHead span{font-size:14px;font-weight:800}.manualQueueHead b{color:var(--muted);font-size:12px}.manualQueueList{display:grid;gap:7px}.manualQueueRow{display:grid;grid-template-columns:28px minmax(80px,1fr) auto;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:15px;background:var(--card)}.queueOrder{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--a);font-size:13px;font-weight:800}.queueZone{display:grid;gap:2px;min-width:0}.queueZone b{font-size:14px}.queueZone small{color:var(--muted);line-height:1.05}.queueDuration{display:grid;grid-template-columns:38px 72px 38px;align-items:center;gap:4px}.queueDuration>button{display:grid;place-items:center;width:38px;height:42px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:23px}.queueDuration label{display:grid;grid-template-columns:minmax(0,1fr) 25px;align-items:center;height:42px;padding:0 5px;border:1px solid var(--line);border-radius:12px;background:var(--card)}.queueDuration input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:16px;font-weight:800;line-height:1;text-align:right}.queueDuration label span{color:var(--muted);font-size:12px}.queueDuration label:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}.manualEmpty{display:flex;align-items:center;justify-content:center;gap:9px;min-height:72px;padding:12px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);text-align:center}.manualEmpty ha-icon{--mdc-icon-size:25px}.manualStart{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;justify-content:center;gap:9px;min-height:58px;padding:8px 16px;border:0;border-radius:17px;background:linear-gradient(145deg,#079bd0,#087aec);color:#fff;text-align:left}.manualStart>ha-icon{--mdc-icon-size:30px}.manualStart span{display:grid;gap:2px}.manualStart b,.manualStart small{color:inherit}.manualStart b{font-size:16px}.manualStart:disabled{background:var(--soft);color:var(--muted)}.manualRunningActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.manualRunningActions>button,.resumeAuto.standalone{min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--soft);font-weight:750}.manualRunningActions>button{display:flex;align-items:center;justify-content:center;gap:6px}.stopManual{border-color:color-mix(in srgb,var(--danger) 42%,var(--line))!important;color:var(--danger)}.resumeAuto{color:var(--a)}.resumeAuto.standalone{width:100%}.manualRunningActions>button:disabled,.resumeAuto:disabled{opacity:.58}.manualNote{margin:0!important;color:var(--muted);line-height:1.35}.manualQueueCard button:focus-visible,.programSeasonControls>button:focus-visible{outline:3px solid color-mix(in srgb,var(--a) 30%,transparent);outline-offset:2px}
     .detailCard{min-height:430px}.detailHead{display:grid;grid-template-columns:112px minmax(0,1fr)!important}.detailHead .scene{width:112px!important;height:96px!important}.detailHead h2{font-size:25px}.detailGrid{margin-top:20px}.detailGrid small,.detailGrid b{font-size:14px}.detailGrid b{margin-top:6px}.detailStateList{display:grid;gap:8px;margin-top:18px}.detailStateList>div{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;padding:11px 13px;border-radius:15px;background:var(--soft)}.detailStateList ha-icon{--mdc-icon-size:27px;color:var(--green)}.detailStateList ha-icon.off,.detailStateList ha-icon.unknown{color:var(--muted)}.detailStateList small,.detailStateList b{display:block;font-size:13px}.detailStateList b{margin-top:2px}.detailNote{margin:16px 2px 0!important;font-size:12px!important}
@@ -1719,7 +1751,7 @@ p.styles = function stylesV0628() {
       .approvedDiagram{aspect-ratio:388/365!important;margin-top:0!important}.approvedDiagram .controller{left:35%!important;width:30%!important;height:27%!important}.approvedDiagram .controllerDrop{top:24%;height:8%}.approvedDiagram .controlBus{top:32%!important}.approvedDiagram .schemaGrid{top:29%!important;bottom:2%!important}.simplifiedDiagram .schemaColumn{grid-template-rows:26px 14% minmax(0,1fr)!important}.schemaGrid .diagramZone{min-height:142px!important}.schemaGrid .scene{min-height:66px!important}.schemaGrid .zoneIndicators ha-icon{--mdc-icon-size:14px}
       .infraRow{grid-template-columns:.95fr 1.25fr;gap:6px}.infraRow .heroPressure,.infraRow .rainStatusCard{min-height:62px}.infraRow .heroPressure{grid-template-columns:28px minmax(0,1fr);padding:7px}.infraRow .heroPressure>ha-icon{--mdc-icon-size:25px}.infraRow .heroPressure b{font-size:17px}.infraRow .rainStatusCard{grid-template-columns:34px minmax(0,1fr) 20px;padding:6px}.infraRow .rainStatusPhoto{width:31px;height:39px}.infraRow .rainStatusText strong{font-size:13px}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}
       .zoneCards{padding-bottom:72px}.zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important;min-height:98px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{grid-template-columns:repeat(3,19px);gap:5px}.zoneCard .zoneIndicators ha-icon{min-width:19px;--mdc-icon-size:19px}.zoneCardTimes{font-size:14px}.programRow{grid-template-columns:68px minmax(0,1fr) 18px!important;min-height:76px!important;padding:9px 11px!important}.programTimes{gap:4px}.programTimes>span,.detailStartTimes>span{min-height:27px;padding:4px 7px}.programSeasonControls{grid-template-columns:minmax(58px,.7fr) minmax(84px,1.3fr);gap:5px}.programSeasonControls>button{padding-inline:5px}
-      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualQueueCard{padding:12px 10px}.manualQueueRow{grid-template-columns:25px minmax(64px,1fr) auto;gap:6px;padding:7px 6px}.queueOrder{width:25px;height:25px}.queueDuration{grid-template-columns:34px 64px 34px;gap:3px}.queueDuration>button{width:34px;height:42px}.queueDuration label{grid-template-columns:minmax(0,1fr) 22px}.manualRuntime{padding:10px}.manualRunningActions{grid-template-columns:1fr}
+      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:0;width:100%;padding-inline:8px}.headerTitle strong{font-size:21px}.headerTitle small{font-size:13px}.manualQueueCard{padding:12px 10px}.manualQueueRow{grid-template-columns:25px minmax(64px,1fr) auto;gap:6px;padding:7px 6px}.queueOrder{width:25px;height:25px}.queueDuration{grid-template-columns:34px 64px 34px;gap:3px}.queueDuration>button{width:34px;height:42px}.queueDuration label{grid-template-columns:minmax(0,1fr) 22px}.manualRuntime{padding:10px}.manualRunningActions{grid-template-columns:1fr}
     }
   `;
 };

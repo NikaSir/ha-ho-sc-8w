@@ -1,7 +1,7 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NikaS Specialized Panel UI Standard v1.8 and NikaS Panel Navigation and Return Contract v1.0
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.28
+**Audit target:** NikaS Specialized Panel UI Standard v1.9 and NikaS Panel Navigation and Return Contract v1.1
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.29
 **Manifest:** integration `1.0.0-b005.46`
 
 ## Compliance
@@ -23,6 +23,8 @@
 | Meaningful typography 12–25 px | PASS | Final v0.6.13 rules raise semantic labels and values to 12 px or more and cap primary headings at 25 px; only the redundant control-wire caption remains 10 px. |
 | Optional two-level indicator | PASS | Explicitly enabled for HO-SC-8W: canonical transport/freshness vocabulary, 16/13 typography, status tint, stable subtree and point-patched updates. |
 | Machine-readable contract agrees | PASS | `panel.json` and registration declare native scroll at 100, fixed origin, >100-only axis pan, resize clamp and tab-top reset. |
+| Data truth and command safety | PASS | Values come from integration-owned entities/state; missing, unknown and unavailable values stay explicit. Writes use registered `nikas_ho_sc_8w` services with confirmation, busy/error handling and factual controller read-back. |
+| Strict source hand-off | PASS | The title consumes route and timestamp only as a complete pair and rejects invalid, expired or future timestamps before applying saved/configured fallbacks. |
 | Repository validation | PASS | Local syntax, JSON, Python and asset checks pass; CI now runs the repository contract guard, HACS Action and Home Assistant Hassfest for every pull request. |
 | Approved icon source preserved | PASS | Existing 256×256 RGBA `custom_components/nikas_ho_sc_8w/brand/icon.png` is unchanged and now shown in README. |
 | Integration icon visible through supported HA Brands path | GAP | Repository-local brand art alone cannot publish the HA integration icon. Submit the approved source as `icon.png` and `icon@2x.png` for domain `nikas_ho_sc_8w` through Home Assistant Brands; add dark variants only if required. |
@@ -33,7 +35,7 @@
 
 At 100% verify native scrolling on Diagnostics, no horizontal/top displacement and immediate tap/hold response. Above 100% verify only necessary axes pan and every release/resize remains clamped. Confirm Header and Bottom navigation stay fixed and match UPS.
 
-## UI 0.6.28 composition delta
+## UI 0.6.29 composition delta
 
 - The first-page seasonal-correction tile is display-only again; it opens factual entity details but contains no input or Apply action.
 - The `Сезон` tile on `Программа` owns the seasonal draft and explicit Apply action. Confirmation, integration-owned service dispatch and DP103 read-back remain mandatory.

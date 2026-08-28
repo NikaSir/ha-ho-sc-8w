@@ -36,11 +36,11 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.28**.
+Current panel version: **0.6.29**.
 
-The panel follows **NikaS Specialized Panel UI Standard v1.8** and the mandatory navigation/return contract:
+The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
-It also conforms to **NikaS Integration Panel Template v1.0**.
+It also conforms to **NikaS Integration Panel Template v1.9**.
 
 - compact symmetric Header with the native Home Assistant `☰` menu;
 - viewport-centered title and one global refresh action;
@@ -112,7 +112,7 @@ The incoming water path now runs from the pressure gauge vertically upward and t
 
 ### Actual HO-SC-8W controller and readable type v0.5.8
 
-The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.8 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
+The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.9 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
 
 ### Shared-axis irrigation schematic v0.6.0
 
@@ -134,7 +134,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.28
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.29
       ↓
 <nikas-ho-sc-8w-panel>
 ```
