@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.24"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.25"',
   "const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION",
   "const ASSET_VERSION = UI_VERSION",
   "this._viewNodeCache = new Map()",
@@ -70,11 +70,13 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.24",
-  "zone-4.webp?v=0.6.24",
+  "zone-lawn-v2.webp?v=0.6.25",
+  "zone-flowers-v2.webp?v=0.6.25",
+  "zone-shrubs-v2.webp?v=0.6.25",
+  "zone-greenhouse-v2.webp?v=0.6.25",
   "detailStateList",
-  "mdi:umbrella-closed-outline",
   "mdi:umbrella-outline",
+  "mdi:help-circle-outline",
   "simplifiedDiagram",
   '"queue" : "idle"',
   ".zoneLink.idle{background:#a8b2ba}",
@@ -103,6 +105,7 @@ for (const forbidden of [
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
   "mdi:umbrella-off-outline",
+  "mdi:umbrella-closed-outline",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
 }

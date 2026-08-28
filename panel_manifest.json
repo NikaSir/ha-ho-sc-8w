@@ -1,7 +1,7 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.24",
-  "integration_version": "1.0.0-b005.42",
+  "panel_version": "0.6.25",
+  "integration_version": "1.0.0-b005.43",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -76,28 +76,20 @@
       "role": "legacy_wide_manifold"
     },
     {
-      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-1.webp",
-      "role": "zone_1"
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-lawn-v2.webp",
+      "role": "zones_1_2_3_lawn"
     },
     {
-      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-2.webp",
-      "role": "zone_2"
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-flowers-v2.webp",
+      "role": "zone_4_flowers"
     },
     {
-      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-3.webp",
-      "role": "zone_3"
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-shrubs-v2.webp",
+      "role": "zone_5_shrubs"
     },
     {
-      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-4.webp",
-      "role": "zone_4"
-    },
-    {
-      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-5.webp",
-      "role": "zone_5"
-    },
-    {
-      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-6.webp",
-      "role": "zone_6"
+      "path": "custom_components/nikas_ho_sc_8w/frontend/assets/zone-greenhouse-v2.webp",
+      "role": "zone_6_greenhouse"
     }
   ],
   "zone_thumbnail_content": "image_zone_number_activity_program_duration",

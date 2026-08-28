@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.43` / panel `0.6.25`: replace the low-resolution landscape crops with sharp square zone thumbnails designed for 62 px cards: lawn sprinkler for zones 1–3, explicit flowers for zone 4, shrub drip irrigation for zone 5 and a close greenhouse for zone 6.
+- `1.0.0-b005.43` / panel `0.6.25`: replace the ambiguous muted folded umbrella with a recognizable open outline umbrella when rain accounting is disabled; reserve the help-circle outline for missing data.
+
 - `1.0.0-b005.42` / panel `0.6.24`: remove the hard-coded `UI v0.6.22` from the late Header override, derive every visible version from one bundle constant and synchronize an already-mounted stable Header without rebuilding its DOM.
 - `1.0.0-b005.42` / panel `0.6.24`: add a repository guard that rejects any future hard-coded semantic version inside Header markup.
 
