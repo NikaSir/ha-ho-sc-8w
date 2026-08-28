@@ -6,7 +6,25 @@ INTEGRATION_NAME = "HO-SC-8W Irrigation"
 MANUFACTURER = "INKBIRD / HiOazo"
 MODEL = "HO-SC-8W"
 NUM_ZONES = 8
+NUM_PRODUCTION_ZONES = 6
 TUYA_VERSION = 3.3
+
+MANUAL_DURATION_MIN = 1
+MANUAL_DURATION_MAX = 120
+SEASONAL_ADJUST_MIN = -90
+SEASONAL_ADJUST_MAX = 100
+SEASONAL_ADJUST_STEP = 10
+
+SERVICE_START_MANUAL_QUEUE = "start_manual_queue"
+SERVICE_STOP_MANUAL = "stop_manual"
+SERVICE_RESUME_AUTOMATIC = "resume_automatic"
+SERVICE_SET_SEASONAL_ADJUSTMENT = "set_seasonal_adjustment"
+
+ATTR_CONFIG_ENTRY_ID = "config_entry_id"
+ATTR_ZONES = "zones"
+ATTR_ZONE = "zone"
+ATTR_DURATION_MINUTES = "duration_minutes"
+ATTR_VALUE = "value"
 
 DP_NORMAL_TIME = 38
 DP_IRRIGATION_MODE = 44
@@ -42,6 +60,6 @@ PANEL_ICON = "mdi:sprinkler"
 PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
-PANEL_VERSION = "0.6.23"
+PANEL_VERSION = "0.6.27"
 PANEL_STATIC_URL = "/nikas-ho-sc-8w"
 PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel.js"
