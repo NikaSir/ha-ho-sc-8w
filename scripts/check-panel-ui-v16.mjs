@@ -67,6 +67,15 @@ for (const forbidden of [
 
 for (const marker of [
   "data-parent-nav",
+  '<button class="headerTitle" type="button" data-parent-nav',
+  '<small>UI v0.6.23</small>',
+  '["return_to", "from"]',
+  '.map((key) => safeReturnRoute(current.searchParams.get(key)))',
+  '.find(Boolean)',
+  '.headerTitle:focus-visible',
+  '.headerTitle:active',
+  'window.history.pushState(null, "", path)',
+  'window.dispatchEvent(new Event("location-changed"))',
   ".scene1,.scene2,.scene3",
   "zone-3.webp?v=0.6.23",
   "zone-4.webp?v=0.6.23",
@@ -90,6 +99,7 @@ for (const forbidden of [
   "Actions API",
   '<small>Доступен</small>',
   "compactStarts",
+  "history.back(",
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
 ]) {
