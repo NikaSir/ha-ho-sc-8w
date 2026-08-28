@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.42` / panel `0.6.24`: remove the hard-coded `UI v0.6.22` from the late Header override, derive every visible version from one bundle constant and synchronize an already-mounted stable Header without rebuilding its DOM.
+- `1.0.0-b005.42` / panel `0.6.24`: add a repository guard that rejects any future hard-coded semantic version inside Header markup.
+
 - `1.0.0-b005.41` / panel `0.6.23`: complete the accepted phone target with supported rain-accounting icons for all three states, including an explicit muted unknown indicator for zone 6.
 - `1.0.0-b005.41` / panel `0.6.23`: make idle topology links neutral while retaining blue active and orange queued emphasis; compact single-start zone rows, keep every multi-start time explicit and add bottom scroll clearance above the fixed navigation.
 

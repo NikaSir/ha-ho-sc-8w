@@ -16,7 +16,9 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.23"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.24"',
+  "const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION",
+  "const ASSET_VERSION = UI_VERSION",
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -68,8 +70,8 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.23",
-  "zone-4.webp?v=0.6.23",
+  "zone-3.webp?v=0.6.24",
+  "zone-4.webp?v=0.6.24",
   "detailStateList",
   "mdi:umbrella-closed-outline",
   "mdi:umbrella-outline",
@@ -87,6 +89,9 @@ for (const marker of [
   "const singleStart = z.starts.length === 1",
   ".zoneCards{padding-bottom:64px}",
   ".zoneCards{padding-bottom:72px}",
+  'function renderV0624()',
+  'querySelector(".headerTitle small")',
+  'UI v${NIKAS_HO_SC_8W_UI_VERSION}',
   "grid-template-columns:repeat(3,minmax(15px,1fr))",
 ]) requireMarker(marker);
 
@@ -104,6 +109,10 @@ for (const forbidden of [
 
 if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
+}
+
+if (/<small[^>]*>UI v\d+\.\d+\.\d+<\/small>/.test(source)) {
+  throw new Error("Header version must be derived from the bundle version constant");
 }
 
 console.log("HO-SC-8W UI standard v1.6 contract verified");
