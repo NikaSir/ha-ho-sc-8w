@@ -48,5 +48,52 @@
       "already_configured": "This HO-SC-8W is already configured.",
       "reconfigure_successful": "Connection details were verified, saved and reloaded."
     }
+  },
+  "services": {
+    "start_manual_queue": {
+      "name": "Start manual irrigation queue",
+      "description": "Starts zones 1–6 sequentially with individual durations and verifies controller read-back.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Required only when multiple HO-SC-8W controllers are loaded."
+        },
+        "zones": {
+          "name": "Zone queue",
+          "description": "List of objects containing zone and duration_minutes."
+        }
+      }
+    },
+    "stop_manual": {
+      "name": "Stop manual irrigation",
+      "description": "Sets the controller to OFF and verifies that no zones are active or queued.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry"
+        }
+      }
+    },
+    "resume_automatic": {
+      "name": "Resume automatic mode",
+      "description": "Sets an idle controller to Auto and verifies DP101.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry"
+        }
+      }
+    },
+    "set_seasonal_adjustment": {
+      "name": "Set seasonal adjustment",
+      "description": "Writes DP103 in 10% steps and verifies the same value by read-back.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry"
+        },
+        "value": {
+          "name": "Seasonal adjustment",
+          "description": "Value from -90% to 100% in 10% steps."
+        }
+      }
+    }
   }
 }

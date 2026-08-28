@@ -90,14 +90,20 @@ class ScheduleChannel:
 def encode_dp45_start_manual(
     durations: dict[int, int], num_zones: int = NUM_ZONES
 ) -> bytes:
+    """Encode the verified one-shot manual-watering DP45 command.
+
+    The first per-zone bank (bytes 2..17 for eight zones) is controller
+    running-time telemetry and must be zero in a start command.  Requested
+    one-shot durations belong to the second bank (bytes 18..33).
+    """
     payload = bytearray(DP45_LENGTH)
-    payload[0] = 0x00
+    payload[0] = 0x01
     payload[1] = 0x01
     for zone in range(1, num_zones + 1):
         duration = int(durations.get(zone, 0))
         if duration < 0 or duration > 0xFFFF:
             raise ValueError(f"Invalid manual duration for zone {zone}: {duration}")
-        struct.pack_into(">H", payload, 2 + (zone - 1) * 2, duration)
+        struct.pack_into(">H", payload, 2 + num_zones * 2 + (zone - 1) * 2, duration)
     return bytes(payload)
 
 

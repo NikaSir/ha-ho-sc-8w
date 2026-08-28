@@ -12,7 +12,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import HOSC8WAPI, HOSC8WDevice
-from .schedule_cache import HOSC8WScheduleCache
 from .const import (
     CONF_CONNECTION_MODE,
     CONNECTION_MODE_AUTO,
@@ -20,6 +19,7 @@ from .const import (
     CONNECTION_MODE_LOCAL,
     CONNECTION_MODES,
 )
+from .schedule_cache import HOSC8WScheduleCache
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,6 +87,42 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
                 options={**self.entry.options, CONF_CONNECTION_MODE: preference},
             )
             self.async_set_updated_data(self.api.device)
+
+    async def async_start_manual_queue(
+        self, durations: dict[int, int]
+    ) -> dict[str, object]:
+        """Run one validated manual queue command outside the event loop."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(
+                self.api.start_manual_queue, durations
+            )
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_stop_manual(self) -> dict[str, object]:
+        """Stop manual watering and publish the verified state."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(self.api.stop_manual)
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_resume_automatic(self) -> dict[str, object]:
+        """Return the controller to Auto and publish the verified state."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(self.api.resume_automatic)
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_set_seasonal_adjustment(
+        self, value: int
+    ) -> dict[str, object]:
+        """Write and read back DP103 outside the event loop."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(
+                self.api.set_seasonal_adjustment, value
+            )
+            self.async_set_updated_data(self.api.device)
+            return result
 
     async def async_start_listener(self) -> None:
         if self._transport_task is None:

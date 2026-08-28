@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.26
-**Manifest:** integration `1.0.0-b005.44`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.27
+**Manifest:** integration `1.0.0-b005.45`
 
 ## Compliance
 
@@ -85,3 +85,11 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Zone-list and zone-detail artwork uses centered `contain` sizing and no repetition, so the complete 512×512 image is visible inside every secondary card.
 - The first-screen diagram retains its separately approved framing and geometry.
 - Asset query versions are derived from the same module-level UI version constant as the Header and bundle registration.
+
+## UI 0.6.27 verified controller actions
+
+- Manual watering supports an ordered selection of production zones 1–6 and an independent 1–120 minute duration for every selected zone.
+- One explicit start button presents the complete queue for confirmation; stop and return-to-Auto actions have their own confirmations.
+- Seasonal adjustment remains a local draft while typing. `Применить` or Enter opens the same confirmation and only then calls the integration service.
+- The frontend never writes raw Tuya DPs. Integration-owned services validate DP45/DP101/DP103 commands and report success only after DP101/107/108 or DP103 read-back matches the requested state.
+- The permanent Header, Bottom Tab Bar and zoom canvas remain outside all device-action controls.

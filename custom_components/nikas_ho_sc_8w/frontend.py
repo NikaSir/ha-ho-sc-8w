@@ -14,8 +14,8 @@ from .const import (
     PANEL_ELEMENT_NAME,
     PANEL_ICON,
     PANEL_JS_URL,
-    PANEL_STATIC_URL,
     PANEL_PARENT_PATH,
+    PANEL_STATIC_URL,
     PANEL_TITLE,
     PANEL_URL_PATH,
     PANEL_VERSION,
@@ -88,7 +88,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "status": "system_state_connection_pressure_informative_zones_program_mode_seasonal_actions",
                 "zones": "production_zones_1_6_status_and_drilldown",
                 "program": "controller_resident_dp38_read_only_program",
-                "manual": "zone_then_duration_then_start_gate",
+                "manual": "multi_zone_queue_per_zone_duration_confirmed_start",
                 "diagnostics": "integration_health_and_zone_8_lab",
             },
             "frontend_bundle": {
@@ -99,6 +99,22 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "shadow_root_inner_html": "initial_mount_only",
                 "telemetry_updates": "patch_existing_nodes",
                 "view_switching": "lazy_dom_cache_and_reattach",
+            },
+            "control_actions": {
+                "policy": "draft_explicit_apply_confirmation_write_readback",
+                "frontend_raw_dp_writes": False,
+                "manual_queue": {
+                    "production_zones": [1, 2, 3, 4, 5, 6],
+                    "per_zone_duration_minutes": [1, 120],
+                    "execution_order": "ascending_controller_order",
+                    "readback_dps": [101, 107, 108],
+                },
+                "seasonal_adjustment": {
+                    "range_percent": [-90, 100],
+                    "step_percent": 10,
+                    "explicit_apply": True,
+                    "readback_dps": [103],
+                },
             },
             "typography": {
                 "meaningful_min_px": 12,

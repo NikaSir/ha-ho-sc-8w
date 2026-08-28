@@ -10,7 +10,7 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
-The current runtime baseline is deliberately conservative and read-only for normal irrigation control. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
+The current runtime decodes schedule telemetry from the verified HO-SC-8W DP model and exposes only narrowly scoped, validated controller actions. The frontend never writes raw Tuya DPs: every write passes through integration-owned services, explicit user confirmation and controller read-back.
 
 ## Installation with HACS
 
@@ -36,7 +36,9 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.13**.
+Current panel version: **0.6.27**.
+
+Current integration version: **1.0.0-b005.45**.
 
 The panel follows **NikaS Specialized Panel UI Standard v1.6**:
 
@@ -61,7 +63,7 @@ The user-facing application model is domain-oriented rather than protocol-orient
 - **Состояние** — factual controller state, six-axis valve/zone schematic, program/mode/telemetry and statuses;
 - **Зоны** — production zones 1–6 with factual drill-down;
 - **Программа** — read-only decoded automatic program;
-- **Ручной** — zone and duration preparation; start stays disabled until a verified public Actions API exists;
+- **Ручной** — queue of production zones 1–6 with an independent duration for each zone, confirmed start/stop and factual active/queued state;
 - **Диагн.** — integration health and diagnostics-only Zone 8.
 
 The primary Bottom Tab Bar is:
@@ -134,7 +136,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.13
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.27
       ↓
 <nikas-ho-sc-8w-panel>
 ```
@@ -149,10 +151,24 @@ This build uses a stable production filename plus query-string cache busting. Co
 - Zone 8 is reserved for controlled development/diagnostic tests and is not exposed as a normal user zone.
 - `unknown` and `unavailable` are unreliable states, never normal/off.
 - The frontend must never construct or send raw Tuya DP payloads.
-- Write operations may be exposed only through stable, tested integration APIs.
+- Write operations are exposed only through stable, tested integration services.
+- Every controller write follows one contract: local draft → explicit action → confirmation → validated integration command → controller read-back.
+- Manual queue start is limited to production zones 1–6 and 1–120 minutes per zone. Success requires matching DP101/107/108 state.
+- Seasonal correction accepts only −90%…100% in 10% steps and changes only after `Применить` or Enter, confirmation and matching DP103 read-back.
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
-- Manual selection and duration controls are local UI state only; the controller is not written until the integration publishes a verified Action.
+- Manual selection, durations and seasonal edits remain local UI state until their explicit confirmed action is accepted.
+
+## Verified controller actions
+
+The panel exposes four integration services used by the mobile UI and available for controlled Home Assistant automation:
+
+- `nikas_ho_sc_8w.start_manual_queue` — encodes one DP45 queue, switches DP101 to `Manual` and verifies active/queued zone masks;
+- `nikas_ho_sc_8w.stop_manual` — writes DP101 `OFF` and verifies that DP107/108 are clear;
+- `nikas_ho_sc_8w.resume_automatic` — returns an idle controller to DP101 `Auto` and verifies the result;
+- `nikas_ho_sc_8w.set_seasonal_adjustment` — writes and reads back DP103.
+
+The panel always asks for confirmation before calling these services. Direct service calls from external automations are intentionally outside the panel confirmation boundary and must provide their own safety gate.
 
 ## Device scope
 
