@@ -5,7 +5,7 @@ const source = fs.readFileSync(panelPath, "utf8");
 
 const count = (pattern) => [...source.matchAll(pattern)].length;
 const requireMarker = (marker) => {
-  if (!source.includes(marker)) throw new Error(`Missing UI v1.6 marker: ${marker}`);
+  if (!source.includes(marker)) throw new Error(`Missing UI v1.8 marker: ${marker}`);
 };
 
 if (count(/shadowRoot\.innerHTML\s*=/g) !== 1) {
@@ -16,9 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27"',
-  "const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION",
-  "const ASSET_VERSION = UI_VERSION",
+  'const UI_VERSION = "0.6.23"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -49,7 +47,7 @@ for (const marker of [
   '"Нет связи"',
   'class="statusScreen"',
   "statusFitsViewport",
-  ">СЕЗОННАЯ КОРРЕКЦИЯ<",
+  '"СЕЗОННАЯ КОРРЕКЦИЯ"',
   '<b>Зона ${zone}</b>',
   '_scheduleGestureTransform(transform)',
   'label: "Не учитывается"',
@@ -69,36 +67,14 @@ for (const forbidden of [
 
 for (const marker of [
   "data-parent-nav",
-  "data-season-value",
-  "data-season-apply",
-  "data-queue-toggle",
-  "data-queue-duration",
-  "data-manual-start",
-  "data-manual-stop",
-  "data-resume-auto",
-  'callService("nikas_ho_sc_8w", "start_manual_queue"',
-  'callService("nikas_ho_sc_8w", "stop_manual"',
-  'callService("nikas_ho_sc_8w", "resume_automatic"',
-  'callService("nikas_ho_sc_8w", "set_seasonal_adjustment"',
-  "window.confirm(`Запустить ручной полив?",
-  'window.confirm("Остановить ручной полив?',
-  'window.confirm("Вернуть автоматический режим полива?',
-  "window.confirm(`Применить сезонную коррекцию",
-  "Очередь принята и подтверждена контроллером",
-  "Сезонная коррекция ${value}% подтверждена контроллером",
-  "DP101, DP107 и DP108",
   ".scene1,.scene2,.scene3",
-  "zone-lawn-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
-  "zone-flowers-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
-  "zone-shrubs-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
-  "zone-greenhouse-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
-  ".zoneCard .scene,.detailHead .scene{background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important",
+  "zone-3.webp?v=0.6.23",
+  "zone-4.webp?v=0.6.23",
   "detailStateList",
-  "mdi:umbrella-outline",
-  "mdi:help-circle-outline",
+  "mdi:umbrella-off-outline",
   "simplifiedDiagram",
-  '"queue" : "idle"',
-  ".zoneLink.idle{background:#a8b2ba}",
+  "zoneLink",
+  "Ручной запуск заблокирован",
   "Первый запуск",
   "min-width:190px",
   "fullStarts(attrs)",
@@ -106,48 +82,25 @@ for (const marker of [
   'this.startChips(z.starts, "programTimes")',
   'this.startChips(z.starts, "detailStartTimes")',
   'class="zoneCardTimes"',
-  "const singleStart = z.starts.length === 1",
-  ".zoneCards{padding-bottom:64px}",
-  ".zoneCards{padding-bottom:72px}",
-  'function renderV0624()',
-  'querySelector(".headerTitle small")',
-  'UI v${NIKAS_HO_SC_8W_UI_VERSION}',
   "grid-template-columns:repeat(3,minmax(15px,1fr))",
 ]) requireMarker(marker);
 
 for (const forbidden of [
   "Read-only представление",
   "Actions API",
-  "Ручной запуск заблокирован",
-  "Управление недоступно",
-  "Запуск зон из панели пока не поддерживается",
   '<small>Доступен</small>',
   "compactStarts",
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
-  "mdi:umbrella-off-outline",
-  "mdi:umbrella-closed-outline",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
-}
-
-if (source.includes("set_value(") || source.includes("sendcommand(")) {
-  throw new Error("The frontend must not write raw Tuya values directly");
-}
-
-if (count(/window\.confirm\(/g) < 4) {
-  throw new Error("Every controller write exposed by the panel must have a confirmation gate");
 }
 
 if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
 }
 
-if (/<small[^>]*>UI v\d+\.\d+\.\d+<\/small>/.test(source)) {
-  throw new Error("Header version must be derived from the bundle version constant");
-}
-
-console.log("HO-SC-8W UI standard v1.6 contract verified");
+console.log("HO-SC-8W UI standard v1.8 contract verified");
 
 if (source.includes("${this.nodes(e)}")) {
   throw new Error("Status strip must not be rendered on the status view");

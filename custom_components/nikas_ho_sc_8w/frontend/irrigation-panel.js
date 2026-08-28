@@ -1,8 +1,6 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
-
 (() => {
-  const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
-  const ASSET_VERSION = UI_VERSION;
+  const UI_VERSION = "0.6.23";
+  const ASSET_VERSION = "0.6.23";
   const ASSET_BASE = "/nikas-ho-sc-8w/assets";
   const assetUrl = (name) => `${ASSET_BASE}/${name}?v=${ASSET_VERSION}`;
   const APPROVED_VISUALS = Object.freeze({
@@ -12,12 +10,12 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
     controller: assetUrl("ho-sc-8w-controller-v4.webp"),
     rain: assetUrl("rain-sensor-v5.webp"),
     manifold: assetUrl("manifold-v1.webp"),
-    zone1: assetUrl("zone-lawn-v2.webp"),
-    zone2: assetUrl("zone-lawn-v2.webp"),
-    zone3: assetUrl("zone-lawn-v2.webp"),
-    zone4: assetUrl("zone-flowers-v2.webp"),
-    zone5: assetUrl("zone-shrubs-v2.webp"),
-    zone6: assetUrl("zone-greenhouse-v2.webp"),
+    zone1: assetUrl("zone-1.webp"),
+    zone2: assetUrl("zone-1.webp"),
+    zone3: assetUrl("zone-1.webp"),
+    zone4: assetUrl("zone-3.webp"),
+    zone5: assetUrl("zone-5.webp"),
+    zone6: assetUrl("zone-4.webp"),
   });
   const BAD = new Set(["unknown", "unavailable", "", null, undefined]);
   const VIEWS = ["status", "zones", "program", "manual", "diagnostics"];
@@ -26,6 +24,44 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
   const VIEW_SCALE_SNAP_MIN = 0.97;
   const VIEW_SCALE_SNAP_MAX = 1.03;
   const VIEW_STATE_PREFIX = "nikas_ho_sc_8w.view_transform.v2";
+  const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+  const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
+  const RETURN_ROUTE_KEY = "nikas.ho_sc_8w.return_route.v1";
+  const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
+
+  function safeReturnRoute(value) {
+    if (!value) return null;
+    try {
+      const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
+      if (url.origin !== window.location.origin) return null;
+      if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) return "/dashboard-house-v11/home";
+      if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) return "/dashboard-actions/home";
+      if (url.pathname === "/dashboard-infrastructure" || url.pathname.startsWith("/dashboard-infrastructure/")) return "/dashboard-infrastructure/overview";
+      return null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function resolveReturnRoute(panel) {
+    const current = new URL(window.location.href);
+    const explicit = safeReturnRoute(current.searchParams.get("return_to")) || safeReturnRoute(current.searchParams.get("from"));
+    let handedOff = null;
+    let saved = null;
+    try {
+      const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
+      const handedOffAt = Number(handedOffAtRaw);
+      const handedOffFresh = handedOffAtRaw === null || (Number.isFinite(handedOffAt) && Date.now() - handedOffAt <= 30_000);
+      handedOff = handedOffFresh ? safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY)) : null;
+      sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+      sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
+      saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
+    } catch (_error) {}
+    const configured = safeReturnRoute(panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path);
+    const route = explicit || handedOff || saved || safeReturnRoute(document.referrer) || configured || SAFE_DEFAULT_ROUTE;
+    try { sessionStorage.setItem(RETURN_ROUTE_KEY, route); } catch (_error) {}
+    return route;
+  }
 
   class HOSC8WPanel extends HTMLElement {
     constructor() {
@@ -34,11 +70,8 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       this._hass = null;
       this._view = "status";
       this._drillZone = null;
-      this._manualQueue = [];
-      this._manualDurations = Object.fromEntries(Array.from({ length: 6 }, (_, index) => [index + 1, 10]));
-      this._manualBusy = false;
-      this._seasonalBusy = false;
-      this._seasonalDraft = null;
+      this._manualZone = 1;
+      this._manualDuration = 10;
       this._renderQueued = false;
       this._renderDeferred = false;
       this._viewTransform = { scale: 1, x: 0, y: 0 };
@@ -57,6 +90,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       this._nativeScrollPositions = new Map();
       this._pendingScrollTop = null;
       this._shellMounted = false;
+      this._returnRoute = null;
       this._renderedStructureKey = null;
       this._viewNodeCache = new Map();
       this._longPressTimer = null;
@@ -296,7 +330,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       }));
     }
     navigateParent() {
-      const path = this._panel?.config?.parent_path || "/dashboard-actions";
+      const path = safeReturnRoute(this._returnRoute) || SAFE_DEFAULT_ROUTE;
       if (window.location.pathname === path) return;
       window.history.pushState(null, "", path);
       window.dispatchEvent(new Event("location-changed"));
@@ -314,152 +348,6 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
         await this._hass.callService("homeassistant", "update_entity", { entity_id: ids });
       } catch (_err) {
         // The panel remains factual if forced refresh is unsupported.
-      }
-    }
-
-    notify(message) {
-      this.dispatchEvent(new CustomEvent("hass-notification", {
-        detail: { message }, bubbles: true, composed: true,
-      }));
-    }
-
-    serviceTargetData() {
-      const entryId = this._panel?.config?.entry_id;
-      return entryId ? { config_entry_id: entryId } : {};
-    }
-
-    serviceError(error, fallback) {
-      return error?.message || error?.body?.message || fallback;
-    }
-
-    selectedManualZones() {
-      return [...new Set(this._manualQueue || [])]
-        .map(Number)
-        .filter((zone) => Number.isInteger(zone) && zone >= 1 && zone <= 6)
-        .sort((a, b) => a - b);
-    }
-
-    toggleManualZone(zone) {
-      const selected = new Set(this.selectedManualZones());
-      if (selected.has(zone)) selected.delete(zone);
-      else selected.add(zone);
-      this._manualQueue = [...selected].sort((a, b) => a - b);
-      this.render();
-    }
-
-    setManualDuration(zone, value) {
-      const duration = Math.min(120, Math.max(1, Math.round(Number(value) || 1)));
-      this._manualDurations = { ...this._manualDurations, [zone]: duration };
-      return duration;
-    }
-
-    syncManualDurationInputs() {
-      for (const input of this.shadowRoot.querySelectorAll("[data-queue-duration]")) {
-        const zone = Number(input.dataset.queueDuration);
-        const value = Number(input.value);
-        if (!Number.isInteger(value) || value < 1 || value > 120) {
-          this.notify(`Зона ${zone}: укажите целое время от 1 до 120 минут`);
-          input.focus();
-          return false;
-        }
-        this.setManualDuration(zone, value);
-      }
-      return true;
-    }
-
-    async startManualQueue() {
-      if (this._manualBusy || !this._hass?.callService) return;
-      const selected = this.selectedManualZones();
-      if (!selected.length) {
-        this.notify("Добавьте хотя бы одну зону в очередь");
-        return;
-      }
-      if (!this.syncManualDurationInputs()) return;
-      const zones = selected.map((zone) => ({
-        zone,
-        duration_minutes: this._manualDurations[zone],
-      }));
-      const summary = zones.map((item) => `Зона ${item.zone} — ${item.duration_minutes} мин`).join("\n");
-      if (!window.confirm(`Запустить ручной полив?\n\n${summary}\n\nКонтроллер перейдёт в ручной режим.`)) return;
-      this._manualBusy = true;
-      this.render();
-      try {
-        await this._hass.callService("nikas_ho_sc_8w", "start_manual_queue", {
-          ...this.serviceTargetData(), zones,
-        });
-        this.notify("Очередь принята и подтверждена контроллером");
-        await this.refreshNow();
-      } catch (error) {
-        this.notify(this.serviceError(error, "Не удалось подтвердить запуск очереди"));
-      } finally {
-        this._manualBusy = false;
-        this.render();
-      }
-    }
-
-    async stopManual() {
-      if (this._manualBusy || !this._hass?.callService) return;
-      if (!window.confirm("Остановить ручной полив?\n\nКонтроллер перейдёт в режим OFF.")) return;
-      this._manualBusy = true;
-      this.render();
-      try {
-        await this._hass.callService("nikas_ho_sc_8w", "stop_manual", this.serviceTargetData());
-        this.notify("Полив остановлен и подтверждён контроллером");
-        await this.refreshNow();
-      } catch (error) {
-        this.notify(this.serviceError(error, "Не удалось подтвердить остановку"));
-      } finally {
-        this._manualBusy = false;
-        this.render();
-      }
-    }
-
-    async resumeAutomatic() {
-      if (this._manualBusy || !this._hass?.callService) return;
-      if (!window.confirm("Вернуть автоматический режим полива?")) return;
-      this._manualBusy = true;
-      this.render();
-      try {
-        await this._hass.callService("nikas_ho_sc_8w", "resume_automatic", this.serviceTargetData());
-        this.notify("Режим Авто подтверждён контроллером");
-        await this.refreshNow();
-      } catch (error) {
-        this.notify(this.serviceError(error, "Не удалось подтвердить режим Авто"));
-      } finally {
-        this._manualBusy = false;
-        this.render();
-      }
-    }
-
-    async applySeasonalAdjustment() {
-      if (this._seasonalBusy || !this._hass?.callService) return;
-      const input = this.shadowRoot.querySelector("[data-season-value]");
-      const value = Number(input?.value ?? this._seasonalDraft);
-      if (!Number.isInteger(value) || value < -90 || value > 100 || value % 10 !== 0) {
-        this.notify("Сезонная коррекция: от −90% до 100%, шаг 10%");
-        input?.focus();
-        return;
-      }
-      const current = this.state(this.entities().seasonal);
-      if (String(value) === String(current)) {
-        this.notify("Это значение уже установлено");
-        return;
-      }
-      if (!window.confirm(`Применить сезонную коррекцию ${value}%?\n\nТекущее значение: ${current}%.`)) return;
-      this._seasonalBusy = true;
-      this.render();
-      try {
-        await this._hass.callService("nikas_ho_sc_8w", "set_seasonal_adjustment", {
-          ...this.serviceTargetData(), value,
-        });
-        this._seasonalDraft = null;
-        this.notify(`Сезонная коррекция ${value}% подтверждена контроллером`);
-        await this.refreshNow();
-      } catch (error) {
-        this.notify(this.serviceError(error, "Не удалось подтвердить сезонную коррекцию"));
-      } finally {
-        this._seasonalBusy = false;
-        this.render();
       }
     }
 
@@ -528,7 +416,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       const value = this.state(e.rain);
       if (this.bad(value)) return { label: "Нет данных", detail: "Состояние неизвестно", tone: "unknown", icon: "mdi:help-circle" };
       if (["enabled", "true", "on"].includes(String(value))) return { label: "Учитывается", detail: "Контроль включён", tone: "clear", icon: "mdi:check-circle" };
-      if (["disabled", "false", "off"].includes(String(value))) return { label: "Не учитывается", detail: "Контроль выключен", tone: "blocked", icon: "mdi:umbrella-outline" };
+      if (["disabled", "false", "off"].includes(String(value))) return { label: "Не учитывается", detail: "Контроль выключен", tone: "blocked", icon: "mdi:umbrella-off-outline" };
       return { label: "Нет данных", detail: "Состояние неизвестно", tone: "unknown", icon: "mdi:help-circle" };
     }
     starts(attrs) { return Array.isArray(attrs.start_times) ? attrs.start_times.filter(Boolean) : []; }
@@ -574,7 +462,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
     header() {
       return `<header class="appHeader">
         <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-        <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
+        <button class="headerTitle" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
         <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
       </header>`;
     }
@@ -700,14 +588,12 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       const firstStart = Array.from({ length: 6 }, (_, i) => i + 1)
         .flatMap((zone) => this.zoneRuntime(e, zone).starts)
         .sort()[0] || "—";
-      const seasonalValue = this._seasonalDraft === null
-        ? (this.bad(seasonal) ? "" : seasonal)
-        : this._seasonalDraft;
-      return `<div class="metrics">
-        <button class="metric water" data-entity="${this.esc(e.zones[1].schedule)}"><small>ПРОГРАММА</small><div><ha-icon icon="mdi:calendar-blank-outline"></ha-icon><span><b>${this.esc(firstStart)}</b><em>Первый запуск</em></span></div></button>
-        <button class="metric ${operation === "Auto" ? "active" : ""}" data-entity="${this.esc(e.operation)}"><small>РЕЖИМ</small><div><ha-icon icon="mdi:autorenew"></ha-icon><span><b>${this.esc(this.human("operation", operation))}</b><em>${this.esc(this.human("irrigation", this.state(e.irrigation)))}</em></span></div></button>
-        <div class="metric seasonalEditor ${this.bad(seasonal) ? "" : "active"}"><small>СЕЗОННАЯ КОРРЕКЦИЯ</small><div><ha-icon icon="mdi:percent-outline"></ha-icon><span class="seasonalFields"><span class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов"><b>%</b></span><button data-season-apply ${this._seasonalBusy ? "disabled" : ""}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div></div>
-      </div>`;
+      const data = [
+        ["mdi:calendar-blank-outline", "ПРОГРАММА", firstStart, "Первый запуск", e.zones[1].schedule, "water"],
+        ["mdi:autorenew", "РЕЖИМ", this.human("operation", operation), this.human("irrigation", this.state(e.irrigation)), e.operation, operation === "Auto" ? "active" : ""],
+        ["mdi:percent-outline", "СЕЗОННАЯ КОРРЕКЦИЯ", this.bad(seasonal) ? "—" : `${seasonal} %`, "Текущая поправка", e.seasonal, this.bad(seasonal) ? "" : "active"],
+      ];
+      return `<div class="metrics">${data.map(([icon, label, value, note, id, tone]) => `<button class="metric ${tone}" data-entity="${this.esc(id)}"><small>${label}</small><div><ha-icon icon="${icon}"></ha-icon><span><b>${this.esc(value)}</b><em>${this.esc(note)}</em></span></div></button>`).join("")}</div>`;
     }
     hero(e) {
       const status = this.systemStatus(e);
@@ -731,7 +617,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       return `<section class="quickActions"><div class="modeGrid">
         <button class="mode ${operation === "Auto" ? "active" : ""}" data-entity="${this.esc(e.operation)}"><ha-icon icon="mdi:play"></ha-icon><b>Полив</b><small>${operation === "Auto" ? "Авто" : this.esc(this.human("operation", operation))}</small></button>
         <button class="mode disabled" disabled><ha-icon icon="mdi:pause-circle-outline"></ha-icon><b>Пауза</b><small>Недоступно</small></button>
-        <button class="mode manualAction ${operation === "Manual" ? "active" : ""}" data-go="manual"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>${operation === "Manual" ? "Активен" : "Настроить"}</small></button>
+        <button class="mode disabled" disabled><ha-icon icon="mdi:hand-back-right-outline"></ha-icon><b>Ручной</b><small>Недоступен</small></button>
       </div></section>`;
     }
     statusView(e) { return `<div class="statusScreen">${this.hero(e)}${this.metrics(e)}${this.currentMode(e)}</div>`; }
@@ -762,32 +648,8 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Текущая программа контроллера доступна для просмотра.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><button data-entity="${this.esc(e.seasonal)}"><small>Сезон</small><b>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</b></button><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
     manualView(e) {
-      const operationRaw = this.state(e.operation);
-      const operationKey = String(operationRaw).toLowerCase();
-      const operation = this.human("operation", operationRaw);
-      const active = [...this.zoneSet(this.state(e.active))].map(Number).filter(Boolean).sort((a, b) => a - b);
-      const pending = [...this.zoneSet(this.state(e.queued))].map(Number).filter(Boolean).sort((a, b) => a - b);
-      const selected = this.selectedManualZones();
-      const selectedSet = new Set(selected);
-      const zoneButtons = Array.from({ length: 6 }, (_, index) => index + 1).map((zone) => {
-        const order = selected.indexOf(zone) + 1;
-        return `<button class="manualZone ${selectedSet.has(zone) ? "active" : ""}" data-queue-toggle="${zone}" aria-pressed="${selectedSet.has(zone)}"><span>${selectedSet.has(zone) ? order : zone}</span><small>${selectedSet.has(zone) ? `В очереди · зона ${zone}` : `Зона ${zone}`}</small></button>`;
-      }).join("");
-      const queueRows = selected.map((zone, index) => `<div class="manualQueueRow"><span class="queueOrder">${index + 1}</span><span class="queueZone"><b>Зона ${zone}</b><small>по порядку контроллера</small></span><div class="queueDuration"><button data-queue-step="-1" data-queue-id="${zone}" aria-label="Уменьшить время зоны ${zone}">−</button><label><input data-queue-duration="${zone}" type="number" inputmode="numeric" min="1" max="120" step="1" value="${this.esc(this._manualDurations[zone])}"><span>мин</span></label><button data-queue-step="1" data-queue-id="${zone}" aria-label="Увеличить время зоны ${zone}">+</button></div></div>`).join("");
-      const total = selected.reduce((sum, zone) => sum + Number(this._manualDurations[zone] || 0), 0);
-      const watering = active.length || pending.length || operationKey === "manual";
-      const runningText = active.length ? `Сейчас: зона ${active.join(", ")}` : "Активная зона ожидается";
-      const pendingText = pending.length ? `Далее: ${pending.join(" → ")}` : "Очередь контроллера пуста";
-      return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Очередь зон</h2><p>Выберите зоны и задайте отдельное время каждой.</p></div><section class="manualCard manualQueueCard">
-        <div class="manualRuntime ${watering ? "running" : "idle"}"><ha-icon icon="${watering ? "mdi:water" : "mdi:playlist-check"}"></ha-icon><span><small>Текущий режим · ${this.esc(operation)}</small><b>${watering ? this.esc(runningText) : "Готово к настройке"}</b><em>${watering ? this.esc(pendingText) : "Выполнение по возрастанию номера зоны"}</em></span></div>
-        ${watering ? `<div class="manualRunningActions"><button class="stopManual" data-manual-stop ${this._manualBusy ? "disabled" : ""}><ha-icon icon="mdi:stop-circle-outline"></ha-icon>${this._manualBusy ? "Проверка…" : "Остановить"}</button>${!active.length && !pending.length && operationKey !== "auto" ? `<button class="resumeAuto" data-resume-auto ${this._manualBusy ? "disabled" : ""}>Вернуть Авто</button>` : ""}</div>` : ""}
-        <div class="manualZones" aria-label="Выбор зон">${zoneButtons}</div>
-        <div class="manualQueueHead"><span>Очередь</span><b>${selected.length ? `${selected.length} зон · ${total} мин` : "Не выбрана"}</b></div>
-        <div class="manualQueueList">${queueRows || `<div class="manualEmpty"><ha-icon icon="mdi:gesture-tap"></ha-icon><span>Нажмите на зоны выше, чтобы добавить их в очередь</span></div>`}</div>
-        <button class="manualStart" data-manual-start ${!selected.length || watering || this._manualBusy ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span><b>${this._manualBusy ? "Проверка контроллера…" : "Запустить очередь"}</b><small>${selected.length ? `${selected.length} зон · ${total} мин` : "Сначала выберите зоны"}</small></span></button>
-        ${operationKey === "off" && !active.length && !pending.length ? `<button class="resumeAuto standalone" data-resume-auto ${this._manualBusy ? "disabled" : ""}>Вернуть автоматический режим</button>` : ""}
-        <p class="manualNote">Команда отправляется только после подтверждения. Успех показывается после чтения DP101, DP107 и DP108.</p>
-      </section>`;
+      const operation = this.human("operation", this.state(e.operation));
+      return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Управление недоступно</h2><p>Запуск зон из панели пока не поддерживается.</p></div><section class="manualCard manualUnavailable"><div class="manualLock"><ha-icon icon="mdi:lock-outline"></ha-icon><h3>Ручной запуск заблокирован</h3><p>Автоматическая программа продолжает работать независимо от панели.</p></div><div class="manualFacts"><div><small>Текущий режим</small><b>${this.esc(operation)}</b></div><div><small>Рабочие зоны</small><b>1–6</b></div><div><small>Управление</small><b>Только просмотр</b></div></div></section>`;
     }
     diagnosticsView(e) {
       const rows = [
@@ -1016,17 +878,6 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
         if (target.matches("[data-ha-menu]")) { this.openHaMenu(); return; }
         if (target.matches("[data-refresh]")) { this.refreshNow(); return; }
         if (target.matches("[data-parent-nav]")) { this.navigateParent(); return; }
-        if (target.hasAttribute("data-season-apply")) { this.applySeasonalAdjustment(); return; }
-        if (target.dataset.queueToggle) { this.toggleManualZone(Number(target.dataset.queueToggle)); return; }
-        if (target.dataset.queueStep) {
-          const zone = Number(target.dataset.queueId);
-          this.setManualDuration(zone, Number(this._manualDurations[zone] || 10) + Number(target.dataset.queueStep));
-          this.render();
-          return;
-        }
-        if (target.hasAttribute("data-manual-start")) { this.startManualQueue(); return; }
-        if (target.hasAttribute("data-manual-stop")) { this.stopManual(); return; }
-        if (target.hasAttribute("data-resume-auto")) { this.resumeAutomatic(); return; }
         if (target.dataset.view) { this._switchView(target.dataset.view || "status"); return; }
         if (target.dataset.go) { this._switchView(target.dataset.go); return; }
         if (target.hasAttribute("data-drill-back")) {
@@ -1040,29 +891,17 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
           this.render();
           return;
         }
-        if (target.dataset.entity) this.moreInfo(target.dataset.entity);
-      });
-
-      this.shadowRoot.addEventListener("input", (event) => {
-        const input = event.target;
-        if (input?.matches?.("[data-season-value]")) {
-          this._seasonalDraft = input.value;
+        if (target.dataset.manualZone) {
+          this._manualZone = Number(target.dataset.manualZone) || 1;
+          this.render();
           return;
         }
-        if (input?.matches?.("[data-queue-duration]")) {
-          const value = Number(input.value);
-          if (Number.isInteger(value) && value >= 1 && value <= 120) {
-            this.setManualDuration(Number(input.dataset.queueDuration), value);
-          }
+        if (target.dataset.duration) {
+          this._manualDuration = Math.min(120, Math.max(1, this._manualDuration + Number(target.dataset.duration || 0)));
+          this.render();
+          return;
         }
-      });
-
-      this.shadowRoot.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") return;
-        if (event.target?.matches?.("[data-season-value]")) {
-          event.preventDefault();
-          this.applySeasonalAdjustment();
-        }
+        if (target.dataset.entity) this.moreInfo(target.dataset.entity);
       });
 
       viewport?.addEventListener("pointerleave", clearLongPress);
@@ -1168,7 +1007,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
     styles() {
       return `
         :host{--a:var(--primary-color,#079bd0);--green:#1fa647;--orange:#f59e0b;--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#fafafa);--text:var(--primary-text-color,#151515);--muted:var(--secondary-text-color,#6f6f72);--line:color-mix(in srgb,var(--text) 14%,transparent);--soft:color-mix(in srgb,var(--card) 94%,var(--text) 6%);--surface:color-mix(in srgb,var(--card) 91%,var(--text) 9%);--diagram:color-mix(in srgb,var(--card) 96%,var(--a) 4%);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger:var(--error-color,#d84040);color-scheme:light dark;display:block;min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,sans-serif}
-        *{box-sizing:border-box}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}.app{max-width:920px;margin:0 auto;padding:0 14px calc(106px + env(safe-area-inset-bottom));min-height:100vh}.appHeader{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:56px minmax(0,1fr) 56px;align-items:center;gap:10px;min-height:80px;padding:calc(9px + env(safe-area-inset-top)) 0 8px;background:color-mix(in srgb,var(--bg) 97%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid color-mix(in srgb,var(--text) 6%,transparent)}.headerButton{display:grid;place-items:center;width:56px;height:56px;padding:0;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 6px 18px #0000000c;cursor:pointer}.headerButton ha-icon{--mdc-icon-size:30px}.refreshButton{color:var(--a)}.headerTitle{text-align:center;min-width:0}.headerTitle strong{display:block;font-size:25px;line-height:1;letter-spacing:-.04em}.headerTitle small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.content{padding-top:12px}
+        *{box-sizing:border-box}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}.app{max-width:920px;margin:0 auto;padding:0 14px calc(106px + env(safe-area-inset-bottom));min-height:100vh}.appHeader{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:56px minmax(0,1fr) 56px;align-items:center;gap:10px;min-height:80px;padding:calc(9px + env(safe-area-inset-top)) 0 8px;background:color-mix(in srgb,var(--bg) 97%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid color-mix(in srgb,var(--text) 6%,transparent)}.headerButton{display:grid;place-items:center;width:56px;height:56px;padding:0;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 6px 18px #0000000c;cursor:pointer}.headerButton ha-icon{--mdc-icon-size:30px}.refreshButton{color:var(--a)}.headerTitle{display:block;text-align:center;min-width:0;min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 6px 18px #0000000c;cursor:pointer}.headerTitle:active{transform:scale(.985)}.headerTitle strong{display:block;font-size:25px;line-height:1;letter-spacing:-.04em}.headerTitle small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.content{padding-top:12px}
         .hero,.sectionCard,.detailCard,.zoneCard,.programList,.summaryGrid,.manualCard,.diagList,.lab{background:var(--card);border:1px solid var(--line);box-shadow:0 8px 26px #00000012}.hero{padding:18px;border-radius:28px;background:linear-gradient(145deg,var(--card) 0%,var(--card) 78%,var(--diagram) 100%)}.hero.ready{border-color:color-mix(in srgb,var(--green) 28%,var(--line))}.hero.active{border-color:color-mix(in srgb,var(--a) 48%,var(--line))}.hero.warning{border-color:color-mix(in srgb,var(--orange) 48%,var(--line))}.hero.unknown{border-color:color-mix(in srgb,var(--muted) 40%,var(--line))}.heroHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.heroHead>div:first-child{min-width:0}.heroHead small,.sectionTitle,.pageIntro>small{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.11em}.heroHead h1{margin:7px 0 5px;font-size:32px;line-height:.98;letter-spacing:-.05em;color:var(--text)}.heroHead p{margin:0;color:var(--muted);font-size:14px}.connectionWrap{text-align:right;flex:0 0 auto}.connectionBadge{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:99px;background:var(--soft);font-size:14px}.connectionBadge i{width:10px;height:10px;border-radius:50%;background:var(--muted)}.connectionBadge.local{background:var(--green-soft);color:var(--green)}.connectionBadge.local i{background:var(--green)}.connectionBadge.cloud{background:var(--accent-soft);color:var(--a)}.connectionBadge.cloud i{background:var(--a)}.connectionWrap>small{display:block;margin-top:6px;color:var(--muted);font-size:8px}
         .systemDiagram{position:relative;height:395px;margin-top:16px;border-radius:24px;background:linear-gradient(180deg,var(--diagram),var(--soft));border:1px solid var(--line);overflow:hidden;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent)}.pipes{position:absolute;inset:0;width:100%;height:100%}.pipe{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.pipe.idle{stroke:color-mix(in srgb,var(--muted) 48%,transparent)}.pipe.run,.pipe.supply{stroke:var(--a)}.pipe.queue{stroke:var(--orange)}.pipe.sensor{stroke:var(--muted);stroke-width:3;stroke-dasharray:8 7}.controller{position:absolute;z-index:2;left:2.5%;top:25%;width:20%;height:49%;padding:0;border:1px solid #bdc7d0;border-radius:15px;background:linear-gradient(145deg,#ffffff 0%,#e8edf1 62%,#d6dde3 100%);box-shadow:0 10px 22px #00000028,inset 1px 1px 0 #fff;overflow:hidden}.controller .cap{height:13%;border-bottom:1px solid #c3ccd4;background:linear-gradient(#fff,#e7ebef)}.controller .body{height:74%;display:grid;place-items:center;align-content:center;gap:10px;color:#3e4953}.controller .body b{font-size:12px}.controller .body small{font-size:7px;color:#75818b}.controller .body>i{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px #1fa64726,0 0 9px #1fa64777}.controller .ports{height:13%;display:flex;justify-content:center;gap:20px;border-top:1px solid #bdc7d0;background:#d9e0e6}.controller .ports i{width:10px;height:12px;background:#34414b;border-radius:0 0 4px 4px}.controllerCheck{position:absolute;z-index:3;left:17.4%;top:22%;display:grid;place-items:center;width:31px;height:31px;border-radius:50%;background:var(--green);color:#fff;box-shadow:0 5px 11px #0003}.controllerCheck.bad{background:var(--muted)}.controllerCheck ha-icon{--mdc-icon-size:19px}.manifold{position:absolute;z-index:2;left:25%;top:38%;width:34%;height:30%}.valves{position:absolute;left:2%;right:2%;top:0;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.valve{display:grid;justify-items:center;color:var(--text)}.valve b{font-size:8px;margin-bottom:2px}.valve i{width:17px;height:53px;border-radius:7px;background:linear-gradient(#53616b 0 18%,#2f3a43 19% 38%,#12181d 39% 100%);border:1px solid #0c1014;box-shadow:inset 0 8px 0 #64727d,0 3px 5px #0005}.valve em{width:8px;height:14px;margin-top:-2px;border-radius:0 0 3px 3px;background:#72808b}.valve.running i{box-shadow:inset 0 8px 0 #2d7b98,0 0 0 2px #079bd099,0 0 12px #079bd055}.valve.queued i{box-shadow:inset 0 8px 0 #977628,0 0 0 2px #f59e0b88}.rail{position:absolute;left:0;right:0;top:55%;height:20px;border-radius:10px;background:linear-gradient(#59636b 0%,#313a41 42%,#181e23 100%);border:1px solid #11181d;box-shadow:0 5px 12px #0005,inset 0 1px 0 #ffffff26}.rainSensor{position:absolute;z-index:3;left:49%;top:3%;display:grid;grid-template-columns:34px auto;align-items:center;gap:7px;padding:7px 10px;border:0;background:transparent;color:var(--muted);text-align:left}.rainSensor ha-icon{color:var(--muted);--mdc-icon-size:28px}.rainSensor span{font-size:8px;line-height:1.1}.zoneStack{position:absolute;z-index:2;right:2%;top:7%;width:35.5%;display:grid;gap:6px}.diagramZone{display:grid;grid-template-columns:51px minmax(0,1fr) auto 17px;align-items:center;gap:7px;min-height:51px;padding:5px 7px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);text-align:left;box-shadow:0 4px 10px #00000018}.diagramZone.running{border-color:color-mix(in srgb,var(--a) 72%,var(--line));background:var(--accent-soft)}.diagramZone.queued{border-color:color-mix(in srgb,var(--orange) 68%,var(--line));background:var(--orange-soft)}.diagramZone.off{filter:saturate(.72)}.diagramZone.unknown{border-style:dashed}.scene{display:grid;place-items:center;width:51px;height:40px;border-radius:9px;color:white;text-shadow:0 1px 3px #0008;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff26}.scene ha-icon{--mdc-icon-size:23px}.scene1,.scene2{background:linear-gradient(180deg,#55bfe8 0 42%,#65c74d 43% 100%)}.scene3{background:linear-gradient(145deg,#5fa44d,#ec658d 50%,#704b35)}.scene4{background:linear-gradient(145deg,#58b2da,#d8efeb 53%,#48974f)}.scene5{background:linear-gradient(145deg,#84b950,#60452f)}.scene6{background:linear-gradient(145deg,#5aabd8,#328d50 58%,#66432d)}.zoneText{min-width:0}.zoneText b{display:block;font-size:10.5px;line-height:1;color:var(--text)}.zoneText small{display:block;margin-top:3px;overflow:hidden;color:var(--muted);font-size:7px;white-space:nowrap;text-overflow:ellipsis}.duration{font-size:12px;font-weight:850;text-align:right;color:var(--text)}.duration small{display:block;font-size:6px;color:var(--muted)}.readyIcon{color:var(--green);--mdc-icon-size:15px}.mainlineDevice{position:absolute;z-index:2;left:44.5%;bottom:6.5%;display:grid;place-items:center;width:64px;height:36px;border-radius:14px;background:var(--surface);border:2px solid var(--muted);color:var(--a);box-shadow:0 4px 10px #0003}.mainlineDevice ha-icon{--mdc-icon-size:24px}.mainlineLabel{position:absolute;z-index:3;left:39%;bottom:0.5%;display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:8px;color:var(--muted);box-shadow:0 2px 6px #0002}.mainlineLabel b{color:var(--text);font-size:9px}
         .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.metric{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:8px;min-height:72px;padding:9px;border:1px solid var(--line);border-radius:18px;background:#fff;text-align:left}.metric ha-icon{color:var(--muted);--mdc-icon-size:29px}.metric small{display:block;color:var(--muted);font-size:7px;line-height:1.1}.metric b{display:block;margin-top:3px;font-size:14px;line-height:1.05}.metric em{display:block;margin-top:3px;color:var(--muted);font-size:7px;font-style:normal}.metric.good b,.metric.good ha-icon{color:var(--green)}.metric.water ha-icon{color:var(--a)}.metric.active b,.metric.active ha-icon{color:var(--a)}
@@ -1264,7 +1103,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
         .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
-        /* v0.6.13: NikaS Specialized Panel UI Standard v1.6 shell. */
+        /* v0.6.13: NikaS Specialized Panel UI Standard v1.8 shell. */
         .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
         .headerButton{width:44px;height:44px;justify-self:center;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;color:var(--text)}
         .headerButton ha-icon{--mdc-icon-size:25px}.refreshButton{color:var(--a)}
@@ -1364,6 +1203,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       const structureKey = this._structureKey();
 
       if (!this._shellMounted) {
+        this._returnRoute = resolveReturnRoute(this);
         this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${this.header()}${this._workspace(content)}${this.bottomNav()}</div>`;
         this._shellMounted = true;
         this._renderedStructureKey = structureKey;
@@ -1395,20 +1235,12 @@ if (!Panel) throw new Error("HO-SC-8W base panel is not registered");
 const p = Panel.prototype;
 const baseStyles = p.styles;
 
-p.header = function headerV0624() {
+p.header = function headerV0622() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small></button>
+    <button class="headerTitle" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v0.6.23</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
-};
-
-const renderBeforeVersionSync = p._render;
-p._render = function renderV0624() {
-  renderBeforeVersionSync.call(this);
-  const versionNode = this.shadowRoot?.querySelector(".headerTitle small");
-  const expected = `UI v${NIKAS_HO_SC_8W_UI_VERSION}`;
-  if (versionNode && versionNode.textContent !== expected) versionNode.textContent = expected;
 };
 
 p.connectionIndicator = function connectionIndicatorV0619(e) {
@@ -1439,14 +1271,14 @@ p.connectionIndicator = function connectionIndicatorV0619(e) {
   return `<div class="connectionWrap connectionOnly"><button class="systemConnection ${tone}" data-connection-indicator${entity} aria-label="${this.esc(`${label}. ${freshness}`)}"><span class="systemConnectionMain"><i></i><b>${label}</b></span><small class="freshness ${freshnessTone}">${freshness}</small></button></div>`;
 };
 
-p._zoneIndicators = function zoneIndicatorsV0625(z) {
+p._zoneIndicators = function zoneIndicatorsV0622(z) {
   const configured = this.state(z.q.schedule) === "configured";
   const rain = z.attrs.rain_sensor_follow;
   const readyIcon = z.tone === "running" ? "mdi:water" : z.tone === "queued" ? "mdi:clock-outline" : z.tone === "unknown" ? "mdi:help-circle" : z.tone === "off" ? "mdi:minus-circle" : "mdi:check-circle";
   const readyClass = z.tone === "unknown" || z.tone === "off" ? "off" : "on";
   const programClass = configured ? "on" : "off";
   const rainClass = rain === true ? "on" : rain === false ? "off" : "unknown";
-  const rainIcon = rain === true ? "mdi:umbrella" : rain === false ? "mdi:umbrella-outline" : "mdi:help-circle-outline";
+  const rainIcon = rain === true ? "mdi:umbrella" : "mdi:umbrella-off-outline";
   const rainTitle = rain === true ? "Датчик дождя учитывается" : rain === false ? "Датчик дождя не учитывается" : "Нет данных об учёте датчика дождя";
   return `<span class="zoneIndicators" aria-label="Готовность, участие в программе, учёт датчика дождя">
     <ha-icon class="${readyClass}" icon="${readyIcon}" title="Готовность зоны"></ha-icon>
@@ -1455,12 +1287,12 @@ p._zoneIndicators = function zoneIndicatorsV0625(z) {
   </span>`;
 };
 
-p.irrigationDiagram = function irrigationDiagramV0623(e) {
+p.irrigationDiagram = function irrigationDiagramV0621(e) {
   const active = this.zoneSet(this.state(e.active));
   const queued = this.zoneSet(this.state(e.queued));
   const columns = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
     const z = this.zoneRuntime(e, zone);
-    const branchTone = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "idle";
+    const branchTone = active.has(String(zone)) ? "run" : queued.has(String(zone)) ? "queue" : "water";
     return `<div class="schemaColumn" data-axis="${zone}">
       <span class="valveNumber">${zone}</span>
       <span class="zoneLink ${branchTone}" aria-hidden="true"></span>
@@ -1496,29 +1328,21 @@ p.hero = function heroV0619(e) {
   return `<section class="hero ${status.tone}"><div class="heroHead"><div class="heroStatus"><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>${this.connectionIndicator(e)}</div>${this.irrigationDiagram(e)}${this.infrastructureRow(e)}</section>`;
 };
 
-p.zonesView = function zonesViewV0623(e) {
+p.zonesView = function zonesViewV0619(e) {
   if (this._drillZone) return this.zoneDetail(e, this._drillZone);
   const cards = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
     const z = this.zoneRuntime(e, zone);
-    const singleStart = z.starts.length === 1;
-    const scheduleLine = singleStart ? `${z.duration} мин · ${z.starts[0]}` : `${z.duration} мин`;
-    const extraTimes = z.starts.length > 1
-      ? `<span class="zoneCardTimes">${this.esc(z.start)}</span>`
-      : z.starts.length === 0
-        ? `<span class="zoneCardTimes muted">Нет запусков</span>`
-        : "";
-    return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(scheduleLine)}</em>${extraTimes}</span>${this._zoneIndicators(z)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
+    return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(z.duration)} мин</em><span class="zoneCardTimes">${this.esc(z.start)}</span></span>${this._zoneIndicators(z)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
   }).join("");
   return `<div class="pageIntro"><small>ЗОНЫ 1–6</small><h2>Рабочие зоны</h2><p>Фактическое состояние и программа каждого канала.</p></div><div class="zoneCards">${cards}</div>`;
 };
 
-p.zoneDetail = function zoneDetailV0625(e, zone) {
+p.zoneDetail = function zoneDetailV0622(e, zone) {
   const z = this.zoneRuntime(e, zone);
   const a = z.attrs;
   const configured = this.state(z.q.schedule) === "configured";
   const rainLabel = a.rain_sensor_follow === true ? "Учитывается" : a.rain_sensor_follow === false ? "Не учитывается" : "Нет данных";
-  const rainIcon = a.rain_sensor_follow === true ? "mdi:umbrella" : a.rain_sensor_follow === false ? "mdi:umbrella-outline" : "mdi:help-circle-outline";
-  return `<button class="inlineBack" data-drill-back><ha-icon icon="mdi:arrow-left"></ha-icon>Зоны</button><section class="detailCard"><div class="detailHead"><span class="scene scene${zone}" aria-hidden="true"></span><div><small>ЗОНА ${zone}</small><h2>${this.esc(z.label)}</h2></div></div><div class="detailGrid"><div><small>Длительность</small><b>${this.esc(z.duration)} мин</b></div><div class="detailStarts"><small>Время запуска</small>${this.startChips(z.starts, "detailStartTimes")}</div><div><small>Цикл</small><b>${this.esc(this.cycleText(a))}</b></div><div><small>Датчик дождя</small><b>${rainLabel}</b></div></div><div class="detailStateList"><div><ha-icon class="${z.tone === "unknown" || z.tone === "off" ? "off" : "on"}" icon="mdi:check-circle"></ha-icon><span><small>Состояние зоны</small><b>${this.esc(z.label)}</b></span></div><div><ha-icon class="${configured ? "on" : "off"}" icon="mdi:calendar-check"></ha-icon><span><small>Автоматическая программа</small><b>${configured ? "Участвует" : "Не участвует"}</b></span></div><div><ha-icon class="${a.rain_sensor_follow === true ? "on" : a.rain_sensor_follow === false ? "off" : "unknown"}" icon="${rainIcon}"></ha-icon><span><small>Контроль датчика дождя</small><b>${rainLabel}</b></span></div></div><p class="detailNote">Параметры программы доступны только для просмотра.</p></section>`;
+  return `<button class="inlineBack" data-drill-back><ha-icon icon="mdi:arrow-left"></ha-icon>Зоны</button><section class="detailCard"><div class="detailHead"><span class="scene scene${zone}" aria-hidden="true"></span><div><small>ЗОНА ${zone}</small><h2>${this.esc(z.label)}</h2></div></div><div class="detailGrid"><div><small>Длительность</small><b>${this.esc(z.duration)} мин</b></div><div class="detailStarts"><small>Время запуска</small>${this.startChips(z.starts, "detailStartTimes")}</div><div><small>Цикл</small><b>${this.esc(this.cycleText(a))}</b></div><div><small>Датчик дождя</small><b>${rainLabel}</b></div></div><div class="detailStateList"><div><ha-icon class="${z.tone === "unknown" || z.tone === "off" ? "off" : "on"}" icon="mdi:check-circle"></ha-icon><span><small>Состояние зоны</small><b>${this.esc(z.label)}</b></span></div><div><ha-icon class="${configured ? "on" : "off"}" icon="mdi:calendar-check"></ha-icon><span><small>Автоматическая программа</small><b>${configured ? "Участвует" : "Не участвует"}</b></span></div><div><ha-icon class="${a.rain_sensor_follow === true ? "on" : a.rain_sensor_follow === false ? "off" : "unknown"}" icon="${a.rain_sensor_follow === true ? "mdi:umbrella" : "mdi:umbrella-off-outline"}"></ha-icon><span><small>Контроль датчика дождя</small><b>${rainLabel}</b></span></div></div><p class="detailNote">Параметры программы доступны только для просмотра.</p></section>`;
 };
 
 p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
@@ -1654,33 +1478,31 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   }, { passive: false });
 };
 
-p.styles = function stylesV0627() {
+p.styles = function stylesV0622() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.27 verified write actions and readable zone imagery */
+    /* UI v0.6.23 full DP38 schedule presentation */
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
     .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:25%!important;transform:none!important}
     .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:23%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
     .approvedDiagram .controlBus{top:31%!important}
     .approvedDiagram .schemaGrid{top:28%!important;bottom:3%!important}
     .simplifiedDiagram .manifoldRail,.simplifiedDiagram .supplyLine,.simplifiedDiagram .valvePhoto,.simplifiedDiagram .waterBranch{display:none!important}
-    .simplifiedDiagram .schemaColumn{grid-template-rows:28px 15% minmax(0,1fr)!important}.simplifiedDiagram .schemaColumn::before{display:none!important}.zoneLink{display:block;justify-self:center;width:4px;height:100%;border-radius:4px;background:#a8b2ba}.zoneLink.idle{background:#a8b2ba}.zoneLink.run{background:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 18%,transparent)}.zoneLink.queue{background:var(--orange)}
+    .simplifiedDiagram .schemaColumn{grid-template-rows:28px 15% minmax(0,1fr)!important}.simplifiedDiagram .schemaColumn::before{display:none!important}.zoneLink{display:block;justify-self:center;width:4px;height:100%;border-radius:4px;background:#0a95df}.zoneLink.run{background:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 18%,transparent)}.zoneLink.queue{background:var(--orange)}
     .diagramZone{overflow:hidden}.schemaGrid .diagramZone{grid-template-rows:minmax(48px,1fr) auto auto auto!important;gap:4px!important;padding:6px 5px 7px!important}
     .schemaGrid .scene{height:100%!important;min-height:48px}.schemaGrid .zoneText small,.schemaGrid .duration em,.schemaGrid .readyIcon{display:none!important}
     .zoneIndicators{display:grid;grid-template-columns:repeat(3,minmax(15px,1fr));align-items:center;justify-items:center;gap:3px;width:100%;min-width:0;margin-top:1px;overflow:visible}.zoneIndicators ha-icon{display:block;min-width:15px;--mdc-icon-size:15px;color:#08a52b}.zoneIndicators ha-icon.off{color:#9aa1a8}.zoneIndicators ha-icon.unknown{color:#9aa1a8}
-    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-lawn-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-flowers-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-shrubs-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-greenhouse-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene>ha-icon{display:none!important}
-    .zoneCard .scene,.detailHead .scene{background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;background-color:color-mix(in srgb,var(--card) 92%,var(--text) 8%)}
+    .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-1.webp?v=0.6.23')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-3.webp?v=0.6.23')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-5.webp?v=0.6.23')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-4.webp?v=0.6.23')!important}.scene>ha-icon{display:none!important}
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
-    .zoneCards{padding-bottom:64px}.zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:88px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}.zoneCardTimes.muted{color:var(--muted);font-weight:500}
+    .zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:96px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}
     .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}
-    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:active{background:var(--accent-soft)}
-    .seasonalEditor{gap:2px!important}.seasonalEditor>div{grid-template-columns:1fr!important;gap:0!important}.seasonalEditor>div>ha-icon{display:none}.seasonalFields{display:grid!important;grid-template-columns:1fr;gap:3px;width:100%!important}.seasonalInput{display:grid!important;grid-template-columns:minmax(0,1fr) 17px;align-items:center;width:100%!important;min-height:27px;padding:0 5px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}.seasonalInput input{width:100%;min-width:0;padding:2px 0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:14px;font-weight:750;line-height:1.1;text-align:center}.seasonalInput b{margin:0!important;color:var(--muted)!important;font-size:12px!important}.seasonalFields>button{min-height:29px;padding:3px 5px;border:1px solid color-mix(in srgb,var(--a) 50%,var(--line));border-radius:8px;background:var(--accent-soft);color:var(--a);font-size:12px;font-weight:750;line-height:1}.seasonalFields>button:disabled{opacity:.58}.seasonalInput:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}
-    .manualQueueCard{display:grid;gap:12px;padding:14px}.manualRuntime{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;padding:12px;border-radius:16px;background:var(--soft)}.manualRuntime>ha-icon{--mdc-icon-size:32px;color:var(--muted)}.manualRuntime.running{background:var(--accent-soft)}.manualRuntime.running>ha-icon{color:var(--a)}.manualRuntime span{display:grid;gap:2px;min-width:0}.manualRuntime small,.manualRuntime b,.manualRuntime em{display:block}.manualRuntime b{font-size:15px}.manualRuntime em{color:var(--muted);font-style:normal}.manualZones{gap:7px}.manualZone{min-height:72px;padding:7px;border-color:var(--line);background:var(--soft)}.manualZone span{font-size:21px;line-height:1}.manualZone small{margin-top:5px;line-height:1.05;text-align:center}.manualQueueHead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px}.manualQueueHead span{font-size:14px;font-weight:800}.manualQueueHead b{color:var(--muted);font-size:12px}.manualQueueList{display:grid;gap:7px}.manualQueueRow{display:grid;grid-template-columns:28px minmax(80px,1fr) auto;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:15px;background:var(--card)}.queueOrder{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--a);font-size:13px;font-weight:800}.queueZone{display:grid;gap:2px;min-width:0}.queueZone b{font-size:14px}.queueZone small{color:var(--muted);line-height:1.05}.queueDuration{display:grid;grid-template-columns:38px 72px 38px;align-items:center;gap:4px}.queueDuration>button{display:grid;place-items:center;width:38px;height:42px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:23px}.queueDuration label{display:grid;grid-template-columns:minmax(0,1fr) 25px;align-items:center;height:42px;padding:0 5px;border:1px solid var(--line);border-radius:12px;background:var(--card)}.queueDuration input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:16px;font-weight:800;line-height:1;text-align:right}.queueDuration label span{color:var(--muted);font-size:12px}.queueDuration label:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}.manualEmpty{display:flex;align-items:center;justify-content:center;gap:9px;min-height:72px;padding:12px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);text-align:center}.manualEmpty ha-icon{--mdc-icon-size:25px}.manualStart{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;justify-content:center;gap:9px;min-height:58px;padding:8px 16px;border:0;border-radius:17px;background:linear-gradient(145deg,#079bd0,#087aec);color:#fff;text-align:left}.manualStart>ha-icon{--mdc-icon-size:30px}.manualStart span{display:grid;gap:2px}.manualStart b,.manualStart small{color:inherit}.manualStart b{font-size:16px}.manualStart:disabled{background:var(--soft);color:var(--muted)}.manualRunningActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.manualRunningActions>button,.resumeAuto.standalone{min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--soft);font-weight:750}.manualRunningActions>button{display:flex;align-items:center;justify-content:center;gap:6px}.stopManual{border-color:color-mix(in srgb,var(--danger) 42%,var(--line))!important;color:var(--danger)}.resumeAuto{color:var(--a)}.resumeAuto.standalone{width:100%}.manualRunningActions>button:disabled,.resumeAuto:disabled{opacity:.58}.manualNote{margin:0!important;color:var(--muted);line-height:1.35}.manualQueueCard button:focus-visible,.seasonalFields>button:focus-visible{outline:3px solid color-mix(in srgb,var(--a) 30%,transparent);outline-offset:2px}
+    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:focus-visible{outline:2px solid var(--a);outline-offset:2px}.headerTitle:active{background:var(--accent-soft)}
+    .manualUnavailable{display:grid;gap:18px;min-height:390px;align-content:start}.manualLock{display:grid;justify-items:center;padding:24px 18px 20px;border-radius:20px;background:var(--soft);text-align:center}.manualLock>ha-icon{--mdc-icon-size:48px;color:var(--muted)}.manualLock h3{margin:12px 0 6px;font-size:21px}.manualLock p{max-width:390px;margin:0;color:var(--muted);font-size:14px!important;line-height:1.35}.manualFacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.manualFacts>div{padding:13px 10px;border-radius:15px;background:var(--soft);text-align:center}.manualFacts small,.manualFacts b{display:block;font-size:13px}.manualFacts b{margin-top:4px}
     .detailCard{min-height:430px}.detailHead{display:grid;grid-template-columns:112px minmax(0,1fr)!important}.detailHead .scene{width:112px!important;height:96px!important}.detailHead h2{font-size:25px}.detailGrid{margin-top:20px}.detailGrid small,.detailGrid b{font-size:14px}.detailGrid b{margin-top:6px}.detailStateList{display:grid;gap:8px;margin-top:18px}.detailStateList>div{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;padding:11px 13px;border-radius:15px;background:var(--soft)}.detailStateList ha-icon{--mdc-icon-size:27px;color:var(--green)}.detailStateList ha-icon.off,.detailStateList ha-icon.unknown{color:var(--muted)}.detailStateList small,.detailStateList b{display:block;font-size:13px}.detailStateList b{margin-top:2px}.detailNote{margin:16px 2px 0!important;font-size:12px!important}
     @media(max-width:520px){
       .approvedDiagram{aspect-ratio:388/365!important;margin-top:0!important}.approvedDiagram .controller{left:35%!important;width:30%!important;height:27%!important}.approvedDiagram .controllerDrop{top:24%;height:8%}.approvedDiagram .controlBus{top:32%!important}.approvedDiagram .schemaGrid{top:29%!important;bottom:2%!important}.simplifiedDiagram .schemaColumn{grid-template-rows:26px 14% minmax(0,1fr)!important}.schemaGrid .diagramZone{min-height:142px!important}.schemaGrid .scene{min-height:66px!important}.schemaGrid .zoneIndicators ha-icon{--mdc-icon-size:14px}
       .infraRow{grid-template-columns:.95fr 1.25fr;gap:6px}.infraRow .heroPressure,.infraRow .rainStatusCard{min-height:62px}.infraRow .heroPressure{grid-template-columns:28px minmax(0,1fr);padding:7px}.infraRow .heroPressure>ha-icon{--mdc-icon-size:25px}.infraRow .heroPressure b{font-size:17px}.infraRow .rainStatusCard{grid-template-columns:34px minmax(0,1fr) 20px;padding:6px}.infraRow .rainStatusPhoto{width:31px;height:39px}.infraRow .rainStatusText strong{font-size:13px}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}
-      .zoneCards{padding-bottom:72px}.zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important;min-height:90px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{grid-template-columns:repeat(3,19px);gap:5px}.zoneCard .zoneIndicators ha-icon{min-width:19px;--mdc-icon-size:19px}.programRow{grid-template-columns:68px minmax(0,1fr) 18px!important;min-height:76px!important;padding:9px 11px!important}.programTimes{gap:4px}.programTimes>span,.detailStartTimes>span{min-height:27px;padding:4px 7px}
-      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualQueueCard{padding:12px 10px}.manualQueueRow{grid-template-columns:25px minmax(64px,1fr) auto;gap:6px;padding:7px 6px}.queueOrder{width:25px;height:25px}.queueDuration{grid-template-columns:34px 64px 34px;gap:3px}.queueDuration>button{width:34px;height:42px}.queueDuration label{grid-template-columns:minmax(0,1fr) 22px}.manualRuntime{padding:10px}.manualRunningActions{grid-template-columns:1fr}.seasonalEditor{padding-left:5px!important;padding-right:5px!important}
+      .zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important;min-height:100px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{grid-template-columns:repeat(3,19px);gap:5px}.zoneCard .zoneIndicators ha-icon{min-width:19px;--mdc-icon-size:19px}.programRow{grid-template-columns:68px minmax(0,1fr) 18px!important;min-height:76px!important;padding:9px 11px!important}.programTimes{gap:4px}.programTimes>span,.detailStartTimes>span{min-height:27px;padding:4px 7px}
+      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualFacts{grid-template-columns:1fr}.manualUnavailable{min-height:380px}
     }
   `;
 };

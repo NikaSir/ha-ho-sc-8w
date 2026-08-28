@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.27
-**Manifest:** integration `1.0.0-b005.45`
+**Audit target:** NikaS Specialized Panel UI Standard v1.8 and NikaS Panel Navigation and Return Contract v1.0
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.23
+**Manifest:** integration `1.0.0-b005.41`
 
 ## Compliance
 
@@ -58,38 +58,3 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - All one-to-six DP38 start times are rendered explicitly on Program, Zones and zone-detail views. The UI no longer replaces additional times with a `+N` counter; time chips wrap and the native 100% scroll path carries the taller content.
 - The status summary labels the earliest configured time as `Первый запуск`, not as a computed next irrigation event. Every compact zone card reserves three fixed indicator columns, so unknown rain-accounting data cannot collapse the third icon.
 - Pinch, reset, pan, one viewport/canvas and stable DOM architecture are unchanged.
-
-## UI 0.6.23 phone-target completion
-
-- Every zone now renders all three fixed indicators with official Material Design Icons: green umbrella when rain accounting is enabled, muted closed umbrella when disabled and muted outline umbrella when the DP38 flag is absent.
-- Idle controller-to-zone links are neutral gray; active links remain blue and queued links remain orange, so color communicates live state rather than decorative water flow.
-- A zone with one configured start keeps duration and time on one compact line. Multiple starts remain fully expanded without `+N`, including all three zone 6 times in the accepted phone sample.
-- The Zones view includes dedicated bottom scroll clearance so the final card can be raised completely above the fixed Bottom Tab Bar on iPhone safe-area layouts.
-- Header, Bottom Tab Bar, stable DOM and the 75–200% work-canvas zoom implementation are unchanged.
-
-## UI 0.6.24 Header version synchronization
-
-- One module-level constant is now the source of truth for the bundle, Header and asset cache version.
-- The late production Header override no longer contains a stale literal version.
-- An already-mounted stable Header is point-patched only when its version text differs; the Header subtree is not rebuilt and telemetry updates remain flicker-free.
-- CI rejects hard-coded `UI vX.Y.Z` text inside Header markup.
-
-## UI 0.6.25 readable zone assets
-
-- Four new 512×512 WebP sources are composed for the actual 62 px phone thumbnail: one central subject, high local contrast and no decorative overlays.
-- Zones 1–3 use a large lawn sprinkler, zone 4 uses large red, pink and yellow flowers, zone 5 uses a centered shrub with a visible drip line and zone 6 uses a close greenhouse.
-- Rain accounting uses a solid green umbrella when enabled and a muted open outline umbrella when disabled. Missing DP38 rain data uses a separate help-circle outline instead of an ambiguous folded umbrella.
-
-## UI 0.6.26 secondary image framing
-
-- Zone-list and zone-detail artwork uses centered `contain` sizing and no repetition, so the complete 512×512 image is visible inside every secondary card.
-- The first-screen diagram retains its separately approved framing and geometry.
-- Asset query versions are derived from the same module-level UI version constant as the Header and bundle registration.
-
-## UI 0.6.27 verified controller actions
-
-- Manual watering supports an ordered selection of production zones 1–6 and an independent 1–120 minute duration for every selected zone.
-- One explicit start button presents the complete queue for confirmation; stop and return-to-Auto actions have their own confirmations.
-- Seasonal adjustment remains a local draft while typing. `Применить` or Enter opens the same confirmation and only then calls the integration service.
-- The frontend never writes raw Tuya DPs. Integration-owned services validate DP45/DP101/DP103 commands and report success only after DP101/107/108 or DP103 read-back matches the requested state.
-- The permanent Header, Bottom Tab Bar and zoom canvas remain outside all device-action controls.
