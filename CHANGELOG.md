@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.46` / panel `0.6.29`: require a complete, finite and non-future source-route hand-off before the Header return plaque can consume it; orphaned route/timestamp values now fail closed to the saved/configured safe route.
+- `1.0.0-b005.46` / panel `0.6.29`: adopt NikaS UI Standard v1.9 data-truth, autonomous-bundle and version-coherence guards without changing the integration-owned confirmed watering command contract.
+
 - `1.0.0-b005.46` / panel `0.6.28`: keep seasonal adjustment display-only on the first page and move its confirmed editor to the `Сезон` tile on `Программа`; the DP103 validation, confirmation and read-back contract is unchanged.
 - `1.0.0-b005.46` / panel `0.6.28`: render duration and every start time on separate lines for all six zone cards, using the readable bold time treatment previously shown only for Zone 6.
 - `1.0.0-b005.46` / panel `0.6.28`: rebuild the panel against rule set 1.17 and the NikaS v1.8 fixed-chrome, stable-DOM and responsive 1280×800 reference geometry.

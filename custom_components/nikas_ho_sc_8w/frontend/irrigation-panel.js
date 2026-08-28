@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28";
+const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -52,10 +52,16 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     let handedOff = null;
     let saved = null;
     try {
+      const handedOffRaw = sessionStorage.getItem(SOURCE_ROUTE_KEY);
       const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
       const handedOffAt = Number(handedOffAtRaw);
-      const handedOffFresh = handedOffAtRaw === null || (Number.isFinite(handedOffAt) && Date.now() - handedOffAt <= 30_000);
-      handedOff = handedOffFresh ? safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY)) : null;
+      const handedOffAge = Date.now() - handedOffAt;
+      const handedOffFresh = handedOffRaw !== null
+        && handedOffAtRaw !== null
+        && Number.isFinite(handedOffAt)
+        && handedOffAge >= 0
+        && handedOffAge <= 30_000;
+      handedOff = handedOffFresh ? safeReturnRoute(handedOffRaw) : null;
       sessionStorage.removeItem(SOURCE_ROUTE_KEY);
       sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
       saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
@@ -295,8 +301,6 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       return related?.[0] || null;
     }
     pressureEntity() {
-      const exactEntityId = "sensor.nikas_h2000_pro_voda_na_poliv_2";
-      if (this.states()[exactEntityId]) return exactEntityId;
       const irrigationWater = Object.entries(this.states()).find(([entityId, value]) => {
         if (!entityId.startsWith("sensor.")) return false;
         const haystack = `${this.normalizedLabel(entityId)} ${this.normalizedLabel(value?.attributes?.friendly_name)}`;
@@ -368,6 +372,30 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       return entryId ? { config_entry_id: entryId } : {};
     }
 
+    commandBusy() {
+      return this._manualBusy || this._seasonalBusy;
+    }
+
+    integrationServiceAvailable(service) {
+      return Boolean(this._hass?.callService && this._hass?.services?.nikas_ho_sc_8w?.[service]);
+    }
+
+    controllerStateAvailable() {
+      const entities = this.entities();
+      return !this.bad(this.state(entities.connection)) && !this.bad(this.state(entities.operation));
+    }
+
+    commandAvailable(service) {
+      return !this.commandBusy() && this.integrationServiceAvailable(service) && this.controllerStateAvailable();
+    }
+
+    rejectUnavailableCommand(service) {
+      if (this.commandBusy()) return true;
+      if (this.integrationServiceAvailable(service) && this.controllerStateAvailable()) return false;
+      this.notify("Команда недоступна: Home Assistant не подтвердил сервис или состояние контроллера");
+      return true;
+    }
+
     serviceError(error, fallback) {
       return error?.message || error?.body?.message || fallback;
     }
@@ -408,7 +436,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async startManualQueue() {
-      if (this._manualBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("start_manual_queue")) return;
       const selected = this.selectedManualZones();
       if (!selected.length) {
         this.notify("Добавьте хотя бы одну зону в очередь");
@@ -438,7 +466,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async stopManual() {
-      if (this._manualBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("stop_manual")) return;
       if (!window.confirm("Остановить ручной полив?\n\nКонтроллер перейдёт в режим OFF.")) return;
       this._manualBusy = true;
       this.render();
@@ -455,7 +483,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async resumeAutomatic() {
-      if (this._manualBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("resume_automatic")) return;
       if (!window.confirm("Вернуть автоматический режим полива?")) return;
       this._manualBusy = true;
       this.render();
@@ -472,7 +500,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
 
     async applySeasonalAdjustment() {
-      if (this._seasonalBusy || !this._hass?.callService) return;
+      if (this.rejectUnavailableCommand("set_seasonal_adjustment")) return;
       const input = this.shadowRoot.querySelector("[data-season-value]");
       const value = Number(input?.value ?? this._seasonalDraft);
       if (!Number.isInteger(value) || value < -90 || value > 100 || value % 10 !== 0) {
@@ -789,6 +817,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     programView(e) {
       const seasonal = this.state(e.seasonal);
       const rain = this.rainPresentation(e);
+      const seasonalCommandAvailable = this.commandAvailable("set_seasonal_adjustment") && !this.bad(seasonal);
       const seasonalValue = this._seasonalDraft === null
         ? (this.bad(seasonal) ? "" : seasonal)
         : this._seasonalDraft;
@@ -799,7 +828,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
         const z = this.zoneRuntime(e, zone);
         return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="programZone"><b>Зона ${zone}</b><small>${this.esc(z.duration)} мин</small></span>${this.startChips(z.starts, "programTimes")}<ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
-      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Программа зон доступна для просмотра. Сезонная коррекция изменяется отдельно с подтверждением.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><div class="programSeasonEditor ${this.bad(seasonal) ? "" : "active"}"><small>Сезон</small><span class="programSeasonControls"><label class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов"><b>%</b></label><button data-season-apply ${this._seasonalBusy ? "disabled" : ""}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
+      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Программа зон доступна для просмотра. Сезонная коррекция изменяется отдельно с подтверждением.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><div class="programSeasonEditor ${this.bad(seasonal) ? "" : "active"}"><small>Сезон</small><span class="programSeasonControls"><label class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов" ${seasonalCommandAvailable ? "" : "disabled"}><b>%</b></label><button data-season-apply ${seasonalCommandAvailable ? "" : "disabled"}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
     manualView(e) {
       const operationRaw = this.state(e.operation);
@@ -808,6 +837,9 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       const active = [...this.zoneSet(this.state(e.active))].map(Number).filter(Boolean).sort((a, b) => a - b);
       const pending = [...this.zoneSet(this.state(e.queued))].map(Number).filter(Boolean).sort((a, b) => a - b);
       const selected = this.selectedManualZones();
+      const startAvailable = this.commandAvailable("start_manual_queue");
+      const stopAvailable = this.commandAvailable("stop_manual");
+      const resumeAvailable = this.commandAvailable("resume_automatic");
       const selectedSet = new Set(selected);
       const zoneButtons = Array.from({ length: 6 }, (_, index) => index + 1).map((zone) => {
         const order = selected.indexOf(zone) + 1;
@@ -820,13 +852,13 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       const pendingText = pending.length ? `Далее: ${pending.join(" → ")}` : "Очередь контроллера пуста";
       return `<div class="pageIntro"><small>РУЧНОЙ ПОЛИВ</small><h2>Очередь зон</h2><p>Выберите зоны и задайте отдельное время каждой.</p></div><section class="manualCard manualQueueCard">
         <div class="manualRuntime ${watering ? "running" : "idle"}"><ha-icon icon="${watering ? "mdi:water" : "mdi:playlist-check"}"></ha-icon><span><small>Текущий режим · ${this.esc(operation)}</small><b>${watering ? this.esc(runningText) : "Готово к настройке"}</b><em>${watering ? this.esc(pendingText) : "Выполнение по возрастанию номера зоны"}</em></span></div>
-        ${watering ? `<div class="manualRunningActions"><button class="stopManual" data-manual-stop ${this._manualBusy ? "disabled" : ""}><ha-icon icon="mdi:stop-circle-outline"></ha-icon>${this._manualBusy ? "Проверка…" : "Остановить"}</button>${!active.length && !pending.length && operationKey !== "auto" ? `<button class="resumeAuto" data-resume-auto ${this._manualBusy ? "disabled" : ""}>Вернуть Авто</button>` : ""}</div>` : ""}
+        ${watering ? `<div class="manualRunningActions"><button class="stopManual" data-manual-stop ${stopAvailable ? "" : "disabled"}><ha-icon icon="mdi:stop-circle-outline"></ha-icon>${this._manualBusy ? "Проверка…" : "Остановить"}</button>${!active.length && !pending.length && operationKey !== "auto" ? `<button class="resumeAuto" data-resume-auto ${resumeAvailable ? "" : "disabled"}>Вернуть Авто</button>` : ""}</div>` : ""}
         <div class="manualZones" aria-label="Выбор зон">${zoneButtons}</div>
         <div class="manualQueueHead"><span>Очередь</span><b>${selected.length ? `${selected.length} зон · ${total} мин` : "Не выбрана"}</b></div>
         <div class="manualQueueList">${queueRows || `<div class="manualEmpty"><ha-icon icon="mdi:gesture-tap"></ha-icon><span>Нажмите на зоны выше, чтобы добавить их в очередь</span></div>`}</div>
-        <button class="manualStart" data-manual-start ${!selected.length || watering || this._manualBusy ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span><b>${this._manualBusy ? "Проверка контроллера…" : "Запустить очередь"}</b><small>${selected.length ? `${selected.length} зон · ${total} мин` : "Сначала выберите зоны"}</small></span></button>
-        ${operationKey === "off" && !active.length && !pending.length ? `<button class="resumeAuto standalone" data-resume-auto ${this._manualBusy ? "disabled" : ""}>Вернуть автоматический режим</button>` : ""}
-        <p class="manualNote">Команда отправляется только после подтверждения. Успех показывается после чтения DP101, DP107 и DP108.</p>
+        <button class="manualStart" data-manual-start ${!selected.length || watering || !startAvailable ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span><b>${this._manualBusy ? "Проверка контроллера…" : "Запустить очередь"}</b><small>${selected.length ? `${selected.length} зон · ${total} мин` : "Сначала выберите зоны"}</small></span></button>
+        ${operationKey === "off" && !active.length && !pending.length ? `<button class="resumeAuto standalone" data-resume-auto ${resumeAvailable ? "" : "disabled"}>Вернуть автоматический режим</button>` : ""}
+        <p class="manualNote">${this.controllerStateAvailable() ? "Команда отправляется только после подтверждения. Успех показывается после чтения DP101, DP107 и DP108." : "Управление отключено: нет подтверждённого состояния контроллера."}</p>
       </section>`;
     }
     diagnosticsView(e) {
@@ -1693,7 +1725,7 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
 
 p.styles = function stylesV0628() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.28 rule 1.17 rebuild: program-owned seasonal write and uniform zone times */
+    /* UI v0.6.29 rule 1.17 rebuild: program-owned seasonal write and uniform zone times */
     .app{width:min(100%,1280px);max-width:1280px}
     .bottomNavInner{max-width:1280px}
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}

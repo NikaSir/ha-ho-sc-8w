@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.28",
+    "dashboard_version": "0.6.29",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -210,7 +210,7 @@
       "/dashboard-actions",
       "/dashboard-infrastructure"
     ],
-    "standard": "NIKAS Specialized Panel UI Standard v1.8",
+    "standard": "NIKAS Specialized Panel UI Standard v1.9",
     "rule_set": "1.17"
   },
   "ownership": {
@@ -221,7 +221,7 @@
     "unknown_unavailable_are_healthy": false
   },
   "standards": {
-    "specialized_panel_ui": "1.8",
+    "specialized_panel_ui": "1.9",
     "integration_panel_template": "NikaS specialized panel variant",
     "header": "ha_sidebar_menu_centered_title_refresh"
   }

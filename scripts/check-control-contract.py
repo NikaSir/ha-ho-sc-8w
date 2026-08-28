@@ -77,12 +77,12 @@ panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))
 panel_manifest = json.loads((ROOT / "panel_manifest.json").read_text(encoding="utf-8"))
 
 assert manifest["version"] == "1.0.0-b005.46"
-assert panel["panel"]["dashboard_version"] == "0.6.28"
-assert panel_manifest["panel_version"] == "0.6.28"
+assert panel["panel"]["dashboard_version"] == "0.6.29"
+assert panel_manifest["panel_version"] == "0.6.29"
 assert panel_manifest["integration_version"] == manifest["version"]
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
-assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28"' in frontend_source
+assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29"' in frontend_source
 
 metrics_section = frontend_source.split("metrics(e) {", 1)[1].split("hero(e) {", 1)[0]
 program_section = frontend_source.split("programView(e) {", 1)[1].split("manualView(e) {", 1)[0]

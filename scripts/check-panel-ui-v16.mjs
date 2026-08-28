@@ -5,7 +5,7 @@ const source = fs.readFileSync(panelPath, "utf8");
 
 const count = (pattern) => [...source.matchAll(pattern)].length;
 const requireMarker = (marker) => {
-  if (!source.includes(marker)) throw new Error(`Missing UI v1.8 marker: ${marker}`);
+  if (!source.includes(marker)) throw new Error(`Missing UI v1.9 marker: ${marker}`);
 };
 
 if (count(/shadowRoot\.innerHTML\s*=/g) !== 1) {
@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -40,6 +40,12 @@ for (const marker of [
   "VIEW_SCALE_SNAP_MAX = 1.03",
   "this._suppressClicksUntil = Date.now() + 500",
   'this._showScaleToast("Масштаб 100%")',
+  "handedOffRaw !== null",
+  "handedOffAtRaw !== null",
+  "handedOffAge >= 0",
+  "integrationServiceAvailable(service)",
+  "controllerStateAvailable()",
+  "rejectUnavailableCommand(service)",
   'class="systemConnection ${tone}"',
   'data-connection-indicator',
   '"Данные актуальны"',
@@ -61,6 +67,7 @@ for (const forbidden of [
   "Система полива · UI v",
   "Фактические параметры DP38",
   "Игнорируется",
+  "sensor.nikas_h2000_pro_voda_na_poliv_2",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden stale UI marker: ${forbidden}`);
 }
@@ -114,7 +121,7 @@ if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
 }
 
-console.log("HO-SC-8W UI standard v1.8 contract verified");
+console.log("HO-SC-8W UI standard v1.9 contract verified");
 
 if (source.includes("${this.nodes(e)}")) {
   throw new Error("Status strip must not be rendered on the status view");
