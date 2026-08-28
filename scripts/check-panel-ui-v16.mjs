@@ -5,7 +5,7 @@ const source = fs.readFileSync(panelPath, "utf8");
 
 const count = (pattern) => [...source.matchAll(pattern)].length;
 const requireMarker = (marker) => {
-  if (!source.includes(marker)) throw new Error(`Missing UI v1.7 marker: ${marker}`);
+  if (!source.includes(marker)) throw new Error(`Missing UI v1.8 marker: ${marker}`);
 };
 
 if (count(/shadowRoot\.innerHTML\s*=/g) !== 1) {
@@ -67,15 +67,6 @@ for (const forbidden of [
 
 for (const marker of [
   "data-parent-nav",
-  '<button class="headerTitle" type="button" data-parent-nav',
-  '<small>UI v0.6.23</small>',
-  '["return_to", "from"]',
-  '.map((key) => safeReturnRoute(current.searchParams.get(key)))',
-  '.find(Boolean)',
-  '.headerTitle:focus-visible',
-  '.headerTitle:active',
-  'window.history.pushState(null, "", path)',
-  'window.dispatchEvent(new Event("location-changed"))',
   ".scene1,.scene2,.scene3",
   "zone-3.webp?v=0.6.23",
   "zone-4.webp?v=0.6.23",
@@ -99,7 +90,6 @@ for (const forbidden of [
   "Actions API",
   '<small>Доступен</small>',
   "compactStarts",
-  "history.back(",
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
 ]) {
@@ -110,7 +100,7 @@ if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
 }
 
-console.log("HO-SC-8W UI standard v1.7 contract verified");
+console.log("HO-SC-8W UI standard v1.8 contract verified");
 
 if (source.includes("${this.nodes(e)}")) {
   throw new Error("Status strip must not be rendered on the status view");

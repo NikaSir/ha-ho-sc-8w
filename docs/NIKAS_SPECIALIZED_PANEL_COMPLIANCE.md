@@ -1,6 +1,6 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NikaS Specialized Panel UI Standard v1.7
+**Audit target:** NikaS Specialized Panel UI Standard v1.8 and NikaS Panel Navigation and Return Contract v1.0
 **Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.23
 **Manifest:** integration `1.0.0-b005.41`
 
@@ -17,7 +17,7 @@
 | Hold/more-info and click guards | PASS | Second pointer/pan cancels pending holds; post-gesture clicks are suppressed; stationary hold remains. |
 | Stable DOM / no flicker | PASS | `shadowRoot.innerHTML` is used only for initial shell mounting; telemetry point-patches existing nodes while Header, viewport, scroll and Bottom Tab Bar retain identity. |
 | Lazy work-view DOM cache | PASS | Visited tab and zone structure nodes are cached by structural key, reattached on return and point-patched before display; shell and zoom owners are never replaced. |
-| Fixed UPS Header and source return | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, 44×44 radius-16 bordered plaques, 25 px MDI icons, 23/14 typography (21/13 narrow); menu and Refresh use theme text/primary colours. The semantic centered title has focus/pressed states, shows the exact version-only second line and returns through the validated source-route precedence without a Header Back arrow. |
+| Fixed UPS Header | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, 44×44 radius-16 bordered plaques, 25 px MDI icons, 23/14 typography (21/13 narrow); menu and Refresh use theme text/primary colours. The centered title returns to the configured parent panel without adding a Header Back arrow. |
 | Permanent left system menu | PASS | Header always emits composed/bubbling `hass-toggle-menu`; no Header Back action. |
 | Fixed UPS Bottom Tab Bar | PASS | Shell grid row outside viewport, safe-area padding, equal tabs, minimum 52 px, `ha-icon` 28 px, labels 12/700, theme-derived 11% active background. |
 | Meaningful typography 12–25 px | PASS | Final v0.6.13 rules raise semantic labels and values to 12 px or more and cap primary headings at 25 px; only the redundant control-wire caption remains 10 px. |

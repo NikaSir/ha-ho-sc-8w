@@ -25,17 +25,19 @@
   const VIEW_SCALE_SNAP_MAX = 1.03;
   const VIEW_STATE_PREFIX = "nikas_ho_sc_8w.view_transform.v2";
   const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+  const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
   const RETURN_ROUTE_KEY = "nikas.ho_sc_8w.return_route.v1";
-  const SAFE_DEFAULT_ROUTE = "/dashboard-actions";
-  const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"];
+  const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
 
   function safeReturnRoute(value) {
     if (!value) return null;
     try {
       const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
       if (url.origin !== window.location.origin) return null;
-      const allowed = SAFE_ROUTE_PREFIXES.some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
-      return allowed ? `${url.pathname}${url.search}${url.hash}` : null;
+      if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) return "/dashboard-house-v11/home";
+      if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) return "/dashboard-actions/home";
+      if (url.pathname === "/dashboard-infrastructure" || url.pathname.startsWith("/dashboard-infrastructure/")) return "/dashboard-infrastructure/overview";
+      return null;
     } catch (_error) {
       return null;
     }
@@ -43,14 +45,16 @@
 
   function resolveReturnRoute(panel) {
     const current = new URL(window.location.href);
-    const explicit = ["return_to", "from"]
-      .map((key) => safeReturnRoute(current.searchParams.get(key)))
-      .find(Boolean) || null;
+    const explicit = safeReturnRoute(current.searchParams.get("return_to")) || safeReturnRoute(current.searchParams.get("from"));
     let handedOff = null;
     let saved = null;
     try {
-      handedOff = safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY));
+      const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
+      const handedOffAt = Number(handedOffAtRaw);
+      const handedOffFresh = handedOffAtRaw === null || (Number.isFinite(handedOffAt) && Date.now() - handedOffAt <= 30_000);
+      handedOff = handedOffFresh ? safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY)) : null;
       sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+      sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
       saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
     } catch (_error) {}
     const configured = safeReturnRoute(panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path);
@@ -458,7 +462,7 @@
     header() {
       return `<header class="appHeader">
         <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-        <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
+        <button class="headerTitle" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
         <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
       </header>`;
     }
@@ -1099,7 +1103,7 @@
         .scaleToast.show{opacity:1;transform:translate(-50%,0)}
         .bottomNav{position:relative;z-index:70;left:auto;right:auto;bottom:auto;margin:0 -14px;padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
         @media(max-width:520px){.app{padding:0 9px}.bottomNav{margin:0 -9px;padding:6px 7px calc(6px + env(safe-area-inset-bottom))}.workCanvas .content{padding-top:2px;padding-bottom:14px}}
-        /* v0.6.13: NikaS Specialized Panel UI Standard v1.7 shell. */
+        /* v0.6.13: NikaS Specialized Panel UI Standard v1.8 shell. */
         .appHeader{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 4px 0}
         .headerButton{width:44px;height:44px;justify-self:center;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 3px 12px #00000012;color:var(--text)}
         .headerButton ha-icon{--mdc-icon-size:25px}.refreshButton{color:var(--a)}
@@ -1234,7 +1238,7 @@ const baseStyles = p.styles;
 p.header = function headerV0622() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v0.6.23</small></button>
+    <button class="headerTitle" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v0.6.23</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
 };
@@ -1491,7 +1495,7 @@ p.styles = function stylesV0622() {
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
     .zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:96px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}
     .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}
-    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:active{background:var(--accent-soft)}.headerTitle:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:active{background:var(--accent-soft)}
     .manualUnavailable{display:grid;gap:18px;min-height:390px;align-content:start}.manualLock{display:grid;justify-items:center;padding:24px 18px 20px;border-radius:20px;background:var(--soft);text-align:center}.manualLock>ha-icon{--mdc-icon-size:48px;color:var(--muted)}.manualLock h3{margin:12px 0 6px;font-size:21px}.manualLock p{max-width:390px;margin:0;color:var(--muted);font-size:14px!important;line-height:1.35}.manualFacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.manualFacts>div{padding:13px 10px;border-radius:15px;background:var(--soft);text-align:center}.manualFacts small,.manualFacts b{display:block;font-size:13px}.manualFacts b{margin-top:4px}
     .detailCard{min-height:430px}.detailHead{display:grid;grid-template-columns:112px minmax(0,1fr)!important}.detailHead .scene{width:112px!important;height:96px!important}.detailHead h2{font-size:25px}.detailGrid{margin-top:20px}.detailGrid small,.detailGrid b{font-size:14px}.detailGrid b{margin-top:6px}.detailStateList{display:grid;gap:8px;margin-top:18px}.detailStateList>div{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;padding:11px 13px;border-radius:15px;background:var(--soft)}.detailStateList ha-icon{--mdc-icon-size:27px;color:var(--green)}.detailStateList ha-icon.off,.detailStateList ha-icon.unknown{color:var(--muted)}.detailStateList small,.detailStateList b{display:block;font-size:13px}.detailStateList b{margin-top:2px}.detailNote{margin:16px 2px 0!important;font-size:12px!important}
     @media(max-width:520px){
