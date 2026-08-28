@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.29",
-  "integration_version": "1.0.0-b005.47",
+  "panel_version": "0.6.30",
+  "integration_version": "1.0.0-b005.48",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -128,6 +128,13 @@
   "rain_sensor_connection": "direct_horizontal_midline_to_controller",
   "status_scroll_at_100": false,
   "long_views_native_vertical_scroll_at_100": true,
+  "fixed_chrome": {
+    "viewport_locked_host": true,
+    "outer_scroll_owner": false,
+    "scroll_boundary_guard": "prevent_default_at_top_and_bottom",
+    "header_touch_action": "none",
+    "bottom_tab_bar_touch_action": "none"
+  },
   "summary_cards": [
     "program",
     "mode",
