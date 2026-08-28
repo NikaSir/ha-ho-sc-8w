@@ -92,9 +92,9 @@ def encode_dp45_start_manual(
 ) -> bytes:
     """Encode the verified one-shot manual-watering DP45 command.
 
-    The first per-zone bank (bytes 2..17 for eight zones) is controller
-    running-time telemetry and must be zero in a start command.  Requested
-    one-shot durations belong to the second bank (bytes 18..33).
+    The first per-zone bank (bytes 2..17 for eight zones) carries requested
+    one-shot durations in a start command and live remaining time in controller
+    reports.  The second bank (bytes 18..33) stays zero in a start command.
     """
     payload = bytearray(DP45_LENGTH)
     payload[0] = 0x01
@@ -103,7 +103,7 @@ def encode_dp45_start_manual(
         duration = int(durations.get(zone, 0))
         if duration < 0 or duration > 0xFFFF:
             raise ValueError(f"Invalid manual duration for zone {zone}: {duration}")
-        struct.pack_into(">H", payload, 2 + num_zones * 2 + (zone - 1) * 2, duration)
+        struct.pack_into(">H", payload, 2 + (zone - 1) * 2, duration)
     return bytes(payload)
 
 
