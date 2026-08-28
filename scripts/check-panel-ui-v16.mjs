@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.23"',
+  'const UI_VERSION = "0.6.27"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -68,8 +68,8 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.23",
-  "zone-4.webp?v=0.6.23",
+  "zone-3.webp?v=0.6.27",
+  "zone-4.webp?v=0.6.27",
   "detailStateList",
   "mdi:umbrella-off-outline",
   "simplifiedDiagram",
