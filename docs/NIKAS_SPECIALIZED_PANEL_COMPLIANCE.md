@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.9 and NikaS Panel Navigation and Return Contract v1.1
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.29
-**Manifest:** integration `1.0.0-b005.47`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.30
+**Manifest:** integration `1.0.0-b005.48`
 
 ## Compliance
 
@@ -11,6 +11,7 @@
 | One autonomous production bundle and one viewport/canvas | PASS | One `irrigation-panel.js`, one `.workViewport` and one `.workCanvas`; `module_url` points directly to the versioned bundle. |
 | 75–200% focal pinch, 97–103 snap, two-finger reset toast, persistence | PASS | Scale constants, midpoint content coordinates, `_resetTransform()` and per-panel/view localStorage. |
 | Native vertical scroll at 100%; x/y zero; no horizontal or one-finger transform pan | PASS | `isNative` uses `overflow-y:auto`, `overflow-x:hidden`, `touch-action:pan-y`; clamp returns x/y zero at scale <=1; the first pointer enters `native`, not `pan`. |
+| Viewport-locked chrome and scroll boundary | PASS | The host is fixed to `inset:0`, the app is an absolute three-row shell, Header/Bottom Tab Bar use `touch-action:none`, and native pointer movement is cancelled when it would chain past the work viewport's top or bottom edge. |
 | Pan only above 100% and only overflowing axes | PASS | Pan starts only when `scale > 1`; independent minX/minY are derived from real scaled dimensions. |
 | Clamp after gesture/render/resize | PASS | `_clampAndApplyTransform()` runs after gestures, render and real/visual viewport resize. |
 | Tab transition returns to top, saved scale retained | PASS | `_switchView()` restores scale, resets x/y and pending native scroll to zero. |
@@ -34,6 +35,13 @@
 ## Required phone check
 
 At 100% verify native scrolling on Diagnostics, no horizontal/top displacement and immediate tap/hold response. Above 100% verify only necessary axes pan and every release/resize remains clamped. Confirm Header and Bottom navigation stay fixed and match UPS.
+
+## UI 0.6.30 shell and identity delta
+
+- The specialized panel and Home Assistant sidebar use the approved user-facing name `Автополив`; `HO-SC-8W` remains the controller model and repository identity.
+- The host is locked to the real viewport and the app fills it as an absolute three-row shell, so Header and Bottom Tab Bar cannot be dragged with the outer Home Assistant document.
+- Native vertical scrolling remains inside the work viewport. Boundary-direction pointer movement is cancelled at its top and bottom edges to prevent iOS scroll chaining/bounce into the HA shell.
+- Header and Bottom Tab Bar explicitly reject scroll gestures while preserving their click actions. Stable DOM, pinch/pan and telemetry point-patching remain unchanged.
 
 ## UI 0.6.29 composition delta
 
