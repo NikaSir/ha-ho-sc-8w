@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.23
-**Manifest:** integration `1.0.0-b005.41`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.24
+**Manifest:** integration `1.0.0-b005.42`
 
 ## Compliance
 
@@ -66,3 +66,10 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - A zone with one configured start keeps duration and time on one compact line. Multiple starts remain fully expanded without `+N`, including all three zone 6 times in the accepted phone sample.
 - The Zones view includes dedicated bottom scroll clearance so the final card can be raised completely above the fixed Bottom Tab Bar on iPhone safe-area layouts.
 - Header, Bottom Tab Bar, stable DOM and the 75–200% work-canvas zoom implementation are unchanged.
+
+## UI 0.6.24 Header version synchronization
+
+- One module-level constant is now the source of truth for the bundle, Header and asset cache version.
+- The late production Header override no longer contains a stale literal version.
+- An already-mounted stable Header is point-patched only when its version text differs; the Header subtree is not rebuilt and telemetry updates remain flicker-free.
+- CI rejects hard-coded `UI vX.Y.Z` text inside Header markup.
