@@ -5,11 +5,13 @@
   "navigation_contract_path": "docs/NIKAS_PANEL_NAVIGATION_CONTRACT.md",
   "navigation_contract_sha256": "4f3efe18470f106f2c140cccb17245f3ad4cca4213da760570373f84952cebea",
   "role": "specialized",
-  "runtime_files": ["custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js"],
+  "runtime_files": [
+    "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js"
+  ],
   "production_entrypoint": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "header_return": {
     "button_marker": "data-parent-nav",
-    "version_marker": "<small>UI v0.6.23</small>",
+    "version_marker": "<small>UI v0.6.27</small>",
     "focus_marker": ".headerTitle:focus-visible",
     "pressed_marker": ".headerTitle:active",
     "explicit_precedence_marker": "safeReturnRoute(current.searchParams.get(\"return_to\")) || safeReturnRoute(current.searchParams.get(\"from\"))",
