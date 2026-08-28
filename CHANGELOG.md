@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.47` / panel `0.6.29`: fix physical IIC-800 local manual starts. DP101 now enters and confirms `Manual` before DP45, and requested durations are encoded in DP45 bytes 2–17 as required by the controller. The fail-safe `OFF` remains active only when the corrected start is not confirmed by DP101/107/108.
+
 - `1.0.0-b005.46` / panel `0.6.29`: require a complete, finite and non-future source-route hand-off before the Header return plaque can consume it; orphaned route/timestamp values now fail closed to the saved/configured safe route.
 - `1.0.0-b005.46` / panel `0.6.29`: adopt NikaS UI Standard v1.9 data-truth, autonomous-bundle and version-coherence guards without changing the integration-owned confirmed watering command contract.
 

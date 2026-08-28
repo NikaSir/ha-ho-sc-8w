@@ -454,19 +454,45 @@ class HOSC8WAPI:
                 all_durations.update(normalized)
                 raw_payload = encode_dp45_start_manual(all_durations, NUM_ZONES)
                 local_payload = base64.b64encode(raw_payload).decode("ascii")
-                self._write_command_value(
-                    DP_IRRIGATION_TIME_ALL,
-                    local_payload,
-                    cloud_code="irrigation_time_all",
-                    cloud_value=raw_payload.hex(),
-                    nowait=True,
-                )
-                time.sleep(0.5)
-                self._write_command_value(
-                    DP_OPERATION_MODE,
-                    "Manual",
-                    cloud_code="operation_mode",
-                )
+                if self._using_cloud:
+                    # Tuya Cloud accepts the two-command sequence used by the
+                    # product API: DP45 payload first, then Manual mode.
+                    self._write_command_value(
+                        DP_IRRIGATION_TIME_ALL,
+                        local_payload,
+                        cloud_code="irrigation_time_all",
+                        cloud_value=raw_payload.hex(),
+                        nowait=True,
+                    )
+                    time.sleep(0.5)
+                    self._write_command_value(
+                        DP_OPERATION_MODE,
+                        "Manual",
+                        cloud_code="operation_mode",
+                    )
+                else:
+                    # Physical IIC-800 controllers require the opposite local
+                    # order: enter Manual and confirm DP101 before sending the
+                    # Base64-encoded DP45 one-shot duration map.
+                    self._write_command_value(
+                        DP_OPERATION_MODE,
+                        "Manual",
+                        cloud_code="operation_mode",
+                    )
+                    if not self._wait_for_readback(
+                        lambda: str(self.device.operation_mode).lower() == "manual",
+                        timeout_seconds=4.0,
+                    ):
+                        raise RuntimeError(
+                            "DP101 did not confirm Manual; DP45 was not sent"
+                        )
+                    self._write_command_value(
+                        DP_IRRIGATION_TIME_ALL,
+                        local_payload,
+                        cloud_code="irrigation_time_all",
+                        cloud_value=raw_payload.hex(),
+                        nowait=True,
+                    )
                 time.sleep(1.0)
 
                 expected_mask = sum(1 << (zone - 1) for zone in normalized)
@@ -479,9 +505,15 @@ class HOSC8WAPI:
                     )
 
                 if not self._wait_for_readback(_manual_queue_confirmed):
+                    observed = (
+                        f"mode={self.device.operation_mode}, "
+                        f"active={self.device.active_zone}, "
+                        f"queued={self.device.queued_zone}"
+                    )
                     stopped = self._fail_safe_stop_after_unconfirmed_start()
                     raise RuntimeError(
-                        "Manual queue was not confirmed by DP101/107/108; "
+                        "Manual queue was not confirmed by DP101/107/108 "
+                        f"({observed}); "
                         + (
                             "fail-safe OFF was confirmed"
                             if stopped
