@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.22
-**Manifest:** integration `1.0.0-b005.40`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.23
+**Manifest:** integration `1.0.0-b005.41`
 
 ## Compliance
 
@@ -58,3 +58,11 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - All one-to-six DP38 start times are rendered explicitly on Program, Zones and zone-detail views. The UI no longer replaces additional times with a `+N` counter; time chips wrap and the native 100% scroll path carries the taller content.
 - The status summary labels the earliest configured time as `Первый запуск`, not as a computed next irrigation event. Every compact zone card reserves three fixed indicator columns, so unknown rain-accounting data cannot collapse the third icon.
 - Pinch, reset, pan, one viewport/canvas and stable DOM architecture are unchanged.
+
+## UI 0.6.23 phone-target completion
+
+- Every zone now renders all three fixed indicators with official Material Design Icons: green umbrella when rain accounting is enabled, muted closed umbrella when disabled and muted outline umbrella when the DP38 flag is absent.
+- Idle controller-to-zone links are neutral gray; active links remain blue and queued links remain orange, so color communicates live state rather than decorative water flow.
+- A zone with one configured start keeps duration and time on one compact line. Multiple starts remain fully expanded without `+N`, including all three zone 6 times in the accepted phone sample.
+- The Zones view includes dedicated bottom scroll clearance so the final card can be raised completely above the fixed Bottom Tab Bar on iPhone safe-area layouts.
+- Header, Bottom Tab Bar, stable DOM and the 75–200% work-canvas zoom implementation are unchanged.
