@@ -53,15 +53,15 @@ def load_api():
 
 models = load_models()
 
-# DP45 one-shot contract: bytes 0/1 select manual/specific-stations, the first
-# eight 16-bit fields stay zero, and requested minutes live in bytes 18..33.
+# DP45 one-shot contract: bytes 0/1 select manual/specific-stations, requested
+# minutes live in the first eight 16-bit fields, and bytes 18..33 stay zero.
 payload = models.encode_dp45_start_manual({1: 1, 4: 10, 6: 120})
 assert len(payload) == 34, f"DP45 must be 34 bytes, got {len(payload)}"
 assert payload[:2] == b"\x01\x01", f"Unexpected DP45 flags: {payload[:2].hex()}"
-assert payload[2:18] == bytes(16), "DP45 telemetry bank must stay zero on start"
+assert payload[18:34] == bytes(16), "DP45 second bank must stay zero on start"
 expected = {1: 1, 4: 10, 6: 120}
 for zone in range(1, 9):
-    value = struct.unpack_from(">H", payload, 18 + (zone - 1) * 2)[0]
+    value = struct.unpack_from(">H", payload, 2 + (zone - 1) * 2)[0]
     assert value == expected.get(zone, 0), (
         f"DP45 zone {zone} command duration is {value}, "
         f"expected {expected.get(zone, 0)}"
@@ -76,7 +76,7 @@ manifest = json.loads((INTEGRATION / "manifest.json").read_text(encoding="utf-8"
 panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))
 panel_manifest = json.loads((ROOT / "panel_manifest.json").read_text(encoding="utf-8"))
 
-assert manifest["version"] == "1.0.0-b005.46"
+assert manifest["version"] == "1.0.0-b005.47"
 assert panel["panel"]["dashboard_version"] == "0.6.29"
 assert panel_manifest["panel_version"] == "0.6.29"
 assert panel_manifest["integration_version"] == manifest["version"]
@@ -148,10 +148,11 @@ assert "sendcommand(" not in frontend_source, "Frontend contains a raw cloud DP 
 class FakeLocalDevice:
     """TinyTuya-shaped local device that returns factual DP read-back."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, reject_manual: bool = False) -> None:
         self.mode = "Auto"
         self.season = 20
         self.requested_mask = 0
+        self.reject_manual = reject_manual
         self.commands: list[tuple[int, object, bool]] = []
 
     def set_value(self, dp: int, value: object, nowait: bool = False) -> None:
@@ -161,10 +162,11 @@ class FakeLocalDevice:
             self.requested_mask = sum(
                 1 << index
                 for index in range(8)
-                if int.from_bytes(raw[18 + index * 2 : 20 + index * 2], "big")
+                if int.from_bytes(raw[2 + index * 2 : 4 + index * 2], "big")
             )
         elif dp == 101:
-            self.mode = str(value)
+            if not (self.reject_manual and str(value) == "Manual"):
+                self.mode = str(value)
         elif dp == 103:
             self.season = int(value)
         return None
@@ -209,7 +211,7 @@ class FakeCloud:
             self.requested_mask = sum(
                 1 << index
                 for index in range(8)
-                if int.from_bytes(raw[18 + index * 2 : 20 + index * 2], "big")
+                if int.from_bytes(raw[2 + index * 2 : 4 + index * 2], "big")
             )
         elif code == "operation_mode":
             self.mode = str(value)
@@ -252,10 +254,28 @@ result = api.start_manual_queue({1: 1, 4: 10, 6: 120})
 assert result["verified"] is True
 assert result["active_zone_bitmask"] == 1
 assert result["queued_zone_bitmask"] == 40
-assert [command[0] for command in local_device.commands] == [45, 101]
-wire_payload = base64.b64decode(str(local_device.commands[0][1]))
+assert [command[0] for command in local_device.commands] == [101, 45]
+wire_payload = base64.b64decode(str(local_device.commands[1][1]))
 assert wire_payload == payload, "Local DP45 payload differs from the verified encoder"
-assert local_device.commands[0][2] is True, "Local DP45 must use nowait"
+assert local_device.commands[1][2] is True, "Local DP45 must use nowait"
+
+# If DP101 does not confirm Manual, the safety boundary must stop before DP45.
+rejecting_device = FakeLocalDevice(reject_manual=True)
+rejecting_api = api_module.HOSC8WAPI("device", "local-key", "192.0.2.1")
+rejecting_api._tuya = rejecting_device
+rejecting_api._connected = True
+rejecting_api._using_cloud = False
+rejecting_api.device.online = True
+rejecting_api.device.operation_mode = "Auto"
+rejecting_api.device.irrigation_mode = "order"
+rejecting_api._wait_for_readback = lambda predicate, timeout_seconds=8.0: predicate()
+try:
+    rejecting_api.start_manual_queue({1: 1})
+except RuntimeError as error:
+    assert "DP45 was not sent" in str(error)
+else:
+    raise AssertionError("A local manual start continued without DP101 confirmation")
+assert [command[0] for command in rejecting_device.commands] == [101]
 
 api.stop_manual()
 assert local_device.mode == "OFF"
@@ -293,8 +313,8 @@ assert [command["code"] for command in cloud.commands] == [
     "operation_mode",
 ]
 cloud_wire = bytes.fromhex(str(cloud.commands[0]["value"]))
-assert cloud_wire[:2] == b"\x01\x01" and cloud_wire[2:18] == bytes(16)
-assert struct.unpack_from(">H", cloud_wire, 20)[0] == 5
-assert struct.unpack_from(">H", cloud_wire, 26)[0] == 15
+assert cloud_wire[:2] == b"\x01\x01" and cloud_wire[18:34] == bytes(16)
+assert struct.unpack_from(">H", cloud_wire, 4)[0] == 5
+assert struct.unpack_from(">H", cloud_wire, 10)[0] == 15
 
 print("HO-SC-8W verified control contract passed")
