@@ -28,7 +28,13 @@ from .const import (
     DP_RESET_DEVICE,
     DP_SEASONAL_ADJUST,
     DP_TIMEERROR_ALARM,
+    MANUAL_DURATION_MAX,
+    MANUAL_DURATION_MIN,
     NUM_ZONES,
+    NUM_PRODUCTION_ZONES,
+    SEASONAL_ADJUST_MAX,
+    SEASONAL_ADJUST_MIN,
+    SEASONAL_ADJUST_STEP,
     TUYA_VERSION,
 )
 from .models import PROFILE, ScheduleChannel, decode_dp38, decode_dp45, encode_dp45_start_manual
@@ -184,7 +190,7 @@ class HOSC8WAPI:
         self._fail_count = 0
         self._using_cloud = False
         self._connection_preference = connection_preference if connection_preference in CONNECTION_MODES else CONNECTION_MODE_AUTO
-        self._command_lock = False
+        self._command_lock = threading.Lock()
         self._io_lock = threading.RLock()
         self._last_heartbeat = 0.0
         self._heartbeat_interval = 30.0
@@ -311,6 +317,302 @@ class HOSC8WAPI:
         if self._using_cloud and self._has_cloud:
             return self._cloud_update()
         return False
+
+    def _ingest_command_response(self, response: Any) -> None:
+        """Merge a TinyTuya command/status response and reject wire errors."""
+        if response is None:
+            return
+        if not isinstance(response, dict):
+            raise RuntimeError("Controller returned an invalid command response")
+        error = response.get("Err") or response.get("Error") or response.get("error")
+        if error:
+            raise RuntimeError(f"Controller rejected the command: {error}")
+        dps = response.get("dps")
+        if isinstance(dps, dict) and dps:
+            self.device.online = True
+            self.device.update_from_dps(dps)
+
+    def _cloud_command(self, code: str, value: Any) -> None:
+        """Send one verified Tuya Cloud command and require API acceptance."""
+        cloud = self._get_cloud()
+        if not cloud:
+            raise RuntimeError("Tuya Cloud command transport is unavailable")
+        response = cloud.sendcommand(
+            self._device_id,
+            {"commands": [{"code": code, "value": value}]},
+        )
+        if not isinstance(response, dict) or not response.get("success"):
+            raise RuntimeError(f"Tuya Cloud rejected {code}")
+
+    def _write_command_value(
+        self,
+        dp: int,
+        value: Any,
+        *,
+        cloud_code: str,
+        cloud_value: Any | None = None,
+        nowait: bool = False,
+    ) -> None:
+        """Write a verified DP through the currently active transport."""
+        if self._using_cloud:
+            self._cloud_command(cloud_code, value if cloud_value is None else cloud_value)
+            return
+        device = self._ensure_connection()
+        if not device:
+            raise RuntimeError("Local controller connection is unavailable")
+        response = device.set_value(dp, value, nowait=nowait)
+        self._ingest_command_response(response)
+
+    def _refresh_command_state(self) -> bool:
+        """Read the controller after a write without trusting API acceptance alone."""
+        if self._using_cloud:
+            return self._cloud_update()
+        device = self._ensure_connection()
+        if not device:
+            return False
+        try:
+            response = device.status()
+            self._ingest_command_response(response)
+            return isinstance(response, dict) and isinstance(response.get("dps"), dict)
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug("HO-SC-8W command read-back failed: %s", exc)
+            return False
+
+    def _wait_for_readback(self, predicate, timeout_seconds: float = 8.0) -> bool:
+        """Poll boundedly until a command is confirmed by controller state."""
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
+            self._refresh_command_state()
+            if predicate():
+                return True
+            time.sleep(0.35)
+        return False
+
+    def _require_fresh_command_state(self) -> None:
+        """Require a factual pre-write snapshot for guarded controller actions."""
+        if not self._refresh_command_state():
+            raise RuntimeError("Cannot read a fresh controller state before the write")
+
+    def _fail_safe_stop_after_unconfirmed_start(self) -> bool:
+        """Best-effort OFF after a start whose active/queued state is uncertain."""
+        try:
+            self._write_command_value(
+                DP_OPERATION_MODE,
+                "OFF",
+                cloud_code="operation_mode",
+            )
+            time.sleep(0.5)
+            return self._wait_for_readback(
+                lambda: str(self.device.operation_mode).upper() == "OFF"
+                and self.device.active_zone == 0
+                and self.device.queued_zone == 0,
+                timeout_seconds=3.0,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.error("HO-SC-8W fail-safe OFF command failed: %s", exc)
+            return False
+
+    def start_manual_queue(self, durations: dict[int, int]) -> dict[str, Any]:
+        """Start a sequential manual queue and verify DP45/107/108 read-back."""
+        normalized: dict[int, int] = {}
+        for raw_zone, raw_duration in durations.items():
+            zone = int(raw_zone)
+            duration = int(raw_duration)
+            if not 1 <= zone <= NUM_PRODUCTION_ZONES:
+                raise ValueError(f"Manual zone must be 1..{NUM_PRODUCTION_ZONES}")
+            if not MANUAL_DURATION_MIN <= duration <= MANUAL_DURATION_MAX:
+                raise ValueError(
+                    f"Zone {zone} duration must be {MANUAL_DURATION_MIN}..{MANUAL_DURATION_MAX} minutes"
+                )
+            normalized[zone] = duration
+        if not normalized:
+            raise ValueError("Manual queue must contain at least one zone")
+
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Cannot replace a running or queued watering operation")
+                if str(self.device.operation_mode).lower() == "manual":
+                    raise RuntimeError(
+                        "Controller is already in Manual; stop it or return to Auto first"
+                    )
+
+                # A queue is sequential by definition.  Do not leave the device
+                # in the parallel/together mode before issuing its one-shot map.
+                if str(self.device.irrigation_mode).lower() != "order":
+                    self._write_command_value(
+                        DP_IRRIGATION_MODE,
+                        "order",
+                        cloud_code="irrigation_mode",
+                    )
+                    time.sleep(0.35)
+
+                all_durations = {zone: 0 for zone in range(1, NUM_ZONES + 1)}
+                all_durations.update(normalized)
+                raw_payload = encode_dp45_start_manual(all_durations, NUM_ZONES)
+                local_payload = base64.b64encode(raw_payload).decode("ascii")
+                self._write_command_value(
+                    DP_IRRIGATION_TIME_ALL,
+                    local_payload,
+                    cloud_code="irrigation_time_all",
+                    cloud_value=raw_payload.hex(),
+                    nowait=True,
+                )
+                time.sleep(0.5)
+                self._write_command_value(
+                    DP_OPERATION_MODE,
+                    "Manual",
+                    cloud_code="operation_mode",
+                )
+                time.sleep(1.0)
+
+                expected_mask = sum(1 << (zone - 1) for zone in normalized)
+
+                def _manual_queue_confirmed() -> bool:
+                    observed_mask = self.device.active_zone | self.device.queued_zone
+                    return (
+                        str(self.device.operation_mode).lower() == "manual"
+                        and observed_mask & expected_mask == expected_mask
+                    )
+
+                if not self._wait_for_readback(_manual_queue_confirmed):
+                    stopped = self._fail_safe_stop_after_unconfirmed_start()
+                    raise RuntimeError(
+                        "Manual queue was not confirmed by DP101/107/108; "
+                        + (
+                            "fail-safe OFF was confirmed"
+                            if stopped
+                            else "fail-safe OFF could not be confirmed"
+                        )
+                    )
+
+                return {
+                    "verified": True,
+                    "transport": self.active_transport,
+                    "zones": [
+                        {"zone": zone, "duration_minutes": normalized[zone]}
+                        for zone in sorted(normalized)
+                    ],
+                    "active_zone_bitmask": self.device.active_zone,
+                    "queued_zone_bitmask": self.device.queued_zone,
+                }
+        finally:
+            self._command_lock.release()
+
+    def stop_manual(self) -> dict[str, Any]:
+        """Stop manual watering through DP101 and verify that all zones are idle."""
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                fresh = self._refresh_command_state()
+                if fresh and (
+                    str(self.device.operation_mode).upper() == "OFF"
+                    and self.device.active_zone == 0
+                    and self.device.queued_zone == 0
+                ):
+                    return {
+                        "verified": True,
+                        "changed": False,
+                        "operation_mode": "OFF",
+                    }
+                self._write_command_value(
+                    DP_OPERATION_MODE,
+                    "OFF",
+                    cloud_code="operation_mode",
+                )
+                time.sleep(1.0)
+                if not self._wait_for_readback(
+                    lambda: str(self.device.operation_mode).upper() == "OFF"
+                    and self.device.active_zone == 0
+                    and self.device.queued_zone == 0
+                ):
+                    raise RuntimeError("DP101/107/108 did not confirm watering stop")
+                return {
+                    "verified": True,
+                    "changed": True,
+                    "operation_mode": "OFF",
+                }
+        finally:
+            self._command_lock.release()
+
+    def resume_automatic(self) -> dict[str, Any]:
+        """Return an idle controller to automatic mode and verify DP101."""
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop active watering before returning to Auto")
+                if str(self.device.operation_mode).lower() == "auto":
+                    return {
+                        "verified": True,
+                        "changed": False,
+                        "operation_mode": "Auto",
+                    }
+                self._write_command_value(
+                    DP_OPERATION_MODE,
+                    "Auto",
+                    cloud_code="operation_mode",
+                )
+                time.sleep(1.0)
+                if not self._wait_for_readback(
+                    lambda: str(self.device.operation_mode).lower() == "auto"
+                ):
+                    raise RuntimeError("DP101 did not confirm automatic mode")
+                return {
+                    "verified": True,
+                    "changed": True,
+                    "operation_mode": "Auto",
+                }
+        finally:
+            self._command_lock.release()
+
+    def set_seasonal_adjustment(self, value: int) -> dict[str, Any]:
+        """Write DP103 only after validation and verify the same value by reading it."""
+        adjustment = int(value)
+        if not SEASONAL_ADJUST_MIN <= adjustment <= SEASONAL_ADJUST_MAX:
+            raise ValueError(
+                f"Seasonal adjustment must be {SEASONAL_ADJUST_MIN}..{SEASONAL_ADJUST_MAX}%"
+            )
+        if adjustment % SEASONAL_ADJUST_STEP:
+            raise ValueError(
+                f"Seasonal adjustment must use {SEASONAL_ADJUST_STEP}% steps"
+            )
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                previous = self.device.seasonal_adjust
+                if previous == adjustment:
+                    return {
+                        "verified": True,
+                        "changed": False,
+                        "seasonal_adjustment": adjustment,
+                    }
+                self._write_command_value(
+                    DP_SEASONAL_ADJUST,
+                    adjustment,
+                    cloud_code="SeaAdjValue",
+                )
+                time.sleep(1.0)
+                if not self._wait_for_readback(
+                    lambda: self.device.seasonal_adjust == adjustment
+                ):
+                    raise RuntimeError("DP103 did not confirm the seasonal adjustment")
+                return {
+                    "verified": True,
+                    "changed": True,
+                    "previous_seasonal_adjustment": previous,
+                    "seasonal_adjustment": adjustment,
+                }
+        finally:
+            self._command_lock.release()
 
     def receive_push_update(self) -> bool:
         """Consume one unsolicited update from the persistent local socket."""

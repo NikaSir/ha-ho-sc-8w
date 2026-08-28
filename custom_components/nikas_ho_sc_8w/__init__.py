@@ -1,19 +1,27 @@
-"""Read-only Home Assistant integration for INKBIRD / HiOazo HO-SC-8W."""
+"""Home Assistant integration for INKBIRD / HiOazo HO-SC-8W."""
 
 from __future__ import annotations
 
 import logging
+from functools import partial
+
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
-from homeassistant.core import CoreState, Event, HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.core import CoreState, Event, HomeAssistant, ServiceCall
+from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
 from .api import HOSC8WAPI
 from .const import (
+    ATTR_CONFIG_ENTRY_ID,
+    ATTR_DURATION_MINUTES,
+    ATTR_VALUE,
+    ATTR_ZONE,
+    ATTR_ZONES,
     CONF_CLOUD_API_KEY,
     CONF_CLOUD_API_REGION,
     CONF_CLOUD_API_SECRET,
@@ -25,6 +33,16 @@ from .const import (
     CONNECTION_MODE_CLOUD,
     CONNECTION_MODE_LOCAL,
     DOMAIN,
+    MANUAL_DURATION_MAX,
+    MANUAL_DURATION_MIN,
+    NUM_PRODUCTION_ZONES,
+    SEASONAL_ADJUST_MAX,
+    SEASONAL_ADJUST_MIN,
+    SEASONAL_ADJUST_STEP,
+    SERVICE_RESUME_AUTOMATIC,
+    SERVICE_SET_SEASONAL_ADJUSTMENT,
+    SERVICE_START_MANUAL_QUEUE,
+    SERVICE_STOP_MANUAL,
 )
 from .coordinator import HOSC8WCoordinator
 from .frontend import async_setup_panel
@@ -33,18 +51,151 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-# b002 migration gate: no writable Home Assistant platforms are loaded.
+# Writes are exposed only as validated integration services; entity platforms
+# remain factual sensors rather than generic raw-DP controls.
 PLATFORMS: list[Platform] = [Platform.SENSOR]
+
+_ZONE_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ZONE): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=NUM_PRODUCTION_ZONES)
+        ),
+        vol.Required(ATTR_DURATION_MINUTES): vol.All(
+            vol.Coerce(int),
+            vol.Range(min=MANUAL_DURATION_MIN, max=MANUAL_DURATION_MAX),
+        ),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+_START_MANUAL_QUEUE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_ZONES): vol.All(
+            cv.ensure_list,
+            [_ZONE_ITEM_SCHEMA],
+            vol.Length(min=1, max=NUM_PRODUCTION_ZONES),
+        ),
+    }
+)
+
+_ENTRY_COMMAND_SCHEMA = vol.Schema(
+    {vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string}
+)
+
+_SEASONAL_ADJUSTMENT_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_VALUE): vol.All(
+            vol.Coerce(int),
+            vol.In(
+                range(
+                    SEASONAL_ADJUST_MIN,
+                    SEASONAL_ADJUST_MAX + 1,
+                    SEASONAL_ADJUST_STEP,
+                )
+            ),
+        ),
+    }
+)
+
+
+def _coordinator_for_call(hass: HomeAssistant, call: ServiceCall) -> HOSC8WCoordinator:
+    """Resolve one config entry without ever guessing between controllers."""
+    coordinators = hass.data.get(DOMAIN, {})
+    entry_id = call.data.get(ATTR_CONFIG_ENTRY_ID)
+    if entry_id:
+        coordinator = coordinators.get(entry_id)
+        if coordinator is None:
+            raise HomeAssistantError(
+                f"HO-SC-8W config entry {entry_id} is not loaded"
+            )
+        return coordinator
+    loaded = [
+        item
+        for item in coordinators.values()
+        if isinstance(item, HOSC8WCoordinator)
+    ]
+    if len(loaded) != 1:
+        raise HomeAssistantError(
+            "Specify config_entry_id when zero or multiple HO-SC-8W controllers are loaded"
+        )
+    return loaded[0]
+
+
+async def _async_start_manual_queue(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    durations: dict[int, int] = {}
+    for item in call.data[ATTR_ZONES]:
+        zone = int(item[ATTR_ZONE])
+        if zone in durations:
+            raise HomeAssistantError(f"Zone {zone} occurs more than once in the queue")
+        durations[zone] = int(item[ATTR_DURATION_MINUTES])
+    try:
+        await coordinator.async_start_manual_queue(durations)
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
+async def _async_stop_manual(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_stop_manual()
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
+async def _async_resume_automatic(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_resume_automatic()
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
+async def _async_set_seasonal_adjustment(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_set_seasonal_adjustment(int(call.data[ATTR_VALUE]))
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
 
 
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
+    if not hass.services.has_service(DOMAIN, SERVICE_START_MANUAL_QUEUE):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_START_MANUAL_QUEUE,
+            partial(_async_start_manual_queue, hass),
+            schema=_START_MANUAL_QUEUE_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_STOP_MANUAL,
+            partial(_async_stop_manual, hass),
+            schema=_ENTRY_COMMAND_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_RESUME_AUTOMATIC,
+            partial(_async_resume_automatic, hass),
+            schema=_ENTRY_COMMAND_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_SEASONAL_ADJUSTMENT,
+            partial(_async_set_seasonal_adjustment, hass),
+            schema=_SEASONAL_ADJUSTMENT_SCHEMA,
+        )
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up one HO-SC-8W config entry in read-only mode."""
+    """Set up one HO-SC-8W config entry."""
     preference = entry.options.get(CONF_CONNECTION_MODE, CONNECTION_MODE_AUTO)
     if preference not in {
         CONNECTION_MODE_AUTO,
@@ -78,7 +229,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"Cannot connect to HO-SC-8W using requested policy {preference}"
         )
 
-    _LOGGER.info("Starting HO-SC-8W read-only integration using %s transport", transport)
+    _LOGGER.info("Starting HO-SC-8W integration using %s transport", transport)
     coordinator = HOSC8WCoordinator(hass, api, entry)
     await coordinator.async_initialize_schedule_cache()
     await coordinator.async_config_entry_first_refresh()

@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.26"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27"',
   "const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION",
   "const ASSET_VERSION = UI_VERSION",
   "this._viewNodeCache = new Map()",
@@ -49,7 +49,7 @@ for (const marker of [
   '"Нет связи"',
   'class="statusScreen"',
   "statusFitsViewport",
-  '"СЕЗОННАЯ КОРРЕКЦИЯ"',
+  ">СЕЗОННАЯ КОРРЕКЦИЯ<",
   '<b>Зона ${zone}</b>',
   '_scheduleGestureTransform(transform)',
   'label: "Не учитывается"',
@@ -69,6 +69,24 @@ for (const forbidden of [
 
 for (const marker of [
   "data-parent-nav",
+  "data-season-value",
+  "data-season-apply",
+  "data-queue-toggle",
+  "data-queue-duration",
+  "data-manual-start",
+  "data-manual-stop",
+  "data-resume-auto",
+  'callService("nikas_ho_sc_8w", "start_manual_queue"',
+  'callService("nikas_ho_sc_8w", "stop_manual"',
+  'callService("nikas_ho_sc_8w", "resume_automatic"',
+  'callService("nikas_ho_sc_8w", "set_seasonal_adjustment"',
+  "window.confirm(`Запустить ручной полив?",
+  'window.confirm("Остановить ручной полив?',
+  'window.confirm("Вернуть автоматический режим полива?',
+  "window.confirm(`Применить сезонную коррекцию",
+  "Очередь принята и подтверждена контроллером",
+  "Сезонная коррекция ${value}% подтверждена контроллером",
+  "DP101, DP107 и DP108",
   ".scene1,.scene2,.scene3",
   "zone-lawn-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
   "zone-flowers-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
@@ -81,7 +99,6 @@ for (const marker of [
   "simplifiedDiagram",
   '"queue" : "idle"',
   ".zoneLink.idle{background:#a8b2ba}",
-  "Ручной запуск заблокирован",
   "Первый запуск",
   "min-width:190px",
   "fullStarts(attrs)",
@@ -101,6 +118,9 @@ for (const marker of [
 for (const forbidden of [
   "Read-only представление",
   "Actions API",
+  "Ручной запуск заблокирован",
+  "Управление недоступно",
+  "Запуск зон из панели пока не поддерживается",
   '<small>Доступен</small>',
   "compactStarts",
   "Следующий полив",
@@ -109,6 +129,14 @@ for (const forbidden of [
   "mdi:umbrella-closed-outline",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
+}
+
+if (source.includes("set_value(") || source.includes("sendcommand(")) {
+  throw new Error("The frontend must not write raw Tuya values directly");
+}
+
+if (count(/window\.confirm\(/g) < 4) {
+  throw new Error("Every controller write exposed by the panel must have a confirmation gate");
 }
 
 if (source.includes('"Онлайн"')) {

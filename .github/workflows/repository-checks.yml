@@ -54,6 +54,7 @@ jobs:
           test -f "$bundle"
           node --check "$bundle"
           node scripts/check-panel-ui-v16.mjs
+          python scripts/check-control-contract.py
           test -f custom_components/nikas_ho_sc_8w/brand/icon.png
 
           node - <<'NODE'

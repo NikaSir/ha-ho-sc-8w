@@ -1,7 +1,7 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.26",
-  "integration_version": "1.0.0-b005.44",
+  "panel_version": "0.6.27",
+  "integration_version": "1.0.0-b005.45",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -13,6 +13,22 @@
       "scroll",
       "bottom_tab_bar"
     ]
+  },
+  "control_actions": {
+    "policy": "draft_explicit_apply_confirmation_write_readback",
+    "frontend_raw_dp_writes": false,
+    "manual_queue": {
+      "zones": [1, 2, 3, 4, 5, 6],
+      "per_zone_duration_minutes": [1, 120],
+      "execution_order": "ascending_controller_order",
+      "readback_dps": [101, 107, 108]
+    },
+    "seasonal_adjustment": {
+      "range_percent": [-90, 100],
+      "step_percent": 10,
+      "explicit_apply": true,
+      "readback_dps": [103]
+    }
   },
   "typography": {
     "meaningful_min_px": 12,

@@ -6,6 +6,10 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.45` / panel `0.6.27`: add a validated manual-watering queue for production zones 1–6 with independent 1–120 minute durations, one confirmed start action, confirmed stop/Auto actions and DP101/107/108 read-back.
+- `1.0.0-b005.45` / panel `0.6.27`: make seasonal adjustment writable through an explicit `Применить` action only; validate the −90%…100% range and 10% step, require confirmation and verify DP103 after the write.
+- `1.0.0-b005.45` / panel `0.6.27`: enforce the shared write contract in both the frontend and integration: local draft → explicit action → user confirmation → integration-owned command → factual controller read-back. The frontend never constructs or sends raw Tuya payloads.
+
 - `1.0.0-b005.44` / panel `0.6.26`: render zone artwork at its complete intrinsic aspect ratio on the Zones list and zone-detail screens; secondary thumbnails now use centered `contain` sizing instead of exposing a 62×62 fragment of the original 512×512 background.
 - `1.0.0-b005.44` / panel `0.6.26`: derive secondary zone-asset cache keys from the single UI version constant so the artwork and production bundle cannot drift to different browser-cache revisions.
 

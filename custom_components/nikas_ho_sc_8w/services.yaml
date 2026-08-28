@@ -1,0 +1,45 @@
+start_manual_queue:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    zones:
+      required: true
+      example:
+        - zone: 1
+          duration_minutes: 5
+        - zone: 4
+          duration_minutes: 12
+      selector:
+        object:
+
+stop_manual:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+
+resume_automatic:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+
+set_seasonal_adjustment:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    value:
+      required: true
+      example: 20
+      selector:
+        number:
+          min: -90
+          max: 100
+          step: 10
+          mode: box
