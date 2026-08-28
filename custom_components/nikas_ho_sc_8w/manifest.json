@@ -17,5 +17,5 @@
   "requirements": [
     "tinytuya>=1.13.0"
   ],
-  "version": "1.0.0-b005.43"
+  "version": "1.0.0-b005.44"
 }

@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.25"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.26"',
   "const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION",
   "const ASSET_VERSION = UI_VERSION",
   "this._viewNodeCache = new Map()",
@@ -70,10 +70,11 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-lawn-v2.webp?v=0.6.25",
-  "zone-flowers-v2.webp?v=0.6.25",
-  "zone-shrubs-v2.webp?v=0.6.25",
-  "zone-greenhouse-v2.webp?v=0.6.25",
+  "zone-lawn-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
+  "zone-flowers-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
+  "zone-shrubs-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
+  "zone-greenhouse-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}",
+  ".zoneCard .scene,.detailHead .scene{background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important",
   "detailStateList",
   "mdi:umbrella-outline",
   "mdi:help-circle-outline",

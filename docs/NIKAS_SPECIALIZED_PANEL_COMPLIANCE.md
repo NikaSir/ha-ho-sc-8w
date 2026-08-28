@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.25
-**Manifest:** integration `1.0.0-b005.43`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.26
+**Manifest:** integration `1.0.0-b005.44`
 
 ## Compliance
 
@@ -79,3 +79,9 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 - Four new 512×512 WebP sources are composed for the actual 62 px phone thumbnail: one central subject, high local contrast and no decorative overlays.
 - Zones 1–3 use a large lawn sprinkler, zone 4 uses large red, pink and yellow flowers, zone 5 uses a centered shrub with a visible drip line and zone 6 uses a close greenhouse.
 - Rain accounting uses a solid green umbrella when enabled and a muted open outline umbrella when disabled. Missing DP38 rain data uses a separate help-circle outline instead of an ambiguous folded umbrella.
+
+## UI 0.6.26 secondary image framing
+
+- Zone-list and zone-detail artwork uses centered `contain` sizing and no repetition, so the complete 512×512 image is visible inside every secondary card.
+- The first-screen diagram retains its separately approved framing and geometry.
+- Asset query versions are derived from the same module-level UI version constant as the Header and bundle registration.
