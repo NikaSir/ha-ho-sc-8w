@@ -10,7 +10,7 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
-The current runtime decodes schedule telemetry from the verified HO-SC-8W DP model and exposes only narrowly scoped, validated controller actions. The frontend never writes raw Tuya DPs: every write passes through integration-owned services, explicit user confirmation and controller read-back.
+The current runtime exposes only verified controller actions through integration-owned services. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
 ## Installation with HACS
 
@@ -36,11 +36,9 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.27**.
+Current panel version: **0.6.28**.
 
-Current integration version: **1.0.0-b005.45**.
-
-The panel follows **NikaS Specialized Panel UI Standard v1.6**:
+The panel follows **NikaS Specialized Panel UI Standard v1.8** and the mandatory navigation/return contract:
 
 It also conforms to **NikaS Integration Panel Template v1.0**.
 
@@ -60,10 +58,10 @@ It also conforms to **NikaS Integration Panel Template v1.0**.
 
 The user-facing application model is domain-oriented rather than protocol-oriented:
 
-- **Состояние** — factual controller state, six-axis valve/zone schematic, program/mode/telemetry and statuses;
+- **Состояние** — factual controller state, six-axis zone schematic and display-only program, mode and seasonal values;
 - **Зоны** — production zones 1–6 with factual drill-down;
-- **Программа** — read-only decoded automatic program;
-- **Ручной** — queue of production zones 1–6 with an independent duration for each zone, confirmed start/stop and factual active/queued state;
+- **Программа** — read-only decoded automatic zone program plus the confirmed seasonal-correction editor on the `Сезон` tile;
+- **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
 - **Диагн.** — integration health and diagnostics-only Zone 8.
 
 The primary Bottom Tab Bar is:
@@ -72,7 +70,7 @@ The primary Bottom Tab Bar is:
 Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-`Программы` is not a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Direct schedule editing is not exposed; cache and protocol details remain under Diagnostics.
 
 ### Full-field Overview v0.4.3
 
@@ -114,7 +112,7 @@ The incoming water path now runs from the pressure gauge vertically upward and t
 
 ### Actual HO-SC-8W controller and readable type v0.5.8
 
-The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.6 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
+The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.8 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
 
 ### Shared-axis irrigation schematic v0.6.0
 
@@ -136,7 +134,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.27
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.28
       ↓
 <nikas-ho-sc-8w-panel>
 ```
@@ -151,24 +149,11 @@ This build uses a stable production filename plus query-string cache busting. Co
 - Zone 8 is reserved for controlled development/diagnostic tests and is not exposed as a normal user zone.
 - `unknown` and `unavailable` are unreliable states, never normal/off.
 - The frontend must never construct or send raw Tuya DP payloads.
-- Write operations are exposed only through stable, tested integration services.
-- Every controller write follows one contract: local draft → explicit action → confirmation → validated integration command → controller read-back.
-- Manual queue start is limited to production zones 1–6 and 1–120 minutes per zone. Success requires matching DP101/107/108 state.
-- Seasonal correction accepts only −90%…100% in 10% steps and changes only after `Применить` or Enter, confirmation and matching DP103 read-back.
+- Every controller write follows local draft → explicit action → confirmation → integration-owned command → factual read-back.
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
-- Manual selection, durations and seasonal edits remain local UI state until their explicit confirmed action is accepted.
-
-## Verified controller actions
-
-The panel exposes four integration services used by the mobile UI and available for controlled Home Assistant automation:
-
-- `nikas_ho_sc_8w.start_manual_queue` — encodes one DP45 queue, switches DP101 to `Manual` and verifies active/queued zone masks;
-- `nikas_ho_sc_8w.stop_manual` — writes DP101 `OFF` and verifies that DP107/108 are clear;
-- `nikas_ho_sc_8w.resume_automatic` — returns an idle controller to DP101 `Auto` and verifies the result;
-- `nikas_ho_sc_8w.set_seasonal_adjustment` — writes and reads back DP103.
-
-The panel always asks for confirmation before calling these services. Direct service calls from external automations are intentionally outside the panel confirmation boundary and must provide their own safety gate.
+- Manual watering writes only after confirmed queue start/stop/Auto actions and verifies DP101/107/108.
+- Seasonal correction is display-only on `Состояние`; only the `Сезон` tile on `Программа` can apply −90…100% in 10% steps, with confirmation and DP103 read-back.
 
 ## Device scope
 

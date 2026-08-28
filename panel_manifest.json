@@ -1,7 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
-  "panel_version": "0.6.27",
-  "integration_version": "1.0.0-b005.45",
+  "rule_set": "1.17",
+  "panel_version": "0.6.28",
+  "integration_version": "1.0.0-b005.46",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -26,6 +27,9 @@
     "seasonal_adjustment": {
       "range_percent": [-90, 100],
       "step_percent": 10,
+      "status_view": "read_only",
+      "editable_view": "program",
+      "apply_location": "program_summary_season_tile",
       "explicit_apply": true,
       "readback_dps": [103]
     }
@@ -109,6 +113,7 @@
     }
   ],
   "zone_thumbnail_content": "image_zone_number_activity_program_duration",
+  "zone_time_layout": "duration_muted_line_all_start_times_separate_bold_line",
   "zone_thumbnail_visuals": {
     "1": "lawn",
     "2": "lawn",
@@ -117,7 +122,9 @@
     "5": "shrubs",
     "6": "greenhouse"
   },
-  "status_layout": "system_state_connection_pressure_informative_zones_program_mode_seasonal_actions_fit_without_scroll",
+  "status_layout": "system_state_connection_pressure_informative_zones_program_mode_seasonal_read_only_fit_without_scroll",
+  "reference_canvas_px": [1280, 800],
+  "desktop_max_width_px": 1280,
   "rain_sensor_connection": "direct_horizontal_midline_to_controller",
   "status_scroll_at_100": false,
   "long_views_native_vertical_scroll_at_100": true,

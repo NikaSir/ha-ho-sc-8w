@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
+const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -27,7 +27,46 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
   const VIEW_SCALE_SNAP_MAX = 1.03;
   const VIEW_STATE_PREFIX = "nikas_ho_sc_8w.view_transform.v2";
 
-  class HOSC8WPanel extends HTMLElement {
+const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+  const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
+  const RETURN_ROUTE_KEY = "nikas.ho_sc_8w.return_route.v1";
+  const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
+
+  function safeReturnRoute(value) {
+    if (!value) return null;
+    try {
+      const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
+      if (url.origin !== window.location.origin) return null;
+      if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) return "/dashboard-house-v11/home";
+      if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) return "/dashboard-actions/home";
+      if (url.pathname === "/dashboard-infrastructure" || url.pathname.startsWith("/dashboard-infrastructure/")) return "/dashboard-infrastructure/overview";
+      return null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function resolveReturnRoute(panel) {
+    const current = new URL(window.location.href);
+    const explicit = safeReturnRoute(current.searchParams.get("return_to")) || safeReturnRoute(current.searchParams.get("from"));
+    let handedOff = null;
+    let saved = null;
+    try {
+      const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
+      const handedOffAt = Number(handedOffAtRaw);
+      const handedOffFresh = handedOffAtRaw === null || (Number.isFinite(handedOffAt) && Date.now() - handedOffAt <= 30_000);
+      handedOff = handedOffFresh ? safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY)) : null;
+      sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+      sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
+      saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
+    } catch (_error) {}
+    const configured = safeReturnRoute(panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path);
+    const route = explicit || handedOff || saved || safeReturnRoute(document.referrer) || configured || SAFE_DEFAULT_ROUTE;
+    try { sessionStorage.setItem(RETURN_ROUTE_KEY, route); } catch (_error) {}
+    return route;
+  }
+
+    class HOSC8WPanel extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
@@ -57,6 +96,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       this._nativeScrollPositions = new Map();
       this._pendingScrollTop = null;
       this._shellMounted = false;
+      this._returnRoute = null;
       this._renderedStructureKey = null;
       this._viewNodeCache = new Map();
       this._longPressTimer = null;
@@ -574,7 +614,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
     header() {
       return `<header class="appHeader">
         <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-        <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
+        <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small>UI v${UI_VERSION}</small></button>
         <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
       </header>`;
     }
@@ -700,13 +740,10 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       const firstStart = Array.from({ length: 6 }, (_, i) => i + 1)
         .flatMap((zone) => this.zoneRuntime(e, zone).starts)
         .sort()[0] || "—";
-      const seasonalValue = this._seasonalDraft === null
-        ? (this.bad(seasonal) ? "" : seasonal)
-        : this._seasonalDraft;
       return `<div class="metrics">
         <button class="metric water" data-entity="${this.esc(e.zones[1].schedule)}"><small>ПРОГРАММА</small><div><ha-icon icon="mdi:calendar-blank-outline"></ha-icon><span><b>${this.esc(firstStart)}</b><em>Первый запуск</em></span></div></button>
         <button class="metric ${operation === "Auto" ? "active" : ""}" data-entity="${this.esc(e.operation)}"><small>РЕЖИМ</small><div><ha-icon icon="mdi:autorenew"></ha-icon><span><b>${this.esc(this.human("operation", operation))}</b><em>${this.esc(this.human("irrigation", this.state(e.irrigation)))}</em></span></div></button>
-        <div class="metric seasonalEditor ${this.bad(seasonal) ? "" : "active"}"><small>СЕЗОННАЯ КОРРЕКЦИЯ</small><div><ha-icon icon="mdi:percent-outline"></ha-icon><span class="seasonalFields"><span class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов"><b>%</b></span><button data-season-apply ${this._seasonalBusy ? "disabled" : ""}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div></div>
+        <button class="metric ${this.bad(seasonal) ? "" : "active"}" data-entity="${this.esc(e.seasonal)}"><small>СЕЗОННАЯ КОРРЕКЦИЯ</small><div><ha-icon icon="mdi:percent-outline"></ha-icon><span><b>${this.bad(seasonal) ? "Нет данных" : `${this.esc(seasonal)} %`}</b><em>Текущее значение</em></span></div></button>
       </div>`;
     }
     hero(e) {
@@ -752,6 +789,9 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
     programView(e) {
       const seasonal = this.state(e.seasonal);
       const rain = this.rainPresentation(e);
+      const seasonalValue = this._seasonalDraft === null
+        ? (this.bad(seasonal) ? "" : seasonal)
+        : this._seasonalDraft;
       const firstStart = Array.from({ length: 6 }, (_, i) => i + 1)
         .flatMap((zone) => this.starts(this.zoneRuntime(e, zone).attrs))
         .sort()[0] || "—";
@@ -759,7 +799,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
         const z = this.zoneRuntime(e, zone);
         return `<button class="programRow" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="programZone"><b>Зона ${zone}</b><small>${this.esc(z.duration)} мин</small></span>${this.startChips(z.starts, "programTimes")}<ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
       }).join("");
-      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Текущая программа контроллера доступна для просмотра.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><button data-entity="${this.esc(e.seasonal)}"><small>Сезон</small><b>${this.bad(seasonal) ? "Нет данных" : `${seasonal} %`}</b></button><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
+      return `<div class="pageIntro"><small>ПРОГРАММА</small><h2>Автоматический полив</h2><p>Программа зон доступна для просмотра. Сезонная коррекция изменяется отдельно с подтверждением.</p></div><section class="summaryGrid"><button data-entity="${this.esc(e.operation)}"><small>Режим</small><b>${this.esc(this.human("operation", this.state(e.operation)))}</b></button><div class="programSeasonEditor ${this.bad(seasonal) ? "" : "active"}"><small>Сезон</small><span class="programSeasonControls"><label class="seasonalInput"><input data-season-value type="number" inputmode="numeric" min="-90" max="100" step="10" value="${this.esc(seasonalValue)}" aria-label="Сезонная коррекция, процентов"><b>%</b></label><button data-season-apply ${this._seasonalBusy ? "disabled" : ""}>${this._seasonalBusy ? "Проверка…" : "Применить"}</button></span></div><button data-entity="${this.esc(e.rain)}"><small>Датчик дождя</small><b>${this.esc(rain.label)}</b></button><button data-entity="${this.esc(e.zones[1].schedule)}"><small>Первый запуск</small><b>${this.esc(firstStart)}</b></button></section><section class="programList">${zoneRows}</section>`;
     }
     manualView(e) {
       const operationRaw = this.state(e.operation);
@@ -1364,6 +1404,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27";
       const structureKey = this._structureKey();
 
       if (!this._shellMounted) {
+        this._returnRoute = resolveReturnRoute(this);
         this.shadowRoot.innerHTML = `<style>${this.styles()}</style><div class="app">${this.header()}${this._workspace(content)}${this.bottomNav()}</div>`;
         this._shellMounted = true;
         this._renderedStructureKey = structureKey;
@@ -1398,7 +1439,7 @@ const baseStyles = p.styles;
 p.header = function headerV0624() {
   return `<header class="appHeader">
     <button class="headerButton menuButton" data-ha-menu aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button>
-    <button class="headerTitle" data-parent-nav aria-label="Вернуться в панель действий"><strong>HO-SC-8W</strong><small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small></button>
+    <button class="headerTitle" type="button" data-parent-nav aria-label="Вернуться в базовую панель NikaS"><strong>HO-SC-8W</strong><small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small></button>
     <button class="headerButton refreshButton" data-refresh aria-label="Обновить"><ha-icon icon="mdi:refresh"></ha-icon></button>
   </header>`;
 };
@@ -1500,14 +1541,10 @@ p.zonesView = function zonesViewV0623(e) {
   if (this._drillZone) return this.zoneDetail(e, this._drillZone);
   const cards = Array.from({ length: 6 }, (_, i) => i + 1).map((zone) => {
     const z = this.zoneRuntime(e, zone);
-    const singleStart = z.starts.length === 1;
-    const scheduleLine = singleStart ? `${z.duration} мин · ${z.starts[0]}` : `${z.duration} мин`;
-    const extraTimes = z.starts.length > 1
+    const startTimes = z.starts.length
       ? `<span class="zoneCardTimes">${this.esc(z.start)}</span>`
-      : z.starts.length === 0
-        ? `<span class="zoneCardTimes muted">Нет запусков</span>`
-        : "";
-    return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(scheduleLine)}</em>${extraTimes}</span>${this._zoneIndicators(z)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
+      : `<span class="zoneCardTimes muted">Нет запусков</span>`;
+    return `<button class="zoneCard ${z.tone}" data-zone="${zone}" data-entity="${this.esc(z.q.schedule)}"><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(z.label)}</b><em>${this.esc(z.duration)} мин</em>${startTimes}</span>${this._zoneIndicators(z)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
   }).join("");
   return `<div class="pageIntro"><small>ЗОНЫ 1–6</small><h2>Рабочие зоны</h2><p>Фактическое состояние и программа каждого канала.</p></div><div class="zoneCards">${cards}</div>`;
 };
@@ -1654,9 +1691,11 @@ p._bindWorkspaceGestures = function bindWorkspaceGesturesV0619() {
   }, { passive: false });
 };
 
-p.styles = function stylesV0627() {
+p.styles = function stylesV0628() {
   return `${baseStyles.call(this)}
-    /* UI v0.6.27 verified write actions and readable zone imagery */
+    /* UI v0.6.28 rule 1.17 rebuild: program-owned seasonal write and uniform zone times */
+    .app{width:min(100%,1280px);max-width:1280px}
+    .bottomNavInner{max-width:1280px}
     .heroHead{align-items:flex-start}.connectionOnly{display:block}.connectionOnly .systemConnection{min-width:170px}
     .approvedDiagram{margin-top:0}.approvedDiagram .controller{left:37.5%!important;top:1%!important;width:25%!important;height:25%!important;transform:none!important}
     .approvedDiagram .controllerDrop{position:absolute;z-index:1;left:50%;top:23%;height:9%;border-left:2px solid #6f7d88;transform:translateX(-50%)}
@@ -1670,17 +1709,17 @@ p.styles = function stylesV0627() {
     .scene1,.scene2,.scene3{background-image:url('/nikas-ho-sc-8w/assets/zone-lawn-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene4{background-image:url('/nikas-ho-sc-8w/assets/zone-flowers-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene5{background-image:url('/nikas-ho-sc-8w/assets/zone-shrubs-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene6{background-image:url('/nikas-ho-sc-8w/assets/zone-greenhouse-v2.webp?v=${NIKAS_HO_SC_8W_UI_VERSION}')!important}.scene>ha-icon{display:none!important}
     .zoneCard .scene,.detailHead .scene{background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;background-color:color-mix(in srgb,var(--card) 92%,var(--text) 8%)}
     .infraRow{display:grid;grid-template-columns:.9fr 1.35fr;gap:8px;margin-top:8px}.infraRow .heroPressure,.infraRow .rainStatusCard{position:relative;inset:auto;width:100%;min-height:64px;margin:0}.infraRow .heroPressure{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;text-align:left;padding:8px 10px}.infraRow .heroPressure>ha-icon{grid-row:1/3;--mdc-icon-size:29px;color:var(--a)}.infraRow .heroPressure span{font-size:12px}.infraRow .heroPressure b{font-size:19px}.infraRow .rainStatusCard{display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;padding:7px 9px}.infraRow .rainStatusPhoto{width:38px;height:44px}.infraRow .rainStatusText b,.infraRow .rainStatusText strong,.infraRow .rainStatusText small{display:block}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}.infraRow .rainStatusText strong{font-size:14px}.infraRow .rainStatusCard>ha-icon{--mdc-icon-size:24px}
-    .zoneCards{padding-bottom:64px}.zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:88px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-style:normal}.zoneCardTimes{display:block;margin-top:4px;color:var(--text);font-size:12px;font-weight:700;line-height:1.3;white-space:normal}.zoneCardTimes.muted{color:var(--muted);font-weight:500}
+    .zoneCards{padding-bottom:64px}.zoneCard{grid-template-columns:70px minmax(0,1fr) auto 24px!important;gap:10px!important;min-height:96px!important}.zoneCard .scene{width:70px!important;height:70px!important}.zoneCard .zoneIndicators{width:auto;grid-template-columns:repeat(3,21px);gap:9px}.zoneCard .zoneIndicators ha-icon{min-width:21px;--mdc-icon-size:21px}.zoneCard .zoneChevron{--mdc-icon-size:22px}.zoneCardText{min-width:0}.zoneCardText em{display:block!important;margin-top:3px;color:var(--muted);font-size:12px!important;font-style:normal;line-height:1.2}.zoneCardTimes{display:block;margin-top:5px;color:var(--text);font-size:14px;font-weight:750;line-height:1.25;white-space:normal}.zoneCardTimes.muted{color:var(--muted);font-size:12px;font-weight:500}
     .programRow{grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr) 20px!important;min-height:72px!important;padding:9px 13px!important}.programZone b,.programZone small{display:block}.programZone b{font-size:14px}.programZone small{margin-top:3px;color:var(--muted)}.programTimes,.detailStartTimes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;min-width:0}.programTimes>span,.detailStartTimes>span{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 8px;border-radius:9px;background:color-mix(in srgb,var(--a) 9%,var(--card));color:var(--text);font-size:12px;font-weight:750;white-space:nowrap}.detailStarts{min-width:0}.detailStartTimes{justify-content:flex-start;margin-top:7px}
-    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:active{background:var(--accent-soft)}
-    .seasonalEditor{gap:2px!important}.seasonalEditor>div{grid-template-columns:1fr!important;gap:0!important}.seasonalEditor>div>ha-icon{display:none}.seasonalFields{display:grid!important;grid-template-columns:1fr;gap:3px;width:100%!important}.seasonalInput{display:grid!important;grid-template-columns:minmax(0,1fr) 17px;align-items:center;width:100%!important;min-height:27px;padding:0 5px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}.seasonalInput input{width:100%;min-width:0;padding:2px 0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:14px;font-weight:750;line-height:1.1;text-align:center}.seasonalInput b{margin:0!important;color:var(--muted)!important;font-size:12px!important}.seasonalFields>button{min-height:29px;padding:3px 5px;border:1px solid color-mix(in srgb,var(--a) 50%,var(--line));border-radius:8px;background:var(--accent-soft);color:var(--a);font-size:12px;font-weight:750;line-height:1}.seasonalFields>button:disabled{opacity:.58}.seasonalInput:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}
-    .manualQueueCard{display:grid;gap:12px;padding:14px}.manualRuntime{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;padding:12px;border-radius:16px;background:var(--soft)}.manualRuntime>ha-icon{--mdc-icon-size:32px;color:var(--muted)}.manualRuntime.running{background:var(--accent-soft)}.manualRuntime.running>ha-icon{color:var(--a)}.manualRuntime span{display:grid;gap:2px;min-width:0}.manualRuntime small,.manualRuntime b,.manualRuntime em{display:block}.manualRuntime b{font-size:15px}.manualRuntime em{color:var(--muted);font-style:normal}.manualZones{gap:7px}.manualZone{min-height:72px;padding:7px;border-color:var(--line);background:var(--soft)}.manualZone span{font-size:21px;line-height:1}.manualZone small{margin-top:5px;line-height:1.05;text-align:center}.manualQueueHead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px}.manualQueueHead span{font-size:14px;font-weight:800}.manualQueueHead b{color:var(--muted);font-size:12px}.manualQueueList{display:grid;gap:7px}.manualQueueRow{display:grid;grid-template-columns:28px minmax(80px,1fr) auto;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:15px;background:var(--card)}.queueOrder{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--a);font-size:13px;font-weight:800}.queueZone{display:grid;gap:2px;min-width:0}.queueZone b{font-size:14px}.queueZone small{color:var(--muted);line-height:1.05}.queueDuration{display:grid;grid-template-columns:38px 72px 38px;align-items:center;gap:4px}.queueDuration>button{display:grid;place-items:center;width:38px;height:42px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:23px}.queueDuration label{display:grid;grid-template-columns:minmax(0,1fr) 25px;align-items:center;height:42px;padding:0 5px;border:1px solid var(--line);border-radius:12px;background:var(--card)}.queueDuration input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:16px;font-weight:800;line-height:1;text-align:right}.queueDuration label span{color:var(--muted);font-size:12px}.queueDuration label:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}.manualEmpty{display:flex;align-items:center;justify-content:center;gap:9px;min-height:72px;padding:12px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);text-align:center}.manualEmpty ha-icon{--mdc-icon-size:25px}.manualStart{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;justify-content:center;gap:9px;min-height:58px;padding:8px 16px;border:0;border-radius:17px;background:linear-gradient(145deg,#079bd0,#087aec);color:#fff;text-align:left}.manualStart>ha-icon{--mdc-icon-size:30px}.manualStart span{display:grid;gap:2px}.manualStart b,.manualStart small{color:inherit}.manualStart b{font-size:16px}.manualStart:disabled{background:var(--soft);color:var(--muted)}.manualRunningActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.manualRunningActions>button,.resumeAuto.standalone{min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--soft);font-weight:750}.manualRunningActions>button{display:flex;align-items:center;justify-content:center;gap:6px}.stopManual{border-color:color-mix(in srgb,var(--danger) 42%,var(--line))!important;color:var(--danger)}.resumeAuto{color:var(--a)}.resumeAuto.standalone{width:100%}.manualRunningActions>button:disabled,.resumeAuto:disabled{opacity:.58}.manualNote{margin:0!important;color:var(--muted);line-height:1.35}.manualQueueCard button:focus-visible,.seasonalFields>button:focus-visible{outline:3px solid color-mix(in srgb,var(--a) 30%,transparent);outline-offset:2px}
+    .headerTitle{appearance:none;justify-self:center;min-width:190px;padding:7px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08);cursor:pointer}.headerTitle:focus-visible{outline:2px solid var(--a);outline-offset:2px}.headerTitle:active{background:var(--accent-soft)}
+    .summaryGrid>.programSeasonEditor{display:grid;gap:7px;padding:10px;border:0;border-radius:14px;background:var(--soft);text-align:left}.programSeasonEditor>small{display:block;color:var(--muted);font-size:12px}.programSeasonControls{display:grid;grid-template-columns:minmax(62px,.75fr) minmax(88px,1.25fr);align-items:center;gap:6px}.seasonalInput{display:grid;grid-template-columns:minmax(0,1fr) 20px;align-items:center;width:100%;min-height:38px;padding:0 7px;border:1px solid var(--line);border-radius:10px;background:var(--card)}.seasonalInput input{width:100%;min-width:0;padding:4px 0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:16px;font-weight:800;line-height:1;text-align:right}.seasonalInput b{margin:0!important;color:var(--muted)!important;font-size:12px!important}.programSeasonControls>button{min-height:38px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--a) 50%,var(--line));border-radius:10px;background:var(--accent-soft);color:var(--a);font-size:12px;font-weight:750;line-height:1;text-align:center}.programSeasonControls>button:disabled{opacity:.58}.seasonalInput:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}
+    .manualQueueCard{display:grid;gap:12px;padding:14px}.manualRuntime{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;padding:12px;border-radius:16px;background:var(--soft)}.manualRuntime>ha-icon{--mdc-icon-size:32px;color:var(--muted)}.manualRuntime.running{background:var(--accent-soft)}.manualRuntime.running>ha-icon{color:var(--a)}.manualRuntime span{display:grid;gap:2px;min-width:0}.manualRuntime small,.manualRuntime b,.manualRuntime em{display:block}.manualRuntime b{font-size:15px}.manualRuntime em{color:var(--muted);font-style:normal}.manualZones{gap:7px}.manualZone{min-height:72px;padding:7px;border-color:var(--line);background:var(--soft)}.manualZone span{font-size:21px;line-height:1}.manualZone small{margin-top:5px;line-height:1.05;text-align:center}.manualQueueHead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px}.manualQueueHead span{font-size:14px;font-weight:800}.manualQueueHead b{color:var(--muted);font-size:12px}.manualQueueList{display:grid;gap:7px}.manualQueueRow{display:grid;grid-template-columns:28px minmax(80px,1fr) auto;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:15px;background:var(--card)}.queueOrder{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--a);font-size:13px;font-weight:800}.queueZone{display:grid;gap:2px;min-width:0}.queueZone b{font-size:14px}.queueZone small{color:var(--muted);line-height:1.05}.queueDuration{display:grid;grid-template-columns:38px 72px 38px;align-items:center;gap:4px}.queueDuration>button{display:grid;place-items:center;width:38px;height:42px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:23px}.queueDuration label{display:grid;grid-template-columns:minmax(0,1fr) 25px;align-items:center;height:42px;padding:0 5px;border:1px solid var(--line);border-radius:12px;background:var(--card)}.queueDuration input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--text);font-family:inherit;font-size:16px;font-weight:800;line-height:1;text-align:right}.queueDuration label span{color:var(--muted);font-size:12px}.queueDuration label:focus-within{border-color:var(--a);box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 17%,transparent)}.manualEmpty{display:flex;align-items:center;justify-content:center;gap:9px;min-height:72px;padding:12px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);text-align:center}.manualEmpty ha-icon{--mdc-icon-size:25px}.manualStart{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;justify-content:center;gap:9px;min-height:58px;padding:8px 16px;border:0;border-radius:17px;background:linear-gradient(145deg,#079bd0,#087aec);color:#fff;text-align:left}.manualStart>ha-icon{--mdc-icon-size:30px}.manualStart span{display:grid;gap:2px}.manualStart b,.manualStart small{color:inherit}.manualStart b{font-size:16px}.manualStart:disabled{background:var(--soft);color:var(--muted)}.manualRunningActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.manualRunningActions>button,.resumeAuto.standalone{min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--soft);font-weight:750}.manualRunningActions>button{display:flex;align-items:center;justify-content:center;gap:6px}.stopManual{border-color:color-mix(in srgb,var(--danger) 42%,var(--line))!important;color:var(--danger)}.resumeAuto{color:var(--a)}.resumeAuto.standalone{width:100%}.manualRunningActions>button:disabled,.resumeAuto:disabled{opacity:.58}.manualNote{margin:0!important;color:var(--muted);line-height:1.35}.manualQueueCard button:focus-visible,.programSeasonControls>button:focus-visible{outline:3px solid color-mix(in srgb,var(--a) 30%,transparent);outline-offset:2px}
     .detailCard{min-height:430px}.detailHead{display:grid;grid-template-columns:112px minmax(0,1fr)!important}.detailHead .scene{width:112px!important;height:96px!important}.detailHead h2{font-size:25px}.detailGrid{margin-top:20px}.detailGrid small,.detailGrid b{font-size:14px}.detailGrid b{margin-top:6px}.detailStateList{display:grid;gap:8px;margin-top:18px}.detailStateList>div{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;padding:11px 13px;border-radius:15px;background:var(--soft)}.detailStateList ha-icon{--mdc-icon-size:27px;color:var(--green)}.detailStateList ha-icon.off,.detailStateList ha-icon.unknown{color:var(--muted)}.detailStateList small,.detailStateList b{display:block;font-size:13px}.detailStateList b{margin-top:2px}.detailNote{margin:16px 2px 0!important;font-size:12px!important}
     @media(max-width:520px){
       .approvedDiagram{aspect-ratio:388/365!important;margin-top:0!important}.approvedDiagram .controller{left:35%!important;width:30%!important;height:27%!important}.approvedDiagram .controllerDrop{top:24%;height:8%}.approvedDiagram .controlBus{top:32%!important}.approvedDiagram .schemaGrid{top:29%!important;bottom:2%!important}.simplifiedDiagram .schemaColumn{grid-template-rows:26px 14% minmax(0,1fr)!important}.schemaGrid .diagramZone{min-height:142px!important}.schemaGrid .scene{min-height:66px!important}.schemaGrid .zoneIndicators ha-icon{--mdc-icon-size:14px}
       .infraRow{grid-template-columns:.95fr 1.25fr;gap:6px}.infraRow .heroPressure,.infraRow .rainStatusCard{min-height:62px}.infraRow .heroPressure{grid-template-columns:28px minmax(0,1fr);padding:7px}.infraRow .heroPressure>ha-icon{--mdc-icon-size:25px}.infraRow .heroPressure b{font-size:17px}.infraRow .rainStatusCard{grid-template-columns:34px minmax(0,1fr) 20px;padding:6px}.infraRow .rainStatusPhoto{width:31px;height:39px}.infraRow .rainStatusText strong{font-size:13px}.infraRow .rainStatusText b,.infraRow .rainStatusText small{font-size:12px!important}
-      .zoneCards{padding-bottom:72px}.zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important;min-height:90px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{grid-template-columns:repeat(3,19px);gap:5px}.zoneCard .zoneIndicators ha-icon{min-width:19px;--mdc-icon-size:19px}.programRow{grid-template-columns:68px minmax(0,1fr) 18px!important;min-height:76px!important;padding:9px 11px!important}.programTimes{gap:4px}.programTimes>span,.detailStartTimes>span{min-height:27px;padding:4px 7px}
-      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualQueueCard{padding:12px 10px}.manualQueueRow{grid-template-columns:25px minmax(64px,1fr) auto;gap:6px;padding:7px 6px}.queueOrder{width:25px;height:25px}.queueDuration{grid-template-columns:34px 64px 34px;gap:3px}.queueDuration>button{width:34px;height:42px}.queueDuration label{grid-template-columns:minmax(0,1fr) 22px}.manualRuntime{padding:10px}.manualRunningActions{grid-template-columns:1fr}.seasonalEditor{padding-left:5px!important;padding-right:5px!important}
+      .zoneCards{padding-bottom:72px}.zoneCard{grid-template-columns:62px minmax(0,1fr) auto 20px!important;gap:8px!important;min-height:98px!important}.zoneCard .scene{width:62px!important;height:62px!important}.zoneCard .zoneIndicators{grid-template-columns:repeat(3,19px);gap:5px}.zoneCard .zoneIndicators ha-icon{min-width:19px;--mdc-icon-size:19px}.zoneCardTimes{font-size:14px}.programRow{grid-template-columns:68px minmax(0,1fr) 18px!important;min-height:76px!important;padding:9px 11px!important}.programTimes{gap:4px}.programTimes>span,.detailStartTimes>span{min-height:27px;padding:4px 7px}.programSeasonControls{grid-template-columns:minmax(58px,.7fr) minmax(84px,1.3fr);gap:5px}.programSeasonControls>button{padding-inline:5px}
+      .detailCard{min-height:420px;padding:18px}.detailHead{grid-template-columns:104px minmax(0,1fr)!important}.detailHead .scene{width:104px!important;height:92px!important}.headerTitle{min-width:176px;padding:6px 14px;border-radius:16px}.manualQueueCard{padding:12px 10px}.manualQueueRow{grid-template-columns:25px minmax(64px,1fr) auto;gap:6px;padding:7px 6px}.queueOrder{width:25px;height:25px}.queueDuration{grid-template-columns:34px 64px 34px;gap:3px}.queueDuration>button{width:34px;height:42px}.queueDuration label{grid-template-columns:minmax(0,1fr) 22px}.manualRuntime{padding:10px}.manualRunningActions{grid-template-columns:1fr}
     }
   `;
 };

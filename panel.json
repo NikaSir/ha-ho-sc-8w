@@ -3,12 +3,12 @@
     "id": "irrigation",
     "title": "Полив",
     "path": "/dashboard-irrigation",
-    "parent_path": "/dashboard-actions",
+    "parent_path": "/dashboard-actions/home",
     "icon": "mdi:sprinkler",
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.27",
+    "dashboard_version": "0.6.28",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -56,7 +56,7 @@
         "system_state",
         "connection_and_pressure",
         "controller_rain_and_informative_zone_schematic",
-        "program_mode_seasonal_adjustment",
+        "program_mode_seasonal_adjustment_read_only",
         "primary_actions"
       ]
     },
@@ -64,20 +64,42 @@
       "policy": "draft_explicit_apply_confirmation_write_readback",
       "frontend_raw_dp_writes": false,
       "manual_queue": {
-        "production_zones": [1, 2, 3, 4, 5, 6],
-        "per_zone_duration_minutes": [1, 120],
+        "production_zones": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "per_zone_duration_minutes": [
+          1,
+          120
+        ],
         "execution_order": "ascending_controller_order",
         "start_confirmation": true,
         "stop_confirmation": true,
         "resume_auto_confirmation": true,
-        "readback": [101, 107, 108]
+        "readback": [
+          101,
+          107,
+          108
+        ]
       },
       "seasonal_adjustment": {
-        "range_percent": [-90, 100],
+        "range_percent": [
+          -90,
+          100
+        ],
         "step_percent": 10,
+        "status_view": "read_only",
+        "editable_view": "program",
+        "apply_location": "program_summary_season_tile",
         "explicit_apply": true,
         "confirmation": true,
-        "readback": [103]
+        "readback": [
+          103
+        ]
       }
     },
     "system_visualization": {
@@ -156,8 +178,14 @@
         "persist_per_panel_client_and_view": true,
         "shell_reconciliation": "stable_dom_point_patch"
       },
+      "reference_canvas_px": [
+        1280,
+        800
+      ],
+      "desktop_max_width_px": 1280,
       "rain_sensor_connection": "direct_horizontal_midline_to_controller",
       "zone_thumbnail_content": "image_zone_number_activity_program_duration",
+      "zone_time_layout": "duration_muted_line_all_start_times_separate_bold_line",
       "zone_thumbnail_visuals": {
         "1": "lawn",
         "2": "lawn",
@@ -175,7 +203,15 @@
         "mode",
         "seasonal_adjustment"
       ]
-    }
+    },
+    "parent_route": "/dashboard-actions/home",
+    "allowed_source_roots": [
+      "/dashboard-house-v11",
+      "/dashboard-actions",
+      "/dashboard-infrastructure"
+    ],
+    "standard": "NIKAS Specialized Panel UI Standard v1.8",
+    "rule_set": "1.17"
   },
   "ownership": {
     "direct_tuya_dp_writes_from_ui": false,
@@ -185,7 +221,7 @@
     "unknown_unavailable_are_healthy": false
   },
   "standards": {
-    "specialized_panel_ui": "1.6",
+    "specialized_panel_ui": "1.8",
     "integration_panel_template": "NikaS specialized panel variant",
     "header": "ha_sidebar_menu_centered_title_refresh"
   }

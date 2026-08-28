@@ -53,6 +53,7 @@ jobs:
           bundle="custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js"
           test -f "$bundle"
           node --check "$bundle"
+          python scripts/check_nikas_ui_standard.py
           node scripts/check-panel-ui-v16.mjs
           python scripts/check-control-contract.py
           test -f custom_components/nikas_ho_sc_8w/brand/icon.png

@@ -59,6 +59,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         handle_safe_area=True,
         config={
             "version": PANEL_VERSION,
+            "rule_set": "1.17",
             "owner": "ha-ho-sc-8w",
             "preferred_view": "status",
             "parent_path": PANEL_PARENT_PATH,
@@ -85,9 +86,9 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "tabs": ["status", "zones", "program", "manual", "diagnostics"],
             },
             "information_architecture": {
-                "status": "system_state_connection_pressure_informative_zones_program_mode_seasonal_actions",
+                "status": "system_state_connection_pressure_informative_zones_program_mode_seasonal_read_only",
                 "zones": "production_zones_1_6_status_and_drilldown",
-                "program": "controller_resident_dp38_read_only_program",
+                "program": "controller_resident_dp38_read_only_program_and_confirmed_seasonal_adjustment",
                 "manual": "multi_zone_queue_per_zone_duration_confirmed_start",
                 "diagnostics": "integration_health_and_zone_8_lab",
             },
@@ -112,6 +113,9 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "seasonal_adjustment": {
                     "range_percent": [-90, 100],
                     "step_percent": 10,
+                    "status_view": "read_only",
+                    "editable_view": "program",
+                    "apply_location": "program_summary_season_tile",
                     "explicit_apply": True,
                     "readback_dps": [103],
                 },
@@ -120,6 +124,10 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "meaningful_min_px": 12,
                 "meaningful_max_px": 25,
                 "schematic_redundant_annotation_px": 10,
+            },
+            "responsive_geometry": {
+                "reference_canvas_px": [1280, 800],
+                "desktop_max_width_px": 1280,
             },
             "connection_indicator": {
                 "two_level_indicator_enabled": True,
@@ -138,6 +146,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "mobile_layout": "status_fits_work_viewport_without_scroll_at_100",
                 "status_scroll_at_100": False,
                 "zone_card_fields": ["image", "zone_number", "activity", "program_duration"],
+                "zone_time_layout": "duration_muted_line_all_start_times_separate_bold_line",
                 "control_wire_caption": False,
                 "rain_sensor_semantics": "dp102_follow_enabled_or_bypassed_current_wet_contact_not_exposed",
                 "manifold_layout": "removed_from_status_view",
