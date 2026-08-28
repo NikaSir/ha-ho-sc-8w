@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const UI_VERSION = "0.6.22"',
+  'const UI_VERSION = "0.6.23"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -68,12 +68,14 @@ for (const forbidden of [
 for (const marker of [
   "data-parent-nav",
   ".scene1,.scene2,.scene3",
-  "zone-3.webp?v=0.6.22",
-  "zone-4.webp?v=0.6.22",
+  "zone-3.webp?v=0.6.23",
+  "zone-4.webp?v=0.6.23",
   "detailStateList",
-  "mdi:umbrella-off-outline",
+  "mdi:umbrella-closed-outline",
+  "mdi:umbrella-outline",
   "simplifiedDiagram",
-  "zoneLink",
+  '"queue" : "idle"',
+  ".zoneLink.idle{background:#a8b2ba}",
   "Ручной запуск заблокирован",
   "Первый запуск",
   "min-width:190px",
@@ -82,6 +84,9 @@ for (const marker of [
   'this.startChips(z.starts, "programTimes")',
   'this.startChips(z.starts, "detailStartTimes")',
   'class="zoneCardTimes"',
+  "const singleStart = z.starts.length === 1",
+  ".zoneCards{padding-bottom:64px}",
+  ".zoneCards{padding-bottom:72px}",
   "grid-template-columns:repeat(3,minmax(15px,1fr))",
 ]) requireMarker(marker);
 
@@ -92,6 +97,7 @@ for (const forbidden of [
   "compactStarts",
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
+  "mdi:umbrella-off-outline",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
 }

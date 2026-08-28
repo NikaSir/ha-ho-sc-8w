@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.41` / panel `0.6.23`: complete the accepted phone target with supported rain-accounting icons for all three states, including an explicit muted unknown indicator for zone 6.
+- `1.0.0-b005.41` / panel `0.6.23`: make idle topology links neutral while retaining blue active and orange queued emphasis; compact single-start zone rows, keep every multi-start time explicit and add bottom scroll clearance above the fixed navigation.
+
 - `1.0.0-b005.40` / panel `0.6.22`: render every DP38 start time explicitly across Program, Zones and zone detail; replace the `first +N` abbreviation with wrapping time chips that support all six schedule slots.
 - `1.0.0-b005.40` / panel `0.6.22`: label the status summary as the first configured start rather than an unverified next event, and reserve three fixed zone-indicator columns so missing rain data remains visible.
 
