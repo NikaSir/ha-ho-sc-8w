@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v1.8 and NikaS Panel Navigation and Return Contract v1.0
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.23
-**Manifest:** integration `1.0.0-b005.41`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.28
+**Manifest:** integration `1.0.0-b005.46`
 
 ## Compliance
 
@@ -32,6 +32,13 @@
 ## Required phone check
 
 At 100% verify native scrolling on Diagnostics, no horizontal/top displacement and immediate tap/hold response. Above 100% verify only necessary axes pan and every release/resize remains clamped. Confirm Header and Bottom navigation stay fixed and match UPS.
+
+## UI 0.6.28 composition delta
+
+- The first-page seasonal-correction tile is display-only again; it opens factual entity details but contains no input or Apply action.
+- The `Сезон` tile on `Программа` owns the seasonal draft and explicit Apply action. Confirmation, integration-owned service dispatch and DP103 read-back remain mandatory.
+- Every zone card renders duration on the muted line and all configured start times on a separate bold line, matching the accepted Zone 6 typography.
+- The work shell uses the 1280×800 rule-set 1.17 reference width while preserving fixed Header/Bottom navigation, one viewport/canvas and stable DOM updates.
 
 ## UI 0.6.15 composition delta
 

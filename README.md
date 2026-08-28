@@ -10,7 +10,7 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
-The current runtime baseline is deliberately conservative and read-only for normal irrigation control. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
+The current runtime exposes only verified controller actions through integration-owned services. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
 ## Installation with HACS
 
@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Полив**  
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.13**.
+Current panel version: **0.6.28**.
 
 The panel follows **NikaS Specialized Panel UI Standard v1.8** and the mandatory navigation/return contract:
 
@@ -58,10 +58,10 @@ It also conforms to **NikaS Integration Panel Template v1.0**.
 
 The user-facing application model is domain-oriented rather than protocol-oriented:
 
-- **Состояние** — factual controller state, six-axis valve/zone schematic, program/mode/telemetry and statuses;
+- **Состояние** — factual controller state, six-axis zone schematic and display-only program, mode and seasonal values;
 - **Зоны** — production zones 1–6 with factual drill-down;
-- **Программа** — read-only decoded automatic program;
-- **Ручной** — zone and duration preparation; start stays disabled until a verified public Actions API exists;
+- **Программа** — read-only decoded automatic zone program plus the confirmed seasonal-correction editor on the `Сезон` tile;
+- **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
 - **Диагн.** — integration health and diagnostics-only Zone 8.
 
 The primary Bottom Tab Bar is:
@@ -70,7 +70,7 @@ The primary Bottom Tab Bar is:
 Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-`Программы` is not a primary application tab. Program configuration belongs to each zone; the complete read-only program snapshot belongs under Diagnostics.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Direct schedule editing is not exposed; cache and protocol details remain under Diagnostics.
 
 ### Full-field Overview v0.4.3
 
@@ -134,7 +134,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.13
+/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.28
       ↓
 <nikas-ho-sc-8w-panel>
 ```
@@ -149,10 +149,11 @@ This build uses a stable production filename plus query-string cache busting. Co
 - Zone 8 is reserved for controlled development/diagnostic tests and is not exposed as a normal user zone.
 - `unknown` and `unavailable` are unreliable states, never normal/off.
 - The frontend must never construct or send raw Tuya DP payloads.
-- Write operations may be exposed only through stable, tested integration APIs.
+- Every controller write follows local draft → explicit action → confirmation → integration-owned command → factual read-back.
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
-- Manual selection and duration controls are local UI state only; the controller is not written until the integration publishes a verified Action.
+- Manual watering writes only after confirmed queue start/stop/Auto actions and verifies DP101/107/108.
+- Seasonal correction is display-only on `Состояние`; only the `Сезон` tile on `Программа` can apply −90…100% in 10% steps, with confirmation and DP103 read-back.
 
 ## Device scope
 

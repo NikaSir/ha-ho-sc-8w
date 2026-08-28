@@ -6,6 +6,10 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.46` / panel `0.6.28`: keep seasonal adjustment display-only on the first page and move its confirmed editor to the `Сезон` tile on `Программа`; the DP103 validation, confirmation and read-back contract is unchanged.
+- `1.0.0-b005.46` / panel `0.6.28`: render duration and every start time on separate lines for all six zone cards, using the readable bold time treatment previously shown only for Zone 6.
+- `1.0.0-b005.46` / panel `0.6.28`: rebuild the panel against rule set 1.17 and the NikaS v1.8 fixed-chrome, stable-DOM and responsive 1280×800 reference geometry.
+
 - `1.0.0-b005.45` / panel `0.6.27`: add a validated manual-watering queue for production zones 1–6 with independent 1–120 minute durations, one confirmed start action, confirmed stop/Auto actions and DP101/107/108 read-back.
 - `1.0.0-b005.45` / panel `0.6.27`: make seasonal adjustment writable through an explicit `Применить` action only; validate the −90%…100% range and 10% step, require confirmation and verify DP103 after the write.
 - `1.0.0-b005.45` / panel `0.6.27`: enforce the shared write contract in both the frontend and integration: local draft → explicit action → user confirmation → integration-owned command → factual controller read-back. The frontend never constructs or sends raw Tuya payloads.

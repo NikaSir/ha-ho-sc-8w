@@ -76,11 +76,27 @@ manifest = json.loads((INTEGRATION / "manifest.json").read_text(encoding="utf-8"
 panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))
 panel_manifest = json.loads((ROOT / "panel_manifest.json").read_text(encoding="utf-8"))
 
-assert manifest["version"] == "1.0.0-b005.45"
-assert panel["panel"]["dashboard_version"] == "0.6.27"
-assert panel_manifest["panel_version"] == "0.6.27"
+assert manifest["version"] == "1.0.0-b005.46"
+assert panel["panel"]["dashboard_version"] == "0.6.28"
+assert panel_manifest["panel_version"] == "0.6.28"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27"' in frontend_source
+assert panel["panel"]["rule_set"] == "1.17"
+assert panel_manifest["rule_set"] == "1.17"
+assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28"' in frontend_source
+
+metrics_section = frontend_source.split("metrics(e) {", 1)[1].split("hero(e) {", 1)[0]
+program_section = frontend_source.split("programView(e) {", 1)[1].split("manualView(e) {", 1)[0]
+zones_override = frontend_source.split("p.zonesView =", 1)[1].split("p.zoneDetail =", 1)[0]
+
+assert "data-season-value" not in metrics_section
+assert "data-season-apply" not in metrics_section
+assert "data-season-value" in program_section
+assert "data-season-apply" in program_section
+assert 'class="programSeasonEditor' in program_section
+assert "const singleStart" not in zones_override
+assert 'class="zoneCardTimes"' in zones_override
+assert '${this.esc(z.duration)} мин</em>${startTimes}' in zones_override
+assert "max-width:1280px" in frontend_source
 
 for marker in (
     "def start_manual_queue(",

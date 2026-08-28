@@ -11,7 +11,7 @@
   "production_entrypoint": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "header_return": {
     "button_marker": "data-parent-nav",
-    "version_marker": "<small>UI v0.6.27</small>",
+    "version_marker": "<small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small>",
     "focus_marker": ".headerTitle:focus-visible",
     "pressed_marker": ".headerTitle:active",
     "explicit_precedence_marker": "safeReturnRoute(current.searchParams.get(\"return_to\")) || safeReturnRoute(current.searchParams.get(\"from\"))",

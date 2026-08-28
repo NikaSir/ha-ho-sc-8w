@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.27"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.28"',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
   "this._viewNodeCache.set(structureKey, next)",
@@ -82,6 +82,10 @@ for (const marker of [
   'this.startChips(z.starts, "programTimes")',
   'this.startChips(z.starts, "detailStartTimes")',
   'class="zoneCardTimes"',
+  'class="programSeasonEditor',
+  'class="programSeasonControls"',
+  "rule 1.17 rebuild",
+  "max-width:1280px",
   "grid-template-columns:repeat(3,minmax(15px,1fr))",
 ]) requireMarker(marker);
 
@@ -92,6 +96,7 @@ for (const forbidden of [
   "compactStarts",
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
+  "const singleStart =",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
 }
