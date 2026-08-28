@@ -76,13 +76,19 @@ manifest = json.loads((INTEGRATION / "manifest.json").read_text(encoding="utf-8"
 panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))
 panel_manifest = json.loads((ROOT / "panel_manifest.json").read_text(encoding="utf-8"))
 
-assert manifest["version"] == "1.0.0-b005.47"
-assert panel["panel"]["dashboard_version"] == "0.6.29"
-assert panel_manifest["panel_version"] == "0.6.29"
+assert manifest["version"] == "1.0.0-b005.48"
+assert panel["panel"]["title"] == "Автополив"
+assert panel["panel"]["dashboard_version"] == "0.6.30"
+assert panel_manifest["panel_version"] == "0.6.30"
 assert panel_manifest["integration_version"] == manifest["version"]
+assert panel["panel"]["system_visualization"]["content_zoom"]["viewport_locked_host"] is True
+assert panel["panel"]["system_visualization"]["content_zoom"]["outer_document_scroll_owner"] is False
+assert panel["panel"]["system_visualization"]["content_zoom"]["scroll_boundary_guard"] == "prevent_default_at_top_and_bottom"
+assert panel_manifest["fixed_chrome"]["viewport_locked_host"] is True
+assert panel_manifest["fixed_chrome"]["outer_scroll_owner"] is False
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
-assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.29"' in frontend_source
+assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.30"' in frontend_source
 
 metrics_section = frontend_source.split("metrics(e) {", 1)[1].split("hero(e) {", 1)[0]
 program_section = frontend_source.split("programView(e) {", 1)[1].split("manualView(e) {", 1)[0]
