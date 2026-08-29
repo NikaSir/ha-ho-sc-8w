@@ -1,0 +1,47 @@
+name: Publish HACS release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - custom_components/nikas_ho_sc_8w/manifest.json
+      - .github/workflows/publish-release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read integration version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('custom_components/nikas_ho_sc_8w/manifest.json').read_text())
+          print(manifest['version'])
+          PY
+          )
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release for HACS
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists"
+          else
+            gh release create "$VERSION" \
+              --target "$GITHUB_SHA" \
+              --title "$VERSION" \
+              --generate-notes
+          fi
