@@ -32,7 +32,6 @@ def load_models():
 
 models = load_models()
 
-# DP45 native manual command: 34 bytes, command=1, target=specific, second bank zero.
 payload = models.encode_dp45_start_manual({1: 1, 4: 10, 6: 120})
 assert len(payload) == 34
 assert payload[:2] == b"\x01\x01"
@@ -42,7 +41,6 @@ for zone in range(1, 9):
     value = struct.unpack_from(">H", payload, 2 + (zone - 1) * 2)[0]
     assert value == expected.get(zone, 0)
 
-# Stop All is the same DP45 command with all durations zero.
 stop_payload = models.encode_dp45_start_manual({zone: 0 for zone in range(1, 9)})
 assert len(stop_payload) == 34
 assert stop_payload[:2] == b"\x01\x01"
@@ -57,8 +55,7 @@ manual_source = (INTEGRATION / "manual_api.py").read_text(encoding="utf-8")
 frontend_source = (INTEGRATION / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
 wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0632.mjs").read_text(encoding="utf-8")
 
-# Release identity must be visible and cache-busted end to end.
-assert manifest["version"] == "1.0.0-b005.50"
+assert manifest["version"] == "1.0.0-b005.51"
 assert panel["panel"]["dashboard_version"] == "0.6.32"
 assert panel_manifest["panel_version"] == "0.6.32"
 assert panel_manifest["integration_version"] == manifest["version"]
@@ -69,7 +66,6 @@ assert 'irrigation-panel.js?v=0.6.32' in wrapper_source
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
 
-# Runtime must instantiate the native DP45 manual-control subclass.
 assert "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI" in setup_source
 for marker in (
     "class NativeManualHOSC8WAPI",
@@ -84,14 +80,12 @@ for marker in (
 ):
     assert marker in manual_source, f"Missing native manual-control marker: {marker}"
 
-# Manual start/stop must never drive DP101 Auto/OFF/Manual.
 assert "DP_OPERATION_MODE" not in manual_source
 assert 'cloud_code="operation_mode"' not in manual_source
 assert '"Auto"' not in manual_source
 assert '"Manual"' not in manual_source
 assert '"OFF"' not in manual_source
 
-# Metadata documents the same control contract.
 manual_meta = panel["panel"]["control_actions"]["manual_queue"]
 assert manual_meta["write_dp"] == 45
 assert manual_meta["readback"] == [107, 108]
@@ -102,7 +96,6 @@ assert manifest_manual_meta["write_dp"] == 45
 assert manifest_manual_meta["readback_dps"] == [107, 108]
 assert manifest_manual_meta["operation_mode_dp101_write"] is False
 
-# UI remains service-only: no raw Tuya writes from the frontend.
 for marker in (
     'callService("nikas_ho_sc_8w", "start_manual_queue"',
     'callService("nikas_ho_sc_8w", "stop_manual"',
