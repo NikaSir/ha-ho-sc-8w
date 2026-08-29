@@ -393,23 +393,27 @@ class HOSC8WAPI:
         if not self._refresh_command_state():
             raise RuntimeError("Cannot read a fresh controller state before the write")
 
+    def _return_to_auto_after_manual(self, timeout_seconds: float = 4.0) -> bool:
+        """Stop a manual cycle by returning DP101 to Auto; never power the controller off."""
+        self._write_command_value(
+            DP_OPERATION_MODE,
+            "Auto",
+            cloud_code="operation_mode",
+        )
+        time.sleep(0.5)
+        return self._wait_for_readback(
+            lambda: str(self.device.operation_mode).lower() == "auto"
+            and self.device.active_zone == 0
+            and self.device.queued_zone == 0,
+            timeout_seconds=timeout_seconds,
+        )
+
     def _fail_safe_stop_after_unconfirmed_start(self) -> bool:
-        """Best-effort OFF after a start whose active/queued state is uncertain."""
+        """Best-effort recovery to Auto after an unconfirmed manual start."""
         try:
-            self._write_command_value(
-                DP_OPERATION_MODE,
-                "OFF",
-                cloud_code="operation_mode",
-            )
-            time.sleep(0.5)
-            return self._wait_for_readback(
-                lambda: str(self.device.operation_mode).upper() == "OFF"
-                and self.device.active_zone == 0
-                and self.device.queued_zone == 0,
-                timeout_seconds=3.0,
-            )
+            return self._return_to_auto_after_manual(timeout_seconds=3.0)
         except Exception as exc:  # noqa: BLE001
-            _LOGGER.error("HO-SC-8W fail-safe OFF command failed: %s", exc)
+            _LOGGER.error("HO-SC-8W fail-safe Auto recovery failed: %s", exc)
             return False
 
     def start_manual_queue(self, durations: dict[int, int]) -> dict[str, Any]:
@@ -440,8 +444,6 @@ class HOSC8WAPI:
                         "Controller is already in Manual; stop it or return to Auto first"
                     )
 
-                # A queue is sequential by definition.  Do not leave the device
-                # in the parallel/together mode before issuing its one-shot map.
                 if str(self.device.irrigation_mode).lower() != "order":
                     self._write_command_value(
                         DP_IRRIGATION_MODE,
@@ -455,8 +457,6 @@ class HOSC8WAPI:
                 raw_payload = encode_dp45_start_manual(all_durations, NUM_ZONES)
                 local_payload = base64.b64encode(raw_payload).decode("ascii")
                 if self._using_cloud:
-                    # Tuya Cloud accepts the two-command sequence used by the
-                    # product API: DP45 payload first, then Manual mode.
                     self._write_command_value(
                         DP_IRRIGATION_TIME_ALL,
                         local_payload,
@@ -471,9 +471,6 @@ class HOSC8WAPI:
                         cloud_code="operation_mode",
                     )
                 else:
-                    # Physical IIC-800 controllers require the opposite local
-                    # order: enter Manual and confirm DP101 before sending the
-                    # Base64-encoded DP45 one-shot duration map.
                     self._write_command_value(
                         DP_OPERATION_MODE,
                         "Manual",
@@ -510,14 +507,14 @@ class HOSC8WAPI:
                         f"active={self.device.active_zone}, "
                         f"queued={self.device.queued_zone}"
                     )
-                    stopped = self._fail_safe_stop_after_unconfirmed_start()
+                    recovered = self._fail_safe_stop_after_unconfirmed_start()
                     raise RuntimeError(
                         "Manual queue was not confirmed by DP101/107/108 "
                         f"({observed}); "
                         + (
-                            "fail-safe OFF was confirmed"
-                            if stopped
-                            else "fail-safe OFF could not be confirmed"
+                            "fail-safe return to Auto was confirmed"
+                            if recovered
+                            else "fail-safe return to Auto could not be confirmed"
                         )
                     )
 
@@ -535,38 +532,30 @@ class HOSC8WAPI:
             self._command_lock.release()
 
     def stop_manual(self) -> dict[str, Any]:
-        """Stop manual watering through DP101 and verify that all zones are idle."""
+        """Stop manual watering by returning to Auto without powering the controller off."""
         if not self._command_lock.acquire(blocking=False):
             raise RuntimeError("Another controller write is still in progress")
         try:
             with self._io_lock:
                 fresh = self._refresh_command_state()
                 if fresh and (
-                    str(self.device.operation_mode).upper() == "OFF"
+                    str(self.device.operation_mode).lower() == "auto"
                     and self.device.active_zone == 0
                     and self.device.queued_zone == 0
                 ):
                     return {
                         "verified": True,
                         "changed": False,
-                        "operation_mode": "OFF",
+                        "operation_mode": "Auto",
                     }
-                self._write_command_value(
-                    DP_OPERATION_MODE,
-                    "OFF",
-                    cloud_code="operation_mode",
-                )
-                time.sleep(1.0)
-                if not self._wait_for_readback(
-                    lambda: str(self.device.operation_mode).upper() == "OFF"
-                    and self.device.active_zone == 0
-                    and self.device.queued_zone == 0
-                ):
-                    raise RuntimeError("DP101/107/108 did not confirm watering stop")
+                if not self._return_to_auto_after_manual(timeout_seconds=8.0):
+                    raise RuntimeError(
+                        "DP101/107/108 did not confirm watering stop and return to Auto"
+                    )
                 return {
                     "verified": True,
                     "changed": True,
-                    "operation_mode": "OFF",
+                    "operation_mode": "Auto",
                 }
         finally:
             self._command_lock.release()
