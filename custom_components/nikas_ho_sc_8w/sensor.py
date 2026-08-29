@@ -175,15 +175,39 @@ class HOSC8WActiveZones(HOSC8WEntity, SensorEntity):
         self._attr_unique_id = f"{DOMAIN}_{self._device_id}_active_zones"
         self._attr_name = "Active zones"
 
+    def _effective_bitmask(self) -> tuple[int, str]:
+        """Prefer factual DP107, with DP45 remaining time as a verified fallback."""
+        device = self.coordinator.api.device
+        raw_bitmask = int(device.active_zone or 0)
+        if raw_bitmask:
+            return raw_bitmask, "dp107"
+
+        inferred = 0
+        for zone in range(1, NUM_ZONES + 1):
+            if int(device.zone_countdown.get(zone, 0) or 0) > 0:
+                inferred |= 1 << (zone - 1)
+        return inferred, "dp45_remaining" if inferred else "idle"
+
     @property
     def native_value(self) -> str:
-        bitmask = self.coordinator.api.device.active_zone
+        bitmask, _source = self._effective_bitmask()
         zones = [str(z) for z in range(1, NUM_ZONES + 1) if bitmask & (1 << (z - 1))]
         return ", ".join(zones) if zones else "None"
 
     @property
     def extra_state_attributes(self) -> dict:
-        return {"bitmask": self.coordinator.api.device.active_zone}
+        device = self.coordinator.api.device
+        bitmask, source = self._effective_bitmask()
+        return {
+            "bitmask": bitmask,
+            "source": source,
+            "dp107_bitmask": int(device.active_zone or 0),
+            "dp45_remaining_minutes": {
+                str(zone): int(device.zone_countdown.get(zone, 0) or 0)
+                for zone in range(1, NUM_ZONES + 1)
+            },
+            "operation_mode": device.operation_mode,
+        }
 
 
 class HOSC8WQueuedZones(HOSC8WEntity, SensorEntity):
