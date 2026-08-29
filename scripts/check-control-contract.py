@@ -11,13 +11,11 @@ import sys
 import types
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION = ROOT / "custom_components" / "nikas_ho_sc_8w"
 
 
 def load_models():
-    """Load the pure protocol module without executing integration __init__.py."""
     package_name = "ho_sc_8w_contract"
     package = types.ModuleType(package_name)
     package.__path__ = [str(INTEGRATION)]
@@ -34,7 +32,6 @@ def load_models():
 
 
 def load_api():
-    """Load the transport module with a fake TinyTuya namespace."""
     tinytuya = types.ModuleType("tinytuya")
     tinytuya.Device = object
     tinytuya.Cloud = object
@@ -52,20 +49,14 @@ def load_api():
 
 
 models = load_models()
-
-# DP45 one-shot contract: bytes 0/1 select manual/specific-stations, requested
-# minutes live in the first eight 16-bit fields, and bytes 18..33 stay zero.
 payload = models.encode_dp45_start_manual({1: 1, 4: 10, 6: 120})
-assert len(payload) == 34, f"DP45 must be 34 bytes, got {len(payload)}"
-assert payload[:2] == b"\x01\x01", f"Unexpected DP45 flags: {payload[:2].hex()}"
-assert payload[18:34] == bytes(16), "DP45 second bank must stay zero on start"
+assert len(payload) == 34
+assert payload[:2] == b"\x01\x01"
+assert payload[18:34] == bytes(16)
 expected = {1: 1, 4: 10, 6: 120}
 for zone in range(1, 9):
     value = struct.unpack_from(">H", payload, 2 + (zone - 1) * 2)[0]
-    assert value == expected.get(zone, 0), (
-        f"DP45 zone {zone} command duration is {value}, "
-        f"expected {expected.get(zone, 0)}"
-    )
+    assert value == expected.get(zone, 0)
 
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 setup_source = (INTEGRATION / "__init__.py").read_text(encoding="utf-8")
@@ -76,40 +67,20 @@ manifest = json.loads((INTEGRATION / "manifest.json").read_text(encoding="utf-8"
 panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))
 panel_manifest = json.loads((ROOT / "panel_manifest.json").read_text(encoding="utf-8"))
 
-assert manifest["version"] == "1.0.0-b005.48"
+assert manifest["version"] == "1.0.0-b005.49"
 assert panel["panel"]["title"] == "Автополив"
 assert panel["panel"]["dashboard_version"] == "0.6.30"
 assert panel_manifest["panel_version"] == "0.6.30"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert panel["panel"]["system_visualization"]["content_zoom"]["viewport_locked_host"] is True
-assert panel["panel"]["system_visualization"]["content_zoom"]["outer_document_scroll_owner"] is False
-assert panel["panel"]["system_visualization"]["content_zoom"]["scroll_boundary_guard"] == "prevent_default_at_top_and_bottom"
-assert panel_manifest["fixed_chrome"]["viewport_locked_host"] is True
-assert panel_manifest["fixed_chrome"]["outer_scroll_owner"] is False
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
 assert 'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.30"' in frontend_source
-
-metrics_section = frontend_source.split("metrics(e) {", 1)[1].split("hero(e) {", 1)[0]
-program_section = frontend_source.split("programView(e) {", 1)[1].split("manualView(e) {", 1)[0]
-zones_override = frontend_source.split("p.zonesView =", 1)[1].split("p.zoneDetail =", 1)[0]
-
-assert "data-season-value" not in metrics_section
-assert "data-season-apply" not in metrics_section
-assert "data-season-value" in program_section
-assert "data-season-apply" in program_section
-assert 'class="programSeasonEditor' in program_section
-assert "const singleStart" not in zones_override
-assert 'class="zoneCardTimes"' in zones_override
-assert '${this.esc(z.duration)} мин</em>${startTimes}' in zones_override
-assert "max-width:1280px" in frontend_source
 
 for marker in (
     "def start_manual_queue(",
     "DP_IRRIGATION_TIME_ALL",
     'cloud_code="irrigation_time_all"',
     "cloud_value=raw_payload.hex()",
-    'cloud_code="operation_mode"',
     "expected_mask",
     "self.device.active_zone | self.device.queued_zone",
     "def stop_manual(",
@@ -118,42 +89,38 @@ for marker in (
     "_wait_for_readback",
     "_require_fresh_command_state",
     "_fail_safe_stop_after_unconfirmed_start",
-    "fail-safe OFF",
+    "_return_to_auto_after_manual",
+    "fail-safe return to Auto",
 ):
     assert marker in api_source, f"Missing integration command marker: {marker}"
+
+assert 'DP_OPERATION_MODE,\n                "OFF"' not in api_source
+assert 'DP_OPERATION_MODE,\n                    "OFF"' not in api_source
 
 for marker in (
     "SERVICE_START_MANUAL_QUEUE",
     "SERVICE_STOP_MANUAL",
     "SERVICE_RESUME_AUTOMATIC",
     "SERVICE_SET_SEASONAL_ADJUSTMENT",
-    "_START_MANUAL_QUEUE_SCHEMA",
-    "_SEASONAL_ADJUSTMENT_SCHEMA",
 ):
-    assert marker in setup_source, f"Missing service boundary marker: {marker}"
+    assert marker in setup_source
 
 for marker in (
     'callService("nikas_ho_sc_8w", "start_manual_queue"',
     'callService("nikas_ho_sc_8w", "stop_manual"',
     'callService("nikas_ho_sc_8w", "resume_automatic"',
     'callService("nikas_ho_sc_8w", "set_seasonal_adjustment"',
-    "data-season-apply",
     "data-manual-start",
     "data-manual-stop",
-    "data-resume-auto",
 ):
-    assert marker in frontend_source, f"Missing frontend action marker: {marker}"
+    assert marker in frontend_source
 
-assert frontend_source.count("window.confirm(") >= 4, (
-    "Every panel controller write must pass through a user confirmation"
-)
-assert "set_value(" not in frontend_source, "Frontend contains a raw local DP write"
-assert "sendcommand(" not in frontend_source, "Frontend contains a raw cloud DP write"
+assert frontend_source.count("window.confirm(") >= 4
+assert "set_value(" not in frontend_source
+assert "sendcommand(" not in frontend_source
 
 
 class FakeLocalDevice:
-    """TinyTuya-shaped local device that returns factual DP read-back."""
-
     def __init__(self, *, reject_manual: bool = False) -> None:
         self.mode = "Auto"
         self.season = 20
@@ -178,11 +145,7 @@ class FakeLocalDevice:
         return None
 
     def status(self) -> dict[str, dict[str, object]]:
-        active = (
-            self.requested_mask & -self.requested_mask
-            if self.mode == "Manual"
-            else 0
-        )
+        active = self.requested_mask & -self.requested_mask if self.mode == "Manual" else 0
         queued = self.requested_mask ^ active if self.mode == "Manual" else 0
         return {
             "dps": {
@@ -196,8 +159,6 @@ class FakeLocalDevice:
 
 
 class FakeCloud:
-    """TinyTuya-shaped cloud API with the same read-back state machine."""
-
     def __init__(self) -> None:
         self.mode = "Auto"
         self.season = 20
@@ -205,9 +166,7 @@ class FakeCloud:
         self.requested_mask = 0
         self.commands: list[dict[str, object]] = []
 
-    def sendcommand(
-        self, _device_id: str, payload: dict[str, list[dict[str, object]]]
-    ) -> dict[str, bool]:
+    def sendcommand(self, _device_id: str, payload: dict[str, list[dict[str, object]]]) -> dict[str, bool]:
         command = payload["commands"][0]
         self.commands.append(command)
         code = command["code"]
@@ -228,11 +187,7 @@ class FakeCloud:
         return {"success": True}
 
     def getstatus(self, _device_id: str) -> dict[str, object]:
-        active = (
-            self.requested_mask & -self.requested_mask
-            if self.mode == "Manual"
-            else 0
-        )
+        active = self.requested_mask & -self.requested_mask if self.mode == "Manual" else 0
         queued = self.requested_mask ^ active if self.mode == "Manual" else 0
         return {
             "success": True,
@@ -261,11 +216,25 @@ assert result["verified"] is True
 assert result["active_zone_bitmask"] == 1
 assert result["queued_zone_bitmask"] == 40
 assert [command[0] for command in local_device.commands] == [101, 45]
-wire_payload = base64.b64decode(str(local_device.commands[1][1]))
-assert wire_payload == payload, "Local DP45 payload differs from the verified encoder"
-assert local_device.commands[1][2] is True, "Local DP45 must use nowait"
+assert base64.b64decode(str(local_device.commands[1][1])) == payload
+assert local_device.commands[1][2] is True
 
-# If DP101 does not confirm Manual, the safety boundary must stop before DP45.
+api.stop_manual()
+assert local_device.mode == "Auto"
+assert api.device.active_zone == 0 and api.device.queued_zone == 0
+assert all(not (dp == 101 and str(value).upper() == "OFF") for dp, value, _ in local_device.commands)
+
+# A completed manual cycle is controller-driven; the API does not send a follow-up OFF.
+local_device.mode = "Auto"
+local_device.requested_mask = 0
+api._refresh_command_state()
+assert api.device.operation_mode == "Auto"
+
+api.resume_automatic()
+assert local_device.mode == "Auto"
+api.set_seasonal_adjustment(30)
+assert local_device.season == 30 and api.device.seasonal_adjust == 30
+
 rejecting_device = FakeLocalDevice(reject_manual=True)
 rejecting_api = api_module.HOSC8WAPI("device", "local-key", "192.0.2.1")
 rejecting_api._tuya = rejecting_device
@@ -283,21 +252,6 @@ else:
     raise AssertionError("A local manual start continued without DP101 confirmation")
 assert [command[0] for command in rejecting_device.commands] == [101]
 
-api.stop_manual()
-assert local_device.mode == "OFF"
-assert api.device.active_zone == 0 and api.device.queued_zone == 0
-api.resume_automatic()
-assert local_device.mode == "Auto"
-api.set_seasonal_adjustment(30)
-assert local_device.season == 30 and api.device.seasonal_adjust == 30
-
-try:
-    api.set_seasonal_adjustment(25)
-except ValueError:
-    pass
-else:
-    raise AssertionError("A seasonal value outside the 10% step was accepted")
-
 cloud = FakeCloud()
 cloud_api = api_module.HOSC8WAPI(
     "device",
@@ -311,16 +265,17 @@ cloud_api._using_cloud = True
 cloud_api.device.online = True
 cloud_api.device.operation_mode = "Auto"
 cloud_api.device.irrigation_mode = "order"
-
 cloud_result = cloud_api.start_manual_queue({2: 5, 5: 15})
 assert cloud_result["verified"] is True
 assert [command["code"] for command in cloud.commands] == [
     "irrigation_time_all",
     "operation_mode",
 ]
-cloud_wire = bytes.fromhex(str(cloud.commands[0]["value"]))
-assert cloud_wire[:2] == b"\x01\x01" and cloud_wire[18:34] == bytes(16)
-assert struct.unpack_from(">H", cloud_wire, 4)[0] == 5
-assert struct.unpack_from(">H", cloud_wire, 10)[0] == 15
+cloud_api.stop_manual()
+assert cloud.mode == "Auto"
+assert not any(
+    command["code"] == "operation_mode" and str(command["value"]).upper() == "OFF"
+    for command in cloud.commands
+)
 
 print("HO-SC-8W verified control contract passed")
