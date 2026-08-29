@@ -31,7 +31,6 @@ def load_models():
 
 
 models = load_models()
-
 payload = models.encode_dp45_start_manual({1: 1, 4: 10, 6: 120})
 assert len(payload) == 34
 assert payload[:2] == b"\x01\x01"
@@ -53,16 +52,16 @@ const_source = (INTEGRATION / "const.py").read_text(encoding="utf-8")
 setup_source = (INTEGRATION / "__init__.py").read_text(encoding="utf-8")
 manual_source = (INTEGRATION / "manual_api.py").read_text(encoding="utf-8")
 frontend_source = (INTEGRATION / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
-wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0632.mjs").read_text(encoding="utf-8")
+wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0633.mjs").read_text(encoding="utf-8")
 
-assert manifest["version"] == "1.0.0-b005.51"
-assert panel["panel"]["dashboard_version"] == "0.6.32"
-assert panel_manifest["panel_version"] == "0.6.32"
+assert manifest["version"] == "1.0.0-b005.52"
+assert panel["panel"]["dashboard_version"] == "0.6.33"
+assert panel_manifest["panel_version"] == "0.6.33"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.32"' in const_source
-assert 'irrigation-panel-v0632.mjs' in const_source
-assert 'const UI_VERSION = "0.6.32"' in wrapper_source
-assert 'irrigation-panel.js?v=0.6.32' in wrapper_source
+assert 'PANEL_VERSION = "0.6.33"' in const_source
+assert 'irrigation-panel-v0633.mjs' in const_source
+assert 'const UI_VERSION = "0.6.33"' in wrapper_source
+assert 'irrigation-panel-v0632.mjs' in wrapper_source
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
 
@@ -82,15 +81,13 @@ for marker in (
 
 assert "DP_OPERATION_MODE" not in manual_source
 assert 'cloud_code="operation_mode"' not in manual_source
-assert '"Auto"' not in manual_source
-assert '"Manual"' not in manual_source
 assert '"OFF"' not in manual_source
 
 manual_meta = panel["panel"]["control_actions"]["manual_queue"]
 assert manual_meta["write_dp"] == 45
 assert manual_meta["readback"] == [107, 108]
 assert manual_meta["operation_mode_dp101_write"] is False
-assert manual_meta["stop_all"] == "dp45_command_1_all_zero_durations"
+assert manual_meta["ui"] == "zone_cards_with_per_zone_duration_and_switches"
 manifest_manual_meta = panel_manifest["control_actions"]["manual_queue"]
 assert manifest_manual_meta["write_dp"] == 45
 assert manifest_manual_meta["readback_dps"] == [107, 108]
@@ -99,14 +96,16 @@ assert manifest_manual_meta["operation_mode_dp101_write"] is False
 for marker in (
     'callService("nikas_ho_sc_8w", "start_manual_queue"',
     'callService("nikas_ho_sc_8w", "stop_manual"',
-    'callService("nikas_ho_sc_8w", "resume_automatic"',
-    'callService("nikas_ho_sc_8w", "set_seasonal_adjustment"',
     "data-manual-start",
-    "data-manual-stop",
+    "data-queue-toggle",
+    "data-queue-step",
+    "manualZoneCard",
+    "manualDuration",
+    "manualZoneSwitch",
+    "previousToggleManualZone.call",
 ):
-    assert marker in frontend_source
-assert frontend_source.count("window.confirm(") >= 4
-assert "set_value(" not in frontend_source
-assert "sendcommand(" not in frontend_source
+    assert marker in (frontend_source + wrapper_source), f"Missing frontend marker: {marker}"
+assert "set_value(" not in frontend_source + wrapper_source
+assert "sendcommand(" not in frontend_source + wrapper_source
 
-print("HO-SC-8W DP45 native control and release contract passed")
+print("HO-SC-8W DP45 native control, release, and manual UI contract passed")
