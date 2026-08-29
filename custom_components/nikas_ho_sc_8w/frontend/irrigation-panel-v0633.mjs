@@ -6,6 +6,7 @@ if (!Panel) throw new Error("HO-SC-8W base panel is not registered");
 const p = Panel.prototype;
 const previousStyles = p.styles;
 const previousUpdateNavigationState = p._updateNavigationState;
+const previousToggleManualZone = p.toggleManualZone;
 
 p.header = function headerV0633() {
   return `<header class="appHeader">
@@ -15,32 +16,44 @@ p.header = function headerV0633() {
   </header>`;
 };
 
+p.toggleManualZone = function toggleManualZoneV0633(zone) {
+  const runtime = this.activeRuntime(this.entities());
+  if (runtime?.zone === Number(zone)) {
+    this.stopManual();
+    return;
+  }
+  previousToggleManualZone.call(this, Number(zone));
+};
+
 p.manualView = function manualViewV0633(e) {
   const runtime = this.activeRuntime(e);
   const selected = new Set(this._manualQueue || []);
+  const watering = Boolean(runtime);
   const cards = Array.from({ length: 6 }, (_, index) => index + 1).map((zone) => {
     const z = this.zoneRuntime(e, zone);
-    const enabled = selected.has(zone);
     const active = runtime?.zone === zone;
+    const enabled = selected.has(zone) || active;
     const duration = Number(this._manualDurations?.[zone] || z.duration || 10);
     const scene = `scene scene${zone}`;
+    const timeDisabled = !enabled || watering;
+    const switchDisabled = watering && !active;
     return `<article class="manualZoneCard ${enabled ? "selected" : ""} ${active ? "running" : ""}" data-manual-zone-card="${zone}">
       <span class="${scene}" aria-hidden="true"></span>
       <span class="manualZoneIdentity"><small>ЗОНА ${zone}</small><b>${active ? "Полив" : "Готова"}</b></span>
       <span class="manualDuration" aria-label="Длительность зоны ${zone}">
-        <button type="button" class="manualTimeButton" data-manual-minus="${zone}" ${enabled ? "" : "disabled"} aria-label="Уменьшить время зоны ${zone}">−</button>
+        <button type="button" class="manualTimeButton" data-queue-step="-1" data-queue-id="${zone}" ${timeDisabled ? "disabled" : ""} aria-label="Уменьшить время зоны ${zone}">−</button>
         <strong>${duration}<small>мин</small></strong>
-        <button type="button" class="manualTimeButton" data-manual-plus="${zone}" ${enabled ? "" : "disabled"} aria-label="Увеличить время зоны ${zone}">+</button>
+        <button type="button" class="manualTimeButton" data-queue-step="1" data-queue-id="${zone}" ${timeDisabled ? "disabled" : ""} aria-label="Увеличить время зоны ${zone}">+</button>
       </span>
-      <button type="button" class="manualZoneSwitch ${enabled ? "on" : ""}" data-manual-toggle="${zone}" role="switch" aria-checked="${enabled}" aria-label="${enabled ? "Исключить" : "Включить"} зону ${zone}"><span></span></button>
+      <button type="button" class="manualZoneSwitch ${enabled ? "on" : ""}" data-queue-toggle="${zone}" role="switch" aria-checked="${enabled}" ${switchDisabled ? "disabled" : ""} aria-label="${active ? "Остановить" : enabled ? "Исключить" : "Включить"} зону ${zone}"><span></span></button>
     </article>`;
   }).join("");
   const total = [...selected].reduce((sum, zone) => sum + Number(this._manualDurations?.[zone] || 0), 0);
-  const startDisabled = selected.size === 0 || this._manualBusy;
+  const startDisabled = selected.size === 0 || this._manualBusy || watering || !this.commandAvailable("start_manual_queue");
   return `<section class="manualApprovedScreen">
     <div class="manualApprovedIntro">
       <div><small>РУЧНОЙ РЕЖИМ</small><h1>Управление зонами</h1><p>Включите нужные зоны и задайте длительность.<br>Контроллер выполнит их по порядку сверху вниз.</p></div>
-      <button type="button" class="manualStartTop" data-manual-start ${startDisabled ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Старт</span><small>${total ? `${total} мин` : ""}</small></button>
+      <button type="button" class="manualStartTop" data-manual-start ${startDisabled ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${watering ? "Полив" : "Старт"}</span><small>${watering ? `зона ${runtime.zone}` : total ? `${total} мин` : ""}</small></button>
     </div>
     <div class="manualZoneCards">${cards}</div>
   </section>`;
@@ -70,7 +83,7 @@ p.styles = function stylesV0633() {
     .manualDuration{height:100%;max-height:70px;min-height:54px;display:grid;grid-template-columns:minmax(50px,1fr) minmax(66px,1.15fr) minmax(50px,1fr);align-items:stretch;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
     .manualDuration strong{display:flex;align-items:center;justify-content:center;gap:4px;font-size:30px;line-height:1;font-weight:800;white-space:nowrap}.manualDuration strong small{font-size:13px;color:var(--muted);font-weight:700;text-transform:uppercase}
     .manualTimeButton{border:0;background:#fff;font:inherit;font-size:32px;font-weight:500;line-height:1;color:var(--text);touch-action:manipulation}.manualTimeButton:first-child{border-right:1px solid var(--line)}.manualTimeButton:last-child{border-left:1px solid var(--line)}.manualTimeButton:disabled{color:#aeb6bd;background:#f6f8f9}
-    .manualZoneSwitch{justify-self:end;width:58px;height:34px;border:0;border-radius:999px;background:#dfe4e8;padding:3px;transition:background .16s ease;touch-action:manipulation}.manualZoneSwitch span{display:block;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 6px #0002;transform:translateX(0);transition:transform .16s ease}.manualZoneSwitch.on{background:var(--a)}.manualZoneSwitch.on span{transform:translateX(24px)}
+    .manualZoneSwitch{justify-self:end;width:58px;height:34px;border:0;border-radius:999px;background:#dfe4e8;padding:3px;transition:background .16s ease;touch-action:manipulation}.manualZoneSwitch span{display:block;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 6px #0002;transform:translateX(0);transition:transform .16s ease}.manualZoneSwitch.on{background:var(--a)}.manualZoneSwitch.on span{transform:translateX(24px)}.manualZoneSwitch:disabled{opacity:.45}
     .workViewport.isNative.manualFitsViewport{overflow-y:hidden}.workViewport.isNative.manualFitsViewport .workCanvas{height:100%}.workViewport.isNative.manualFitsViewport .workCanvas>.content{height:100%;min-height:100%;padding-bottom:4px}
     @media(max-width:520px){
       .manualApprovedScreen{gap:6px}.manualApprovedIntro{gap:7px;padding:1px 3px 3px}.manualApprovedIntro h1{font-size:21px}.manualApprovedIntro p{font-size:12.5px;margin-top:4px}.manualApprovedIntro>div>small{font-size:11px;margin-bottom:3px}
