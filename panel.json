@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.30",
+    "dashboard_version": "0.6.32",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -28,17 +28,11 @@
       "bottom_tab_label_weight": 700,
       "bottom_tab_active_primary_percent": 11,
       "browser_history_back": false,
-      "views": [
-        "status",
-        "zones",
-        "program",
-        "manual",
-        "diagnostics"
-      ]
+      "views": ["status", "zones", "program", "manual", "diagnostics"]
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel.js",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0632.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -64,54 +58,31 @@
       "policy": "draft_explicit_apply_confirmation_write_readback",
       "frontend_raw_dp_writes": false,
       "manual_queue": {
-        "production_zones": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ],
-        "per_zone_duration_minutes": [
-          1,
-          120
-        ],
-        "execution_order": "ascending_controller_order",
+        "production_zones": [1, 2, 3, 4, 5, 6],
+        "per_zone_duration_minutes": [1, 120],
+        "execution_order": "controller_native_dp45_order",
         "start_confirmation": true,
         "stop_confirmation": true,
         "resume_auto_confirmation": true,
-        "readback": [
-          101,
-          107,
-          108
-        ]
+        "write_dp": 45,
+        "readback": [107, 108],
+        "operation_mode_dp101_write": false,
+        "stop_all": "dp45_command_1_all_zero_durations"
       },
       "seasonal_adjustment": {
-        "range_percent": [
-          -90,
-          100
-        ],
+        "range_percent": [-90, 100],
         "step_percent": 10,
         "status_view": "read_only",
         "editable_view": "program",
         "apply_location": "program_summary_season_tile",
         "explicit_apply": true,
         "confirmation": true,
-        "readback": [
-          103
-        ]
+        "readback": [103]
       }
     },
     "system_visualization": {
       "controller": "INKBIRD / HiOazo HO-SC-8W with LCD and Wi-Fi",
-      "production_zones": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6
-      ],
+      "production_zones": [1, 2, 3, 4, 5, 6],
       "zone_8": "diagnostics_only",
       "hydraulic_path": "not_rendered_on_status_view",
       "mainline_connection_side": "left_direct_to_manifold",
@@ -135,18 +106,8 @@
       "connection_indicator": {
         "two_level_indicator_enabled": true,
         "policy": "explicit_product_request",
-        "transport": [
-          "Локально",
-          "Облако",
-          "Резерв",
-          "Нет связи",
-          "Нет данных"
-        ],
-        "freshness": [
-          "Данные актуальны",
-          "Данные устарели",
-          "Нет данных"
-        ],
+        "transport": ["Локально", "Облако", "Резерв", "Нет связи", "Нет данных"],
+        "freshness": ["Данные актуальны", "Данные устарели", "Нет данных"],
         "main_font_px": 16,
         "freshness_font_px": 13,
         "stable_dom": true
@@ -163,18 +124,12 @@
         "pinch_origin": "touch_midpoint",
         "native_vertical_scroll_at_100": true,
         "horizontal_scroll_at_100": false,
-        "origin_at_100": [
-          0,
-          0
-        ],
+        "origin_at_100": [0, 0],
         "one_pointer_pan_above_100_only": true,
         "pan_only_on_overflowing_axes": true,
         "clamp_after_resize": true,
         "tab_change_returns_to_top": true,
-        "snap_to_100_percent": [
-          97,
-          103
-        ],
+        "snap_to_100_percent": [97, 103],
         "persist_per_panel_client_and_view": true,
         "shell_reconciliation": "stable_dom_point_patch",
         "viewport_locked_host": true,
@@ -182,10 +137,7 @@
         "scroll_boundary_guard": "prevent_default_at_top_and_bottom",
         "fixed_chrome_touch_action": "none"
       },
-      "reference_canvas_px": [
-        1280,
-        800
-      ],
+      "reference_canvas_px": [1280, 800],
       "desktop_max_width_px": 1280,
       "rain_sensor_connection": "direct_horizontal_midline_to_controller",
       "zone_thumbnail_content": "image_zone_number_activity_program_duration",
@@ -202,11 +154,7 @@
       "control_wire_caption": false,
       "status_scroll_at_100": false,
       "long_views_native_vertical_scroll_at_100": true,
-      "summary_cards": [
-        "program",
-        "mode",
-        "seasonal_adjustment"
-      ]
+      "summary_cards": ["program", "mode", "seasonal_adjustment"]
     },
     "parent_route": "/dashboard-actions/home",
     "allowed_source_roots": [
