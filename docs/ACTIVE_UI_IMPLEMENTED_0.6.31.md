@@ -1,0 +1,1 @@
+UI 0.6.31 implementation complete: live automatic/manual watering title, remaining time, active-zone highlighting, compact full-height Zones layout, and corrected manual Stop confirmation.
