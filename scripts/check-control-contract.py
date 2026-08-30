@@ -52,16 +52,19 @@ const_source = (INTEGRATION / "const.py").read_text(encoding="utf-8")
 setup_source = (INTEGRATION / "__init__.py").read_text(encoding="utf-8")
 manual_source = (INTEGRATION / "manual_api.py").read_text(encoding="utf-8")
 frontend_source = (INTEGRATION / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
-wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0633.mjs").read_text(encoding="utf-8")
+inherited_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0633.mjs").read_text(encoding="utf-8")
+wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0634.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.52"
-assert panel["panel"]["dashboard_version"] == "0.6.33"
-assert panel_manifest["panel_version"] == "0.6.33"
+assert manifest["version"] == "1.0.0-b005.53"
+assert panel["panel"]["dashboard_version"] == "0.6.34"
+assert panel_manifest["panel_version"] == "0.6.34"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.33"' in const_source
-assert 'irrigation-panel-v0633.mjs' in const_source
-assert 'const UI_VERSION = "0.6.33"' in wrapper_source
-assert 'irrigation-panel-v0632.mjs' in wrapper_source
+assert 'PANEL_VERSION = "0.6.34"' in const_source
+assert 'irrigation-panel-v0634.mjs' in const_source
+assert 'const UI_VERSION = "0.6.34"' in wrapper_source
+assert 'irrigation-panel-v0633.mjs' in wrapper_source
+assert 'replace("<small>ПРОГРАММА</small>", "")' in wrapper_source
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
 
@@ -104,8 +107,8 @@ for marker in (
     "manualZoneSwitch",
     "previousToggleManualZone.call",
 ):
-    assert marker in (frontend_source + wrapper_source), f"Missing frontend marker: {marker}"
-assert "set_value(" not in frontend_source + wrapper_source
-assert "sendcommand(" not in frontend_source + wrapper_source
+    assert marker in combined_frontend_source, f"Missing frontend marker: {marker}"
+assert "set_value(" not in combined_frontend_source
+assert "sendcommand(" not in combined_frontend_source
 
 print("HO-SC-8W DP45 native control, release, and manual UI contract passed")

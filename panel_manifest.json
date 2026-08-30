@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.33",
-  "integration_version": "1.0.0-b005.52",
+  "panel_version": "0.6.34",
+  "integration_version": "1.0.0-b005.53",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
