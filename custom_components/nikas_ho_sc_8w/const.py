@@ -16,6 +16,7 @@ SEASONAL_ADJUST_MAX = 100
 SEASONAL_ADJUST_STEP = 10
 
 SERVICE_START_MANUAL_QUEUE = "start_manual_queue"
+SERVICE_SKIP_CURRENT_MANUAL = "skip_current_manual"
 SERVICE_STOP_MANUAL = "stop_manual"
 SERVICE_RESUME_AUTOMATIC = "resume_automatic"
 SERVICE_SET_SEASONAL_ADJUSTMENT = "set_seasonal_adjustment"
@@ -60,6 +61,6 @@ PANEL_ICON = "mdi:sprinkler"
 PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
-PANEL_VERSION = "0.6.36"
+PANEL_VERSION = "0.6.37"
 PANEL_STATIC_URL = "/nikas-ho-sc-8w"
-PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0636.mjs"
+PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0637.mjs"
