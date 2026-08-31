@@ -51,23 +51,27 @@ panel_manifest = json.loads((ROOT / "panel_manifest.json").read_text(encoding="u
 const_source = (INTEGRATION / "const.py").read_text(encoding="utf-8")
 setup_source = (INTEGRATION / "__init__.py").read_text(encoding="utf-8")
 manual_source = (INTEGRATION / "manual_api.py").read_text(encoding="utf-8")
+sensor_source = (INTEGRATION / "sensor.py").read_text(encoding="utf-8")
 frontend_source = (INTEGRATION / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
 inherited_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0633.mjs").read_text(encoding="utf-8")
 compact_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0634.mjs").read_text(encoding="utf-8")
-wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0635.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + wrapper_source
+fit_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0635.mjs").read_text(encoding="utf-8")
+wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0636.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.54"
-assert panel["panel"]["dashboard_version"] == "0.6.35"
-assert panel_manifest["panel_version"] == "0.6.35"
+assert manifest["version"] == "1.0.0-b005.55"
+assert panel["panel"]["dashboard_version"] == "0.6.36"
+assert panel_manifest["panel_version"] == "0.6.36"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.35"' in const_source
-assert 'irrigation-panel-v0635.mjs' in const_source
-assert 'const UI_VERSION = "0.6.35"' in wrapper_source
-assert 'irrigation-panel-v0634.mjs' in wrapper_source
+assert 'PANEL_VERSION = "0.6.36"' in const_source
+assert 'irrigation-panel-v0636.mjs' in const_source
+assert 'const UI_VERSION = "0.6.36"' in wrapper_source
+assert 'irrigation-panel-v0635.mjs' in wrapper_source
 assert 'replace("<small>ПРОГРАММА</small>", "")' in compact_wrapper_source
-assert "Зоны — просмотр. Сезон — изменение с подтверждением." in wrapper_source
-assert ".programPageIntro{padding-bottom:8px}" in wrapper_source
+assert "Зоны — просмотр. Сезон — изменение с подтверждением." in fit_wrapper_source
+assert ".programPageIntro{padding-bottom:8px}" in fit_wrapper_source
+assert 'return raw_bitmask, "dp107" if raw_bitmask else "idle"' in sensor_source
+assert '"dp45_unconfirmed": bitmask == 0 and any(dp45_remaining.values())' in sensor_source
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
 
