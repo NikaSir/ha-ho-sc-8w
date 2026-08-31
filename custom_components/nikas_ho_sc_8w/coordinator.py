@@ -106,6 +106,15 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
             self.async_set_updated_data(self.api.device)
             return result
 
+    async def async_skip_current_manual(self) -> dict[str, object]:
+        """Skip the active manual zone and publish the verified transition."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(
+                self.api.skip_current_manual
+            )
+            self.async_set_updated_data(self.api.device)
+            return result
+
     async def async_resume_automatic(self) -> dict[str, object]:
         """Return the controller to Auto and publish the verified state."""
         async with self._transport_lock:

@@ -41,6 +41,7 @@ from .const import (
     SEASONAL_ADJUST_STEP,
     SERVICE_RESUME_AUTOMATIC,
     SERVICE_SET_SEASONAL_ADJUSTMENT,
+    SERVICE_SKIP_CURRENT_MANUAL,
     SERVICE_START_MANUAL_QUEUE,
     SERVICE_STOP_MANUAL,
 )
@@ -145,6 +146,14 @@ async def _async_stop_manual(hass: HomeAssistant, call: ServiceCall) -> None:
         raise HomeAssistantError(str(exc)) from exc
 
 
+async def _async_skip_current_manual(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_skip_current_manual()
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def _async_resume_automatic(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _coordinator_for_call(hass, call)
     try:
@@ -172,6 +181,12 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             SERVICE_START_MANUAL_QUEUE,
             partial(_async_start_manual_queue, hass),
             schema=_START_MANUAL_QUEUE_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SKIP_CURRENT_MANUAL,
+            partial(_async_skip_current_manual, hass),
+            schema=_ENTRY_COMMAND_SCHEMA,
         )
         hass.services.async_register(
             DOMAIN,
