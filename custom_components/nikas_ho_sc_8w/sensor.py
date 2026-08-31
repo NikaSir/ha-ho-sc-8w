@@ -176,17 +176,10 @@ class HOSC8WActiveZones(HOSC8WEntity, SensorEntity):
         self._attr_name = "Active zones"
 
     def _effective_bitmask(self) -> tuple[int, str]:
-        """Prefer factual DP107, with DP45 remaining time as a verified fallback."""
+        """Report active watering only when the controller confirms it via DP107."""
         device = self.coordinator.api.device
         raw_bitmask = int(device.active_zone or 0)
-        if raw_bitmask:
-            return raw_bitmask, "dp107"
-
-        inferred = 0
-        for zone in range(1, NUM_ZONES + 1):
-            if int(device.zone_countdown.get(zone, 0) or 0) > 0:
-                inferred |= 1 << (zone - 1)
-        return inferred, "dp45_remaining" if inferred else "idle"
+        return raw_bitmask, "dp107" if raw_bitmask else "idle"
 
     @property
     def native_value(self) -> str:
@@ -198,14 +191,16 @@ class HOSC8WActiveZones(HOSC8WEntity, SensorEntity):
     def extra_state_attributes(self) -> dict:
         device = self.coordinator.api.device
         bitmask, source = self._effective_bitmask()
+        dp45_remaining = {
+            str(zone): int(device.zone_countdown.get(zone, 0) or 0)
+            for zone in range(1, NUM_ZONES + 1)
+        }
         return {
             "bitmask": bitmask,
             "source": source,
             "dp107_bitmask": int(device.active_zone or 0),
-            "dp45_remaining_minutes": {
-                str(zone): int(device.zone_countdown.get(zone, 0) or 0)
-                for zone in range(1, NUM_ZONES + 1)
-            },
+            "dp45_remaining_minutes": dp45_remaining,
+            "dp45_unconfirmed": bitmask == 0 and any(dp45_remaining.values()),
             "operation_mode": device.operation_mode,
         }
 
