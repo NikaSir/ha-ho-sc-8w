@@ -8,6 +8,7 @@ All notable project changes are recorded here.
 
 - `1.0.0-b005.59`: prefixes the integration/HACS name with `NikaS` and
   republishes the approved local brand icon.
+- `1.0.0-b005.60` / panel `0.6.40`: bind the Zone 8 laboratory draft and action handlers from the first rendered view as well as from `connectedCallback`, preventing an entered start time from reverting when focus moves to another field.
 
 - `1.0.0-b005.58` / panel `0.6.39`: add a Zone 8 laboratory program card under Diagnostics. It displays the decoded 20-byte DP38 block and exposes one-field-at-a-time edits only for the physically unused Zone 8.
 - `1.0.0-b005.58` / panel `0.6.39`: guard every Zone 8 write with a complete eight-zone cache, a fresh controller-sourced Zone 8 block and an idle controller; preserve an exact persistent pre-test backup, require DP38 read-back equality and provide explicit restoration. Zones 1–7 and DP45 are never written by this path.
