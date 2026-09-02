@@ -56,6 +56,7 @@ jobs:
           python scripts/check_nikas_ui_standard.py
           node scripts/check-panel-ui-v16.mjs
           python scripts/check-control-contract.py
+          python scripts/check-zone8-dp38-contract.py
           test -f custom_components/nikas_ho_sc_8w/brand/icon.png
 
           node - <<'NODE'

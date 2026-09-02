@@ -119,6 +119,17 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                     "explicit_apply": True,
                     "readback_dps": [103],
                 },
+                "zone_8_schedule_lab": {
+                    "zone": 8,
+                    "field_granularity": "one_field_per_confirmed_write",
+                    "requires_complete_cache": True,
+                    "requires_controller_source": True,
+                    "requires_idle_controller": True,
+                    "persistent_exact_backup": True,
+                    "explicit_restore": True,
+                    "readback_dps": [38],
+                    "production_zones_untouched": [1, 2, 3, 4, 5, 6],
+                },
             },
             "typography": {
                 "meaningful_min_px": 12,

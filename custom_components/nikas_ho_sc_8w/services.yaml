@@ -50,3 +50,39 @@ set_seasonal_adjustment:
           max: 100
           step: 10
           mode: box
+
+set_zone8_schedule_field:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    field:
+      required: true
+      example: duration_minutes
+      selector:
+        select:
+          options:
+            - duration_minutes
+            - start_time_1
+            - start_time_2
+            - start_time_3
+            - start_time_4
+            - start_time_5
+            - start_time_6
+            - cycle_mode
+            - cycle_value
+            - anchor_date
+            - rain_sensor_follow
+    value:
+      required: true
+      example: "1"
+      selector:
+        text:
+
+restore_zone8_schedule:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w

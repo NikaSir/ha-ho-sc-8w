@@ -54,6 +54,9 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
     async def async_initialize_schedule_cache(self) -> None:
         """Load persistent/bootstrap DP38 data after the initial controller read."""
         await self.schedule_cache.async_load_and_bootstrap()
+        self.api.device.zone8_lab_backup_available = (
+            self.schedule_cache.zone8_lab_backup is not None
+        )
 
     async def _async_update_data(self) -> HOSC8WDevice:
         success = await self.hass.async_add_executor_job(self.api.update)
@@ -130,6 +133,40 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
             result = await self.hass.async_add_executor_job(
                 self.api.set_seasonal_adjustment, value
             )
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_set_zone8_schedule_field(
+        self, field: str, value: str
+    ) -> dict[str, object]:
+        """Persist a safety backup, change one Zone 8 field and publish read-back."""
+        async with self._transport_lock:
+            current = await self.hass.async_add_executor_job(
+                self.api.snapshot_zone8_schedule_for_lab
+            )
+            if self.schedule_cache.zone8_lab_backup is None:
+                await self.schedule_cache.async_set_zone8_lab_backup(current)
+            self.api.device.zone8_lab_backup_available = True
+            try:
+                result = await self.hass.async_add_executor_job(
+                    self.api.set_zone8_schedule_field, field, value, current
+                )
+            finally:
+                await self.schedule_cache.async_save()
+                self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_restore_zone8_schedule(self) -> dict[str, object]:
+        """Restore the exact persistent Zone 8 laboratory backup."""
+        async with self._transport_lock:
+            backup = self.schedule_cache.zone8_lab_backup
+            if backup is None:
+                raise RuntimeError("No saved Zone 8 laboratory backup is available")
+            result = await self.hass.async_add_executor_job(
+                self.api.restore_zone8_schedule, backup
+            )
+            await self.schedule_cache.async_clear_zone8_lab_backup()
+            self.api.device.zone8_lab_backup_available = False
             self.async_set_updated_data(self.api.device)
             return result
 

@@ -36,12 +36,25 @@ class HOSC8WScheduleCache:
             STORE_VERSION,
             f"{DOMAIN}.schedule_cache.{entry.entry_id}",
         )
+        self._zone8_lab_backup: bytes | None = None
+
+    @property
+    def zone8_lab_backup(self) -> bytes | None:
+        return self._zone8_lab_backup
 
     async def async_load_and_bootstrap(self) -> None:
         """Load persisted blocks, then fill missing zones from legacy snapshot."""
         stored = await self._store.async_load() or {}
         blocks = stored.get("blocks", {})
         sources = stored.get("sources", {})
+        backup_hex = stored.get("zone8_lab_backup")
+        if backup_hex:
+            try:
+                backup = bytes.fromhex(str(backup_hex))
+                validate_dp38_block(backup, expected_zone=8)
+                self._zone8_lab_backup = backup
+            except ValueError as exc:
+                _LOGGER.warning("Ignoring invalid Zone 8 laboratory backup: %s", exc)
         for zone_text, raw_hex in blocks.items():
             try:
                 zone = int(zone_text)
@@ -111,5 +124,19 @@ class HOSC8WScheduleCache:
                 str(zone): self.device.schedule_sources.get(zone, "unknown")
                 for zone in sorted(self.device.schedule_blocks)
             },
+            "zone8_lab_backup": (
+                self._zone8_lab_backup.hex().upper()
+                if self._zone8_lab_backup is not None
+                else None
+            ),
         }
         await self._store.async_save(data)
+
+    async def async_set_zone8_lab_backup(self, block: bytes) -> None:
+        validate_dp38_block(block, expected_zone=8)
+        self._zone8_lab_backup = bytes(block)
+        await self.async_save()
+
+    async def async_clear_zone8_lab_backup(self) -> None:
+        self._zone8_lab_backup = None
+        await self.async_save()

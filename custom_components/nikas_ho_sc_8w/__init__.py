@@ -19,6 +19,7 @@ from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI
 from .const import (
     ATTR_CONFIG_ENTRY_ID,
     ATTR_DURATION_MINUTES,
+    ATTR_FIELD,
     ATTR_VALUE,
     ATTR_ZONE,
     ATTR_ZONES,
@@ -40,7 +41,9 @@ from .const import (
     SEASONAL_ADJUST_MIN,
     SEASONAL_ADJUST_STEP,
     SERVICE_RESUME_AUTOMATIC,
+    SERVICE_RESTORE_ZONE8_SCHEDULE,
     SERVICE_SET_SEASONAL_ADJUSTMENT,
+    SERVICE_SET_ZONE8_SCHEDULE_FIELD,
     SERVICE_SKIP_CURRENT_MANUAL,
     SERVICE_START_MANUAL_QUEUE,
     SERVICE_STOP_MANUAL,
@@ -98,6 +101,29 @@ _SEASONAL_ADJUSTMENT_SCHEMA = vol.Schema(
             ),
         ),
     }
+)
+
+_ZONE8_SCHEDULE_FIELD_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_FIELD): vol.In(
+            {
+                "duration_minutes",
+                "start_time_1",
+                "start_time_2",
+                "start_time_3",
+                "start_time_4",
+                "start_time_5",
+                "start_time_6",
+                "cycle_mode",
+                "cycle_value",
+                "anchor_date",
+                "rain_sensor_follow",
+            }
+        ),
+        vol.Required(ATTR_VALUE): cv.string,
+    },
+    extra=vol.PREVENT_EXTRA,
 )
 
 
@@ -172,6 +198,28 @@ async def _async_set_seasonal_adjustment(
         raise HomeAssistantError(str(exc)) from exc
 
 
+async def _async_set_zone8_schedule_field(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_set_zone8_schedule_field(
+            str(call.data[ATTR_FIELD]), str(call.data[ATTR_VALUE])
+        )
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
+async def _async_restore_zone8_schedule(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_restore_zone8_schedule()
+    except (RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
@@ -205,6 +253,18 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             SERVICE_SET_SEASONAL_ADJUSTMENT,
             partial(_async_set_seasonal_adjustment, hass),
             schema=_SEASONAL_ADJUSTMENT_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_ZONE8_SCHEDULE_FIELD,
+            partial(_async_set_zone8_schedule_field, hass),
+            schema=_ZONE8_SCHEDULE_FIELD_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_RESTORE_ZONE8_SCHEDULE,
+            partial(_async_restore_zone8_schedule, hass),
+            schema=_ENTRY_COMMAND_SCHEMA,
         )
     return True
 

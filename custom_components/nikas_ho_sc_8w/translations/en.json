@@ -94,6 +94,22 @@
           "description": "Value from -90% to 100% in 10% steps."
         }
       }
+    },
+    "set_zone8_schedule_field": {
+      "name": "Set one Zone 8 schedule field",
+      "description": "Laboratory DP38 write for Zone 8 only, followed by exact controller read-back.",
+      "fields": {
+        "config_entry_id": { "name": "Config entry" },
+        "field": { "name": "Schedule field" },
+        "value": { "name": "Requested value" }
+      }
+    },
+    "restore_zone8_schedule": {
+      "name": "Restore Zone 8 schedule",
+      "description": "Restores the exact Zone 8 block saved before the first laboratory change.",
+      "fields": {
+        "config_entry_id": { "name": "Config entry" }
+      }
     }
   }
 }
