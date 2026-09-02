@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.58` / panel `0.6.39`: add a Zone 8 laboratory program card under Diagnostics. It displays the decoded 20-byte DP38 block and exposes one-field-at-a-time edits only for the physically unused Zone 8.
+- `1.0.0-b005.58` / panel `0.6.39`: guard every Zone 8 write with a complete eight-zone cache, a fresh controller-sourced Zone 8 block and an idle controller; preserve an exact persistent pre-test backup, require DP38 read-back equality and provide explicit restoration. Zones 1–7 and DP45 are never written by this path.
+
 - `1.0.0-b005.48` / panel `0.6.30`: adopt the approved user-facing name `Автополив` in the panel Header, Home Assistant sidebar and panel/navigation metadata while retaining `HO-SC-8W` as the physical controller model.
 - `1.0.0-b005.48` / panel `0.6.30`: lock the panel host to the viewport, keep Header and Bottom Tab Bar outside the only scroll owner, and prevent native work-area gestures from chaining into Home Assistant at the top and bottom boundaries.
 - `1.0.0-b005.48` / panel `0.6.30`: preserve the field-confirmed seasonal adjustment and corrected local manual-start protocol from b005.47 without changing controller writes.

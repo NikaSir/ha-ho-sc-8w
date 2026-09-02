@@ -59,19 +59,25 @@ fit_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0635.mjs").r
 active_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0636.mjs").read_text(encoding="utf-8")
 manual_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0637.mjs").read_text(encoding="utf-8")
 wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0638.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source
+zone8_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0639.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.57"
-assert panel["panel"]["dashboard_version"] == "0.6.38"
-assert panel_manifest["panel_version"] == "0.6.38"
+assert manifest["version"] == "1.0.0-b005.58"
+assert panel["panel"]["dashboard_version"] == "0.6.39"
+assert panel_manifest["panel_version"] == "0.6.39"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.38"' in const_source
-assert 'irrigation-panel-v0638.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.39"' in const_source
+assert 'irrigation-panel-v0639.mjs' in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
 assert 'irrigation-panel-v0637.mjs' in wrapper_source
 assert 'className = "manualZoneRemaining"' in wrapper_source
 assert '`Осталось ${runtime.remaining} мин`' in wrapper_source
 assert '.manualZoneRemaining{' in wrapper_source
+assert 'const UI_VERSION = "0.6.39"' in zone8_wrapper_source
+assert 'set_zone8_schedule_field' in zone8_wrapper_source
+assert 'restore_zone8_schedule' in zone8_wrapper_source
+assert 'data-zone8-apply' in zone8_wrapper_source
+assert 'Каждая кнопка меняет только одно поле' in zone8_wrapper_source
 assert 'replace("<small>ПРОГРАММА</small>", "")' in compact_wrapper_source
 assert "Зоны — просмотр. Сезон — изменение с подтверждением." in fit_wrapper_source
 assert ".programPageIntro{padding-bottom:8px}" in fit_wrapper_source

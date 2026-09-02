@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.38",
+    "dashboard_version": "0.6.39",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0638.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0639.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -74,6 +74,14 @@
         "explicit_apply": true,
         "confirmation": true,
         "readback": [103]
+      },
+      "zone_8_schedule_lab": {
+        "zone": 8,
+        "one_field_per_write": true,
+        "persistent_exact_backup": true,
+        "requires_idle_controller": true,
+        "readback": [38],
+        "production_zones_untouched": [1, 2, 3, 4, 5, 6]
       }
     },
     "system_visualization": {

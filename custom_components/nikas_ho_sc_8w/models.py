@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 
 from .const import NUM_ZONES
@@ -65,7 +66,10 @@ class ScheduleChannel:
 
     def as_dict(self) -> dict[str, Any]:
         year, month, day = self.anchor_date
-        anchor = f"{year:04d}-{month:02d}-{day:02d}" if year and month and day else None
+        try:
+            anchor = date(year, month, day).isoformat() if year else None
+        except ValueError:
+            anchor = None
         interval_days = self.cycle_value if self.cycle_mode == 3 else None
         return {
             "station": self.station,

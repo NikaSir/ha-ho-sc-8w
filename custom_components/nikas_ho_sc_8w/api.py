@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+from datetime import date
 import logging
 import struct
 import threading
@@ -37,7 +38,14 @@ from .const import (
     SEASONAL_ADJUST_STEP,
     TUYA_VERSION,
 )
-from .models import PROFILE, ScheduleChannel, decode_dp38, decode_dp45, encode_dp45_start_manual
+from .models import (
+    PROFILE,
+    ScheduleChannel,
+    decode_dp38,
+    decode_dp45,
+    encode_dp45_start_manual,
+    validate_dp38_block,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +72,11 @@ class HOSC8WDevice:
         self.schedule_blocks: dict[int, bytes] = {}
         self.schedule_channels: dict[int, ScheduleChannel] = {}
         self.schedule_sources: dict[int, str] = {}
+        self.zone8_lab_backup_available = False
+        self.zone8_lab_last_status = "idle"
+        self.zone8_lab_last_field = ""
+        self.zone8_lab_requested_value = ""
+        self.zone8_lab_last_readback_raw = ""
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -632,6 +645,186 @@ class HOSC8WAPI:
                     "previous_seasonal_adjustment": previous,
                     "seasonal_adjustment": adjustment,
                 }
+        finally:
+            self._command_lock.release()
+
+    def snapshot_zone8_schedule_for_lab(self) -> bytes:
+        """Return a fresh, guarded Zone 8 DP38 block for a laboratory write."""
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before changing the Zone 8 program")
+                if len(self.device.schedule_blocks) != NUM_ZONES:
+                    raise RuntimeError("A complete eight-zone DP38 cache is required")
+                if self.device.schedule_sources.get(8) != "controller":
+                    raise RuntimeError("Zone 8 DP38 was not freshly read from the controller")
+                block = self.device.schedule_blocks.get(8, b"")
+                validate_dp38_block(block, expected_zone=8)
+                return bytes(block)
+        finally:
+            self._command_lock.release()
+
+    @staticmethod
+    def _zone8_block_with_field(
+        current: bytes, field: str, raw_value: str
+    ) -> bytes:
+        """Change only the bytes owned by one supported Zone 8 field."""
+        validate_dp38_block(current, expected_zone=8)
+        requested = bytearray(current)
+        value = str(raw_value).strip()
+        if field == "duration_minutes":
+            duration = int(value)
+            if not 0 <= duration <= 255:
+                raise ValueError("Zone 8 duration must be 0..255 minutes")
+            requested[1] = duration
+        if field.startswith("start_time_"):
+            try:
+                slot = int(field.removeprefix("start_time_"))
+            except ValueError as exc:
+                raise ValueError("Invalid Zone 8 start-time field") from exc
+            if not 1 <= slot <= 6:
+                raise ValueError("Zone 8 start-time slot must be 1..6")
+            if value:
+                try:
+                    hour_text, minute_text = value.split(":", 1)
+                    hour, minute = int(hour_text), int(minute_text)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("Start time must use HH:MM or be empty") from exc
+                if not 0 <= hour <= 23 or not 0 <= minute <= 59:
+                    raise ValueError("Start time must use HH:MM")
+                requested[1 + slot] = hour
+                requested[7 + slot] = minute
+            else:
+                requested[1 + slot] = 0xFF
+                requested[7 + slot] = 0xFF
+        if field == "cycle_mode":
+            modes = {"weekly": 0, "odd": 1, "even": 2, "interval": 3}
+            if value not in modes:
+                raise ValueError("Cycle mode must be weekly, odd, even or interval")
+            requested[14] = modes[value]
+        if field == "cycle_value":
+            cycle_value = int(value)
+            if not 0 <= cycle_value <= 255:
+                raise ValueError("Cycle value must be 0..255")
+            requested[15] = cycle_value
+        if field == "anchor_date":
+            if not value:
+                requested[16:19] = b"\x00\x00\x00"
+            else:
+                try:
+                    parsed = date.fromisoformat(value)
+                except ValueError as exc:
+                    raise ValueError("Anchor date must use YYYY-MM-DD") from exc
+                if not 2000 <= parsed.year <= 2255:
+                    raise ValueError("Anchor date year must be 2000..2255")
+                requested[16:19] = bytes(
+                    (parsed.year - 2000, parsed.month, parsed.day)
+                )
+        if field == "rain_sensor_follow":
+            if value not in {"true", "false"}:
+                raise ValueError("Rain-sensor value must be true or false")
+            requested[19] = (
+                requested[19] | 0x01
+                if value == "true"
+                else requested[19] & ~0x01
+            )
+        allowed = {
+            "duration_minutes",
+            "cycle_mode",
+            "cycle_value",
+            "anchor_date",
+            "rain_sensor_follow",
+        }
+        if field not in allowed and not field.startswith("start_time_"):
+            raise ValueError(f"Unsupported Zone 8 field: {field}")
+        result = bytes(requested)
+        validate_dp38_block(result, expected_zone=8)
+        return result
+
+    def set_zone8_schedule_field(
+        self, field: str, value: str, expected_current: bytes
+    ) -> dict[str, Any]:
+        """Write one Zone 8 DP38 field and require an exact controller read-back."""
+        validate_dp38_block(expected_current, expected_zone=8)
+        requested = self._zone8_block_with_field(expected_current, field, value)
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before changing the Zone 8 program")
+                current = self.device.schedule_blocks.get(8, b"")
+                if (
+                    current != expected_current
+                    or self.device.schedule_sources.get(8) != "controller"
+                ):
+                    raise RuntimeError(
+                        "Zone 8 DP38 changed after the safety snapshot; refresh and retry"
+                    )
+                self.device.zone8_lab_last_field = field
+                self.device.zone8_lab_requested_value = str(value)
+                if requested == current:
+                    self.device.zone8_lab_last_status = "confirmed_no_change"
+                    self.device.zone8_lab_last_readback_raw = current.hex().upper()
+                    return {"verified": True, "changed": False, "raw_hex": current.hex().upper()}
+                self.device.zone8_lab_last_status = "waiting_readback"
+                encoded = base64.b64encode(requested).decode("ascii")
+                self._write_command_value(
+                    DP_NORMAL_TIME,
+                    encoded,
+                    cloud_code="normal_time",
+                    cloud_value=requested.hex().upper(),
+                )
+                time.sleep(1.0)
+                if not self._wait_for_readback(
+                    lambda: self.device.schedule_sources.get(8) == "controller"
+                    and self.device.schedule_blocks.get(8) == requested
+                ):
+                    self.device.zone8_lab_last_status = "readback_mismatch"
+                    actual = self.device.schedule_blocks.get(8, b"")
+                    self.device.zone8_lab_last_readback_raw = actual.hex().upper()
+                    raise RuntimeError("DP38 read-back did not confirm the Zone 8 field")
+                self.device.zone8_lab_last_status = "confirmed"
+                self.device.zone8_lab_last_readback_raw = requested.hex().upper()
+                return {"verified": True, "changed": True, "raw_hex": requested.hex().upper()}
+        finally:
+            self._command_lock.release()
+
+    def restore_zone8_schedule(self, backup: bytes) -> dict[str, Any]:
+        """Restore the exact saved Zone 8 block and verify controller read-back."""
+        validate_dp38_block(backup, expected_zone=8)
+        current = self.snapshot_zone8_schedule_for_lab()
+        if current == backup:
+            self.device.zone8_lab_last_status = "restored"
+            self.device.zone8_lab_last_readback_raw = backup.hex().upper()
+            return {"verified": True, "changed": False, "raw_hex": backup.hex().upper()}
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self.device.zone8_lab_last_status = "restoring"
+                self._write_command_value(
+                    DP_NORMAL_TIME,
+                    base64.b64encode(backup).decode("ascii"),
+                    cloud_code="normal_time",
+                    cloud_value=backup.hex().upper(),
+                )
+                time.sleep(1.0)
+                if not self._wait_for_readback(
+                    lambda: self.device.schedule_sources.get(8) == "controller"
+                    and self.device.schedule_blocks.get(8) == backup
+                ):
+                    self.device.zone8_lab_last_status = "restore_mismatch"
+                    raise RuntimeError("DP38 read-back did not confirm Zone 8 restoration")
+                self.device.zone8_lab_last_status = "restored"
+                self.device.zone8_lab_last_field = ""
+                self.device.zone8_lab_requested_value = ""
+                self.device.zone8_lab_last_readback_raw = backup.hex().upper()
+                return {"verified": True, "changed": True, "raw_hex": backup.hex().upper()}
         finally:
             self._command_lock.release()
 

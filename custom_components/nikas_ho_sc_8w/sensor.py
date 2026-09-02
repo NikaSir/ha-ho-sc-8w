@@ -110,8 +110,33 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
             "cache_source": device.schedule_sources.get(self._zone, "missing"),
             "complete_zone_cache": len(device.schedule_blocks) == NUM_ZONES,
         }
+        if self._zone == 8:
+            attrs.update(
+                {
+                    "lab_backup_available": device.zone8_lab_backup_available,
+                    "lab_last_status": device.zone8_lab_last_status,
+                    "lab_last_field": device.zone8_lab_last_field,
+                    "lab_requested_value": device.zone8_lab_requested_value,
+                    "lab_last_readback_raw": device.zone8_lab_last_readback_raw,
+                    "lab_write_allowed": (
+                        len(device.schedule_blocks) == NUM_ZONES
+                        and device.schedule_sources.get(8) == "controller"
+                        and not device.active_zone
+                        and not device.queued_zone
+                    ),
+                }
+            )
         if channel is not None:
             attrs.update(channel.as_dict())
+        if block:
+            attrs["start_slots"] = [
+                (
+                    None
+                    if block[2 + slot] == 0xFF and block[8 + slot] == 0xFF
+                    else f"{block[2 + slot]:02d}:{block[8 + slot]:02d}"
+                )
+                for slot in range(6)
+            ]
         return attrs
 
 
