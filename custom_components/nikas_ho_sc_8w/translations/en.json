@@ -1,8 +1,9 @@
 {
+  "title": "NikaS HO-SC-8W Irrigation",
   "config": {
     "step": {
       "user": {
-        "title": "HO-SC-8W Irrigation",
+        "title": "NikaS HO-SC-8W Irrigation",
         "description": "Connect an INKBIRD / HiOazo HO-SC-8W. Local Tuya v3.3 is the primary transport. Remove any other integration that keeps a persistent local connection to this controller before setup.",
         "data": {
           "device_name": "Device name",

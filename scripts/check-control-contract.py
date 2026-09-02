@@ -62,7 +62,7 @@ wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0638.mjs").read_
 zone8_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0639.mjs").read_text(encoding="utf-8")
 combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.58"
+assert manifest["version"] == "1.0.0-b005.59"
 assert panel["panel"]["dashboard_version"] == "0.6.39"
 assert panel_manifest["panel_version"] == "0.6.39"
 assert panel_manifest["integration_version"] == manifest["version"]

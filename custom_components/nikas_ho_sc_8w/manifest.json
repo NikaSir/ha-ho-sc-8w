@@ -1,6 +1,6 @@
 {
   "domain": "nikas_ho_sc_8w",
-  "name": "HO-SC-8W Irrigation",
+  "name": "NikaS HO-SC-8W Irrigation",
   "codeowners": [
     "@NikaSir"
   ],
@@ -17,5 +17,5 @@
   "requirements": [
     "tinytuya>=1.13.0"
   ],
-  "version": "1.0.0-b005.58"
+  "version": "1.0.0-b005.59"
 }

@@ -2,7 +2,7 @@
 
 DOMAIN = "nikas_ho_sc_8w"
 
-INTEGRATION_NAME = "HO-SC-8W Irrigation"
+INTEGRATION_NAME = "NikaS HO-SC-8W Irrigation"
 MANUFACTURER = "INKBIRD / HiOazo"
 MODEL = "HO-SC-8W"
 NUM_ZONES = 8
