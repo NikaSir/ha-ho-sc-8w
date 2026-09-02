@@ -1,8 +1,9 @@
 {
+  "title": "NikaS HO-SC-8W Irrigation",
   "config": {
     "step": {
       "user": {
-        "title": "HO-SC-8W Irrigation",
+        "title": "NikaS HO-SC-8W Irrigation",
         "description": "Подключение контроллера INKBIRD / HiOazo HO-SC-8W. Основной транспорт — локальный Tuya v3.3. Перед настройкой отключи другие интеграции, удерживающие постоянное локальное соединение с этим контроллером.",
         "data": {
           "device_name": "Имя устройства",
