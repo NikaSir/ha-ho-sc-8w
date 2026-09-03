@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0-b005.77` / panel `0.6.57`: replace the unsafe 160-byte DP38 experiment with the controller's actual per-station wire contract. Read reports identify Zone 8 with byte `08`, while a write selects it with the one-hot mask `80`; the guarded test now sends exactly one 20-byte block (40 uppercase ASCII-HEX characters) changing only anchor day `04 → 05`. A fresh read-only 8/8 baseline, Auto/ON idle state and a separate control snapshot remain mandatory, with no retry or rollback. The full-frame path is removed because DP38 is limited to separate station operations and the 320-character payload exceeded the declared 255-character datapoint limit.
+
 - `1.0.0-b005.76` / panel `0.6.56`: simplify Program into a direct per-zone workspace. Add a compact 1–8 zone switcher immediately below the Header, remove the redundant General/Zone subtab split and selected-zone explanation card, restore the standard refresh action, and keep the complete decoded read-only form for every selected zone.
 
 - `1.0.0-b005.75` / panel `0.6.55`: add one guarded full-frame DP38 transport experiment based on the completed physical before/after proof. It requires a fresh exact zones 1–8 baseline with Zone 8 at `2026-09-04`, preserves every baseline byte except Zone 8 byte 18 (`04 → 05`), and sends exactly one ordered 160-byte frame as 320 uppercase ASCII-HEX characters. There is no retry or automatic rollback; success is reported only after a separate control snapshot confirms Zones 1–7 unchanged and the exact Zone 8 target.

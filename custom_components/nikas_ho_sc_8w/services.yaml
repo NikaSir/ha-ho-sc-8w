@@ -90,9 +90,9 @@ capture_dp38_snapshot:
           options:
             - DP38_FULL_SNAPSHOT_READ_ONLY
 
-test_zone8_full_frame_write:
-  name: Test Zone 8 with a full DP38 frame
-  description: Sends exactly one 160-byte DP38 frame built from a fresh zones 1-8 baseline. Only Zone 8 anchor day 04 to 05 may differ. No retry or rollback is sent.
+test_zone8_mask_write:
+  name: Test Zone 8 with its DP38 write mask
+  description: Sends exactly one 20-byte DP38 block as 40 uppercase ASCII-HEX characters. Byte 0 is the Zone 8 write mask 0x80; only anchor day 04 to 05 differs. No retry or rollback is sent.
   fields:
     config_entry_id:
       selector:
@@ -100,8 +100,8 @@ test_zone8_full_frame_write:
           integration: nikas_ho_sc_8w
     confirmation:
       required: true
-      example: WRITE_FULL_DP38_FRAME_ZONE8_DATE_2026_09_05_ONCE
+      example: WRITE_DP38_ZONE8_MASK_80_DATE_2026_09_05_ONCE
       selector:
         select:
           options:
-            - WRITE_FULL_DP38_FRAME_ZONE8_DATE_2026_09_05_ONCE
+            - WRITE_DP38_ZONE8_MASK_80_DATE_2026_09_05_ONCE

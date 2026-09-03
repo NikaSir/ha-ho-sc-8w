@@ -44,10 +44,11 @@ from .const import (
     ZONE8_ANCHOR_DATE_TEST_TARGET_HEX,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
-    ZONE8_FULL_FRAME_TEST_CONFIRMATION,
-    ZONE8_FULL_FRAME_TEST_CURRENT_HEX,
-    ZONE8_FULL_FRAME_TEST_ENABLED,
-    ZONE8_FULL_FRAME_TEST_TARGET_HEX,
+    ZONE8_MASK_WRITE_TEST_CONFIRMATION,
+    ZONE8_MASK_WRITE_TEST_CURRENT_READ_HEX,
+    ZONE8_MASK_WRITE_TEST_ENABLED,
+    ZONE8_MASK_WRITE_TEST_EXPECTED_READ_HEX,
+    ZONE8_MASK_WRITE_TEST_PAYLOAD_HEX,
     ZONE8_DAMAGED_BLOCK_HEX,
     ZONE8_KNOWN_BACKUP_HEX,
     ZONE8_KNOWN_RESTORE_CONFIRMATION,
@@ -60,6 +61,7 @@ from .models import (
     decode_dp45,
     encode_dp45_start_manual,
     validate_dp38_block,
+    validate_dp38_write_block,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -115,11 +117,16 @@ class HOSC8WDevice:
         self.dp38_snapshot_baseline_at = ""
         self.dp38_snapshot_current_at = ""
         self.dp38_snapshot_trace: dict[str, Any] = {}
-        self.zone8_full_frame_test_status = "idle"
-        self.zone8_full_frame_test_detail = ""
-        self.zone8_full_frame_test_attempted = False
-        self.zone8_full_frame_test_from_hex = ZONE8_FULL_FRAME_TEST_CURRENT_HEX
-        self.zone8_full_frame_test_to_hex = ZONE8_FULL_FRAME_TEST_TARGET_HEX
+        self.zone8_mask_write_test_status = "idle"
+        self.zone8_mask_write_test_detail = ""
+        self.zone8_mask_write_test_attempted = False
+        self.zone8_mask_write_test_current_read_hex = (
+            ZONE8_MASK_WRITE_TEST_CURRENT_READ_HEX
+        )
+        self.zone8_mask_write_test_payload_hex = ZONE8_MASK_WRITE_TEST_PAYLOAD_HEX
+        self.zone8_mask_write_test_expected_read_hex = (
+            ZONE8_MASK_WRITE_TEST_EXPECTED_READ_HEX
+        )
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -1156,34 +1163,12 @@ class HOSC8WAPI:
             "changes": changes,
         }
 
-    @staticmethod
-    def _dp38_full_frame(snapshot: dict[int, dict[str, Any]]) -> bytes:
-        """Return an exact, ordered eight-zone DP38 frame."""
-        if set(snapshot) != set(range(1, NUM_ZONES + 1)):
-            raise RuntimeError("A complete zones 1-8 DP38 snapshot is required")
-        blocks: list[bytes] = []
-        for zone in range(1, NUM_ZONES + 1):
-            try:
-                block = bytes.fromhex(str(snapshot[zone]["raw_hex"]))
-            except (KeyError, TypeError, ValueError) as exc:
-                raise RuntimeError(f"Zone {zone} snapshot block is invalid") from exc
-            validate_dp38_block(block, expected_zone=zone)
-            blocks.append(block)
-        frame = b"".join(blocks)
-        if len(frame) != NUM_ZONES * 20:
-            raise RuntimeError("DP38 full frame must be exactly 160 bytes")
-        return frame
-
-    def _write_dp38_full_frame(self, frame: bytes) -> None:
-        """Dispatch one complete eight-zone frame as uppercase ASCII HEX."""
-        if len(frame) != NUM_ZONES * 20:
-            raise ValueError("DP38 full-frame write requires exactly 160 bytes")
-        for zone in range(1, NUM_ZONES + 1):
-            block = frame[(zone - 1) * 20 : zone * 20]
-            validate_dp38_block(block, expected_zone=zone)
-        encoded = frame.hex().upper()
-        if len(encoded) != 320:
-            raise RuntimeError("DP38 full-frame transport must contain 320 HEX characters")
+    def _write_dp38_mask_block(self, block: bytes, zone: int) -> None:
+        """Dispatch one 20-byte DP38 block using the write-side zone mask."""
+        validate_dp38_write_block(block, expected_zone=zone)
+        encoded = block.hex().upper()
+        if len(encoded) != 40:
+            raise RuntimeError("DP38 transport must contain 40 uppercase HEX characters")
         self._write_command_value(
             DP_NORMAL_TIME,
             encoded,
@@ -1191,23 +1176,23 @@ class HOSC8WAPI:
             cloud_value=encoded,
         )
 
-    def test_zone8_full_frame_write(self, confirmation: str) -> dict[str, Any]:
-        """Advance Zone 8 with one frame; no automatic rollback or retry."""
-        if not ZONE8_FULL_FRAME_TEST_ENABLED:
-            raise RuntimeError("The Zone 8 full-frame write test is disabled")
-        if confirmation != ZONE8_FULL_FRAME_TEST_CONFIRMATION:
-            raise PermissionError("Explicit full-frame write confirmation is required")
+    def test_zone8_mask_write(self, confirmation: str) -> dict[str, Any]:
+        """Advance Zone 8 with one masked block; never retry or roll back."""
+        if not ZONE8_MASK_WRITE_TEST_ENABLED:
+            raise RuntimeError("The Zone 8 masked write test is disabled")
+        if confirmation != ZONE8_MASK_WRITE_TEST_CONFIRMATION:
+            raise PermissionError("Explicit Zone 8 masked-write confirmation is required")
         if self.active_transport != CONNECTION_MODE_LOCAL:
-            raise RuntimeError("The DP38 full-frame write test is local-transport only")
-        if self.device.zone8_full_frame_test_attempted:
-            raise RuntimeError("The DP38 full-frame write was already attempted")
+            raise RuntimeError("The DP38 masked write test is local-transport only")
+        if self.device.zone8_mask_write_test_attempted:
+            raise RuntimeError("The DP38 Zone 8 masked write was already attempted")
         if not self._command_lock.acquire(blocking=False):
             raise RuntimeError("Another controller action is still in progress")
         dispatched = False
         try:
             with self._io_lock:
-                self.device.zone8_full_frame_test_status = "preflight"
-                self.device.zone8_full_frame_test_detail = ""
+                self.device.zone8_mask_write_test_status = "preflight"
+                self.device.zone8_mask_write_test_detail = ""
                 self._require_fresh_command_state()
                 if str(self.device.operation_mode).lower() != "auto":
                     raise RuntimeError("Set the physical controller to ON/Auto before the write")
@@ -1227,50 +1212,67 @@ class HOSC8WAPI:
                         "The baseline snapshot is older than 15 minutes; capture it again"
                     )
 
-                before = self._dp38_full_frame(self.device.dp38_snapshot_baseline)
-                zone8_offset = (8 - 1) * 20
-                current_zone8 = before[zone8_offset : zone8_offset + 20]
-                expected = bytes.fromhex(ZONE8_FULL_FRAME_TEST_CURRENT_HEX)
-                target_zone8 = bytes.fromhex(ZONE8_FULL_FRAME_TEST_TARGET_HEX)
-                if current_zone8 != expected:
+                baseline_zone8 = self.device.dp38_snapshot_baseline.get(8, {})
+                try:
+                    current_read = bytes.fromhex(str(baseline_zone8["raw_hex"]))
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError("Fresh baseline Zone 8 block is invalid") from exc
+                expected_current = bytes.fromhex(
+                    ZONE8_MASK_WRITE_TEST_CURRENT_READ_HEX
+                )
+                payload = bytes.fromhex(ZONE8_MASK_WRITE_TEST_PAYLOAD_HEX)
+                expected_readback = bytes.fromhex(
+                    ZONE8_MASK_WRITE_TEST_EXPECTED_READ_HEX
+                )
+                validate_dp38_block(expected_current, expected_zone=8)
+                validate_dp38_write_block(payload, expected_zone=8)
+                validate_dp38_block(expected_readback, expected_zone=8)
+                if current_read != expected_current:
                     raise RuntimeError(
                         "Fresh baseline Zone 8 must be exactly 2026-09-04 before this test"
                     )
-
-                after = bytearray(before)
-                after[zone8_offset : zone8_offset + 20] = target_zone8
                 changed_offsets = [
                     index
-                    for index, (old, new) in enumerate(zip(before, after, strict=True))
+                    for index, (old, new) in enumerate(
+                        zip(expected_current, expected_readback, strict=True)
+                    )
                     if old != new
                 ]
-                if changed_offsets != [zone8_offset + 18]:
-                    raise RuntimeError("The full-frame test must change only Zone 8 byte 18")
+                if changed_offsets != [18] or payload[0] != 0x80:
+                    raise RuntimeError(
+                        "The masked test must select Zone 8 with 0x80 and change only byte 18"
+                    )
+                if payload[1:] != expected_readback[1:]:
+                    raise RuntimeError("Write payload and expected read-back data disagree")
 
-                self.device.zone8_full_frame_test_attempted = True
-                self.device.zone8_full_frame_test_status = "writing_once"
-                self._write_dp38_full_frame(bytes(after))
+                self.device.zone8_mask_write_test_attempted = True
+                self.device.zone8_mask_write_test_status = "writing_once"
+                # Once transport dispatch starts, any exception is ambiguous:
+                # the controller may already have received the command.
                 dispatched = True
-                self.device.zone8_full_frame_test_status = "awaiting_compare"
-                self.device.zone8_full_frame_test_detail = (
-                    "One 160-byte DP38 frame was sent; capture a control snapshot of zones 1-8"
+                self._write_dp38_mask_block(payload, zone=8)
+                self.device.zone8_mask_write_test_status = "awaiting_compare"
+                self.device.zone8_mask_write_test_detail = (
+                    "One 20-byte DP38 block with mask 0x80 was sent; capture a control snapshot"
                 )
                 return {
                     "verified": False,
                     "awaiting_control_snapshot": True,
                     "writes_performed": 1,
-                    "frame_bytes": len(after),
-                    "hex_characters": len(after.hex()),
+                    "frame_bytes": len(payload),
+                    "hex_characters": len(payload.hex()),
+                    "write_zone_mask": "80",
                     "changed_zone": 8,
                     "changed_byte_offset": 18,
-                    "from_hex": expected.hex().upper(),
-                    "to_hex": target_zone8.hex().upper(),
+                    "from_hex": expected_current.hex().upper(),
+                    "write_hex": payload.hex().upper(),
+                    "expected_readback_hex": expected_readback.hex().upper(),
                 }
         except Exception as exc:
-            self.device.zone8_full_frame_test_status = (
+            self.device.zone8_mask_write_test_status = (
                 "dispatch_unknown" if dispatched else "blocked"
             )
-            self.device.zone8_full_frame_test_detail = str(exc)
+            self.device.zone8_mask_write_test_detail = str(exc)
             raise
         finally:
             self._command_lock.release()
@@ -1365,9 +1367,9 @@ class HOSC8WAPI:
                         if changed
                         else "All eight DP38 blocks match the baseline"
                     )
-                    if self.device.zone8_full_frame_test_status == "awaiting_compare":
-                        expected_before = ZONE8_FULL_FRAME_TEST_CURRENT_HEX
-                        expected_after = ZONE8_FULL_FRAME_TEST_TARGET_HEX
+                    if self.device.zone8_mask_write_test_status == "awaiting_compare":
+                        expected_before = ZONE8_MASK_WRITE_TEST_CURRENT_READ_HEX
+                        expected_after = ZONE8_MASK_WRITE_TEST_EXPECTED_READ_HEX
                         changes = self.device.dp38_snapshot_diff.get("changes", [])
                         confirmed = (
                             len(changes) == 1
@@ -1378,13 +1380,13 @@ class HOSC8WAPI:
                             and self.device.dp38_snapshot_diff.get("unchanged_zones")
                             == list(range(1, 8))
                         )
-                        self.device.zone8_full_frame_test_status = (
+                        self.device.zone8_mask_write_test_status = (
                             "confirmed" if confirmed else "comparison_mismatch"
                         )
-                        self.device.zone8_full_frame_test_detail = (
+                        self.device.zone8_mask_write_test_detail = (
                             "Only Zone 8 anchor day changed from 04 to 05"
                             if confirmed
-                            else "Control snapshot did not match the one-byte full-frame target"
+                            else "Control snapshot did not match the masked one-block target"
                         )
                 return {
                     "verified": True,
@@ -1423,16 +1425,16 @@ class HOSC8WAPI:
         )
 
     def _write_dp38_hex_block(self, block: bytes) -> None:
-        """Refuse every single-station DP38 write before transport dispatch.
+        """Refuse archived DP38 writers that used a read-side zone number.
 
-        Hardware testing proved that a block whose first byte named Zone 8 was
-        applied to Zone 4, and its cycle fields were normalized unexpectedly.
-        The single-block write protocol is therefore not station-isolated.
+        The old path passed ``08`` as if it selected Zone 8, but DP38 writes
+        interpret that byte as a bitmask and therefore selected Zone 4.  Only
+        the separately validated one-hot-mask writer may reach transport.
         """
-        if len(block) != 20 or not 1 <= block[0] <= NUM_ZONES:
-            raise ValueError("DP38 HEX probe requires one 20-byte station block")
+        if len(block) != 20:
+            raise ValueError("DP38 HEX probe requires one 20-byte block")
         raise RuntimeError(
-            "Single-block DP38 writes are disabled after a Zone 8 command affected Zone 4"
+            "Legacy DP38 writes are disabled; only the guarded one-hot mask test is permitted"
         )
 
     def _stable_raw_zone8_observation(self) -> bytes:

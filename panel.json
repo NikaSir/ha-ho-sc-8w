@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.56",
+    "dashboard_version": "0.6.57",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0656.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0657.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -116,17 +116,19 @@
           "read_only": true,
           "writes_performed": 0
         },
-        "full_frame_test": {
+        "zone8_mask_write_test": {
           "enabled": true,
-          "zones": [1, 2, 3, 4, 5, 6, 7, 8],
-          "frame_bytes": 160,
-          "transport": "320_uppercase_ascii_hex_characters",
+          "read_zone_identifier": "0x08",
+          "write_zone_mask": "0x80",
+          "frame_bytes": 20,
+          "transport": "40_uppercase_ascii_hex_characters",
           "change": "zone_8_anchor_day_04_to_05_at_byte_18",
           "maximum_writes_per_action": 1,
           "requires_fresh_baseline": true,
           "requires_control_snapshot": true,
           "automatic_retry": false,
-          "automatic_rollback": false
+          "automatic_rollback": false,
+          "protocol_evidence": "DP38 uploads/downloads each station in eight separate operations"
         },
         "anchor_date_test_maximum_writes_per_action": 0,
         "automatic_retry": false,

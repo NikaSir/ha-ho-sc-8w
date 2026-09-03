@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.56",
-  "integration_version": "1.0.0-b005.76",
+  "panel_version": "0.6.57",
+  "integration_version": "1.0.0-b005.77",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -74,17 +74,19 @@
         "read_only": true,
         "writes_performed": 0
       },
-      "full_frame_test": {
+      "zone8_mask_write_test": {
         "enabled": true,
-        "zones": [1, 2, 3, 4, 5, 6, 7, 8],
-        "frame_bytes": 160,
-        "transport": "320_uppercase_ascii_hex_characters",
+        "read_zone_identifier": "0x08",
+        "write_zone_mask": "0x80",
+        "frame_bytes": 20,
+        "transport": "40_uppercase_ascii_hex_characters",
         "change": "zone_8_anchor_day_04_to_05_at_byte_18",
         "maximum_writes_per_action": 1,
         "requires_fresh_baseline": true,
         "requires_control_snapshot": true,
         "automatic_retry": false,
-        "automatic_rollback": false
+        "automatic_rollback": false,
+        "protocol_evidence": "DP38 uploads/downloads each station in eight separate operations"
       },
       "anchor_date_test_maximum_writes_per_action": 0,
       "automatic_retry": false,
@@ -112,7 +114,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0656.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0657.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
