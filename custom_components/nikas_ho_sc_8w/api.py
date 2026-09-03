@@ -805,13 +805,7 @@ class HOSC8WAPI:
                 # model requires one 20-byte station block encoded as 40 ASCII
                 # hexadecimal characters. Base64 is correct for RAW DP45, but
                 # corrupts DP38 because the firmware parses it as hexadecimal.
-                encoded = requested.hex().upper()
-                self._write_command_value(
-                    DP_NORMAL_TIME,
-                    encoded,
-                    cloud_code="normal_time",
-                    cloud_value=requested.hex().upper(),
-                )
+                self._write_dp38_hex_block(requested)
                 time.sleep(1.0)
                 if not self._wait_for_readback(
                     lambda: self.device.schedule_sources.get(8) == "controller"
@@ -844,12 +838,7 @@ class HOSC8WAPI:
         try:
             with self._io_lock:
                 self.device.zone8_lab_last_status = "restoring"
-                self._write_command_value(
-                    DP_NORMAL_TIME,
-                    backup.hex().upper(),
-                    cloud_code="normal_time",
-                    cloud_value=backup.hex().upper(),
-                )
+                self._write_dp38_hex_block(backup)
                 time.sleep(1.0)
                 if not self._wait_for_readback(
                     lambda: self.device.schedule_sources.get(8) == "controller"
@@ -1029,14 +1018,16 @@ class HOSC8WAPI:
         )
 
     def _write_dp38_hex_block(self, block: bytes) -> None:
-        """Write one station block using DP38's required ASCII HEX transport."""
+        """Refuse every single-station DP38 write before transport dispatch.
+
+        Hardware testing proved that a block whose first byte named Zone 8 was
+        applied to Zone 4, and its cycle fields were normalized unexpectedly.
+        The single-block write protocol is therefore not station-isolated.
+        """
         if len(block) != 20 or not 1 <= block[0] <= NUM_ZONES:
             raise ValueError("DP38 HEX probe requires one 20-byte station block")
-        self._write_command_value(
-            DP_NORMAL_TIME,
-            block.hex().upper(),
-            cloud_code="normal_time",
-            cloud_value=block.hex().upper(),
+        raise RuntimeError(
+            "Single-block DP38 writes are disabled after a Zone 8 command affected Zone 4"
         )
 
     def _stable_raw_zone8_observation(self) -> bytes:

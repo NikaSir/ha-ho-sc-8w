@@ -202,30 +202,25 @@ for action in (
         raise AssertionError("Every DP38 schedule write must be blocked")
 assert api.writes == []
 
-# Exercise the corrected encoder without changing the production safety flag.
+# Even if an archived feature flag is changed in a test process, the shared
+# single-block writer must still stop before transport dispatch.
 api_module.ZONE8_DP38_WRITES_ENABLED = True
 probe = FakeZone8API()
 for zone in range(1, 9):
     probe.device.ingest_schedule_block(block(zone), source="controller")
-before_all = dict(probe.device.schedule_blocks)
 current = bytearray(probe.snapshot_zone8_schedule_for_lab())
 current[14] |= 0xA0
 probe.device.ingest_schedule_block(bytes(current), source="controller")
 
 snapshot = probe.snapshot_zone8_schedule_for_lab()
-result = probe.set_zone8_schedule_field("cycle_mode", "interval", snapshot)
-assert result["verified"] is True and result["changed"] is True
-assert len(probe.writes) == 1 and probe.writes[0][0] == DP_NORMAL_TIME
-assert probe.writes[0][2] == "normal_time"
-written = bytes.fromhex(probe.writes[0][1])
-assert written[0] == 8 and written[14] == 0xA3
-assert probe.device.schedule_blocks[8] == written
-assert all(probe.device.schedule_blocks[z] == before_all[z] for z in range(1, 8))
-
-restored = probe.restore_zone8_schedule(snapshot)
-assert restored["verified"] is True
-assert probe.device.schedule_blocks[8] == snapshot
-assert all(probe.device.schedule_blocks[z] == before_all[z] for z in range(1, 8))
+try:
+    probe.set_zone8_schedule_field("cycle_mode", "interval", snapshot)
+except RuntimeError as exc:
+    assert "Zone 8 command affected Zone 4" in str(exc)
+else:
+    raise AssertionError("The archived Zone 8 editor must not reach transport")
+assert probe.writes == []
+api_module.ZONE8_DP38_WRITES_ENABLED = False
 
 api.device.active_zone = 1
 try:
@@ -400,68 +395,21 @@ else:
     raise AssertionError("Zone 8 recovery must be emergency-disabled")
 assert disabled_restore.writes == []
 
-# Preserve coverage of the archived one-write implementation without enabling it
-# in the production integration.
+# Even an explicit test-process override cannot bypass the shared transport
+# refusal retained under the archived recovery implementation.
 api_module.ZONE8_KNOWN_RESTORE_ENABLED = True
-restore = GuardedRestoreAPI([damaged, backup])
-production_before = dict(restore.device.schedule_blocks)
-recovered = restore.restore_zone8_known_backup(
-    const.ZONE8_KNOWN_RESTORE_CONFIRMATION
-)
-assert recovered["verified"] is True
-assert recovered["writes_performed"] == 1
-assert recovered["from_hex"] == const.ZONE8_DAMAGED_BLOCK_HEX
-assert recovered["to_hex"] == const.ZONE8_KNOWN_BACKUP_HEX
-assert len(restore.writes) == 1
-assert restore.writes[0][0] == DP_NORMAL_TIME
-assert restore.writes[0][1] == const.ZONE8_KNOWN_BACKUP_HEX
-assert all(
-    restore.device.schedule_blocks[zone] == production_before[zone]
-    for zone in range(1, 8)
-)
-assert restore.device.zone8_restore_status == "restored"
-assert restore.device.zone8_restore_readback_hex == const.ZONE8_KNOWN_BACKUP_HEX
-
-mismatch = bytearray(backup)
-mismatch[16:19] = bytes((26, 9, 4))
-bad_readback = GuardedRestoreAPI([damaged, bytes(mismatch)])
+restore = GuardedRestoreAPI([damaged])
 try:
-    bad_readback.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
+    restore.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
 except RuntimeError as exc:
-    assert "no rollback" in str(exc)
+    assert "Zone 8 command affected Zone 4" in str(exc)
 else:
-    raise AssertionError("A mismatched read-back must fail")
-assert len(bad_readback.writes) == 1, "Read-back failure must never auto-rollback"
-
-wrong_current = GuardedRestoreAPI([backup])
-try:
-    wrong_current.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
-except RuntimeError as exc:
-    assert "does not exactly match" in str(exc)
-else:
-    raise AssertionError("A changed current block must stop before writing")
-assert wrong_current.writes == []
-
-wrong_mode = GuardedRestoreAPI([damaged])
-wrong_mode.device.operation_mode = "Auto"
-try:
-    wrong_mode.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
-except RuntimeError as exc:
-    assert "physical controller to OFF" in str(exc)
-else:
-    raise AssertionError("Recovery must require physical OFF")
-assert wrong_mode.writes == []
-
-try:
-    GuardedRestoreAPI([damaged]).restore_zone8_known_backup("wrong")
-except PermissionError:
-    pass
-else:
-    raise AssertionError("Recovery must require its exact confirmation token")
+    raise AssertionError("Archived recovery must stop before transport")
+assert restore.writes == []
 api_module.ZONE8_KNOWN_RESTORE_ENABLED = False
 
-# The only enabled DP38 write is a fixed Zone 8 anchor-date experiment. It
-# accepts one exact baseline and changes byte offset 18 from day 03 to day 02.
+# Preserve the decoded evidence from the hardware incident while requiring the
+# fixed anchor-date action itself to remain disabled.
 anchor_baseline = bytes.fromhex(const.ZONE8_KNOWN_BACKUP_HEX)
 anchor_target = bytes.fromhex(const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX)
 decoded_anchor_baseline = models.decode_dp38(anchor_baseline)[0]
@@ -483,79 +431,29 @@ assert changed_offsets == [18]
 assert anchor_baseline[18] == 3
 assert anchor_target[18] == 2
 
-anchor_test = GuardedRestoreAPI([anchor_baseline, anchor_target])
-anchor_production_before = dict(anchor_test.device.schedule_blocks)
-anchor_result = anchor_test.test_zone8_anchor_date_write(
-    const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+assert const.ZONE8_ANCHOR_DATE_TEST_ENABLED is False
+anchor_test = GuardedRestoreAPI([anchor_baseline])
+try:
+    anchor_test.test_zone8_anchor_date_write(
+        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "disabled" in str(exc)
+else:
+    raise AssertionError("The anchor-date write must be emergency-disabled")
+assert anchor_test.writes == []
+
+affected_zone4 = bytes.fromhex(
+    "0400FFFFFFFFFFFFFFFFFFFFFFFF007F1A090211"
 )
-assert anchor_result["verified"] is True
-assert anchor_result["writes_performed"] == 1
-assert anchor_result["changed_offsets"] == [18]
-assert anchor_result["from_hex"] == const.ZONE8_KNOWN_BACKUP_HEX
-assert anchor_result["to_hex"] == const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
-assert anchor_result["readback_hex"] == const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
-assert len(anchor_test.writes) == 1
-assert anchor_test.writes[0][0] == DP_NORMAL_TIME
-assert anchor_test.writes[0][1] == const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
-assert anchor_test.device.zone8_anchor_date_test_status == "confirmed"
-assert anchor_test.device.zone8_anchor_date_test_attempted is True
-assert all(
-    anchor_test.device.schedule_blocks[zone] == anchor_production_before[zone]
-    for zone in range(1, 8)
-)
-
-anchor_mismatch = GuardedRestoreAPI([anchor_baseline, anchor_baseline])
-try:
-    anchor_mismatch.test_zone8_anchor_date_write(
-        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
-    )
-except RuntimeError as exc:
-    assert "no retry or rollback" in str(exc)
-else:
-    raise AssertionError("A mismatched date read-back must fail")
-assert len(anchor_mismatch.writes) == 1
-assert anchor_mismatch.device.zone8_anchor_date_test_attempted is True
-assert anchor_mismatch.device.zone8_anchor_date_test_status == "readback_mismatch"
-
-try:
-    anchor_mismatch.test_zone8_anchor_date_write(
-        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
-    )
-except RuntimeError as exc:
-    assert "already attempted" in str(exc)
-else:
-    raise AssertionError("A failed date test must not write again in the same runtime")
-assert len(anchor_mismatch.writes) == 1
-
-anchor_wrong_current = GuardedRestoreAPI([anchor_target])
-try:
-    anchor_wrong_current.test_zone8_anchor_date_write(
-        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
-    )
-except RuntimeError as exc:
-    assert "does not exactly match" in str(exc)
-else:
-    raise AssertionError("A changed Zone 8 baseline must stop before writing")
-assert anchor_wrong_current.writes == []
-
-anchor_wrong_mode = GuardedRestoreAPI([anchor_baseline])
-anchor_wrong_mode.device.operation_mode = "Auto"
-try:
-    anchor_wrong_mode.test_zone8_anchor_date_write(
-        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
-    )
-except RuntimeError as exc:
-    assert "physical controller to OFF" in str(exc)
-else:
-    raise AssertionError("The date test must require physical OFF")
-assert anchor_wrong_mode.writes == []
-
-try:
-    GuardedRestoreAPI([anchor_baseline]).test_zone8_anchor_date_write("wrong")
-except PermissionError:
-    pass
-else:
-    raise AssertionError("The date test must require its exact confirmation token")
+decoded_affected_zone4 = models.decode_dp38(affected_zone4)[0]
+assert decoded_affected_zone4.station == 4
+assert decoded_affected_zone4.duration_minutes == 0
+assert decoded_affected_zone4.start_times == []
+assert decoded_affected_zone4.cycle_mode_name == "weekly"
+assert decoded_affected_zone4.cycle_value == 127
+assert decoded_affected_zone4.anchor_date == (2026, 9, 2)
+assert decoded_affected_zone4.rain_sensor_follow_inferred is True
 
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
@@ -574,14 +472,20 @@ for marker in (
     '"corrupt_zone8"',
     '"writes_performed": 0',
     '"read_only": True',
-    "block.hex().upper()",
     "restore_zone8_known_backup",
     "automatic rollback was not attempted",
     "test_zone8_anchor_date_write",
     "changed_offsets != [18]",
     "zone8_anchor_date_test_attempted = True",
     "no retry or rollback was sent",
+    "Single-block DP38 writes are disabled after a Zone 8 command affected Zone 4",
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
-print("DP38 observer, guarded recovery, and fixed Zone 8 date test: PASS")
+writer_source = api_source.split("def _write_dp38_hex_block", 1)[1].split(
+    "def _stable_raw_zone8_observation", 1
+)[0]
+assert "_write_command_value" not in writer_source
+assert "raise RuntimeError" in writer_source
+
+print("DP38 read-only observer and cross-zone write lockout: PASS")
