@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0-b005.76` / panel `0.6.56`: simplify Program into a direct per-zone workspace. Add a compact 1–8 zone switcher immediately below the Header, remove the redundant General/Zone subtab split and selected-zone explanation card, restore the standard refresh action, and keep the complete decoded read-only form for every selected zone.
+
 - `1.0.0-b005.75` / panel `0.6.55`: add one guarded full-frame DP38 transport experiment based on the completed physical before/after proof. It requires a fresh exact zones 1–8 baseline with Zone 8 at `2026-09-04`, preserves every baseline byte except Zone 8 byte 18 (`04 → 05`), and sends exactly one ordered 160-byte frame as 320 uppercase ASCII-HEX characters. There is no retry or automatic rollback; success is reported only after a separate control snapshot confirms Zones 1–7 unchanged and the exact Zone 8 target.
 
 All notable project changes are recorded here.

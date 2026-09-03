@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.55** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.56** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -60,7 +60,7 @@ The user-facing application model is domain-oriented rather than protocol-orient
 
 - **Состояние** — factual controller state, six-axis zone schematic and display-only program, mode and seasonal values;
 - **Зоны** — production zones 1–6 with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
-- **Программа** — read-only decoded automatic zone program plus the confirmed seasonal-correction editor on the `Сезон` tile;
+- **Программа** — direct 1–8 zone switching below the Header and the complete decoded read-only automatic program for the selected zone;
 - **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
 - **Диагн.** — integration health, decoded Zone 8 state, full snapshots of zones 1–8 and one guarded full-frame transport test. Generic and single-block DP38 schedule writes remain disabled after a single-block test affected Zone 4 instead of Zone 8.
 

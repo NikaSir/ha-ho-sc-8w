@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.55",
-  "integration_version": "1.0.0-b005.75",
+  "panel_version": "0.6.56",
+  "integration_version": "1.0.0-b005.76",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -28,18 +28,17 @@
       "range_percent": [-90, 100],
       "step_percent": 10,
       "status_view": "read_only",
-      "editable_view": "program",
-      "apply_location": "program_summary_season_tile",
+      "editable_view": "not_exposed_in_panel",
+      "apply_location": "none",
       "explicit_apply": true,
       "readback_dps": [103]
     },
     "program_view": {
-      "subtabs": ["general_parameters", "zone_parameters"],
-      "default_subtab": "general_parameters",
-      "general_parameters": ["irrigation_permission", "watering_pause", "rain_sensor", "seasonal_adjustment"],
-      "zone_selector": "header_center",
-      "selected_zone_status": "header_right",
-      "zone_scope": [1, 2, 3, 4, 5, 6],
+      "subtabs": [],
+      "default_subtab": "zone_parameters",
+      "zone_selector": "button_row_below_header",
+      "selected_zone_status": "inside_zone_form",
+      "zone_scope": [1, 2, 3, 4, 5, 6, 7, 8],
       "zone_form": "complete_decoded_zone_detail_read_only",
       "vertical_scroll": "central_work_area_only"
     },
@@ -113,7 +112,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0655.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0656.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
@@ -158,10 +157,9 @@
     "header_touch_action": "none",
     "bottom_tab_bar_touch_action": "none"
   },
-  "program_subtabs": ["general_parameters", "zone_parameters"],
-  "program_zone_selector": "conditional_header_center",
-  "program_selected_zone_status": "conditional_header_right",
-  "summary_cards": ["irrigation_permission", "watering_pause", "rain_sensor", "seasonal_adjustment"],
+  "program_subtabs": [],
+  "program_zone_selector": "button_row_below_header",
+  "program_selected_zone_status": "inside_zone_form",
   "control_wire_caption": false,
   "rain_sensor_state_semantics": "dp102_follow_enabled_or_bypassed_current_wet_contact_not_exposed"
 }
