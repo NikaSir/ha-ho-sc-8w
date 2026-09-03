@@ -847,7 +847,7 @@ class HOSC8WAPI:
     def _collect_fresh_dp38_round(
         self, timeout_seconds: float = 14.0
     ) -> dict[int, bytes]:
-        """Reconnect and collect one controller report for every DP38 station."""
+        """Actively request and collect one fresh DP38 report for every station."""
         if self.active_transport != CONNECTION_MODE_LOCAL:
             raise RuntimeError("The DP38 HEX probe is local-transport only")
         self._reset_connection()
@@ -877,20 +877,41 @@ class HOSC8WAPI:
                 collected[block[0]] = bytes(block)
 
         device.set_socketTimeout(1)
+        request_count = 0
         try:
-            ingest(device.status())
             deadline = time.monotonic() + timeout_seconds
             while len(collected) < NUM_ZONES and time.monotonic() < deadline:
+                # HO-SC-8W exposes only one 20-byte station block in each DP38
+                # report.  One status query therefore cannot establish a safe
+                # before/after image of the complete schedule table.  Repeat
+                # both the ordinary status query and TinyTuya's read-only DPS
+                # refresh request, ingesting every direct or delayed response.
+                try:
+                    ingest(device.status())
+                    request_count += 1
+                except Exception:  # noqa: BLE001
+                    pass
+                if len(collected) >= NUM_ZONES:
+                    break
+                try:
+                    ingest(device.updatedps([DP_NORMAL_TIME]))
+                    request_count += 1
+                except Exception:  # noqa: BLE001
+                    pass
                 try:
                     ingest(device.receive())
                 except Exception:  # noqa: BLE001
                     time.sleep(0.05)
-                    continue
         finally:
             device.set_socketTimeout(5)
         if set(collected) != set(range(1, NUM_ZONES + 1)):
             missing = sorted(set(range(1, NUM_ZONES + 1)) - set(collected))
-            raise RuntimeError(f"Incomplete fresh DP38 round; missing zones: {missing}")
+            present = sorted(collected)
+            raise RuntimeError(
+                "Incomplete fresh DP38 round after "
+                f"{request_count} active requests; present zones: {present}; "
+                f"missing zones: {missing}"
+            )
         required_safety_dps = {DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE}
         if safety_dps_seen != required_safety_dps:
             missing = sorted(required_safety_dps - safety_dps_seen)
