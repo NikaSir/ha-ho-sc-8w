@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.58** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.59** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -58,10 +58,10 @@ It also conforms to **NikaS Integration Panel Template v1.9**.
 
 The user-facing application model is domain-oriented rather than protocol-oriented:
 
-- **Система** — compact controller readiness, standard connection badge, mode, rain, pressure and seasonal values;
-- **Зоны** — production zones 1–6 with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
-- **Программа** — direct 1–8 zone switching below the Header and the complete decoded read-only automatic program for the selected zone;
-- **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
+- **Система** — compact controller readiness, standard connection badge, active/next zone, rain, pressure and seasonal values, plus a gear action opening the settings workspace;
+- **Зоны** — only the browser-selected physical zones 1–8, with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
+- **Программа** — direct switching between the selected physical zones below the Header and the complete decoded read-only automatic program for the selected zone;
+- **Ручной** — confirmed manual queue for the selected physical zones 1–8 with an independent 1–120 minute duration per zone;
 - **Диагн.** — integration health, decoded Zone 8 state, full read-only snapshots of zones 1–8 and one guarded Zone 8 mask-write test. Generic DP38 schedule writes remain disabled.
 
 The only enabled DP38 schedule write is a fixed field experiment based on the controller's separate read/write selectors. A read report starts with the plain zone number (`08` for Zone 8), while a write starts with a one-hot bitmask (`80` for Zone 8). The experiment requires a fresh exact baseline for all eight zones with Zone 8 at `2026-09-04`, sends one 20-byte block as 40 uppercase ASCII-HEX characters, and changes only byte 18 from `04` to `05`. It sends once, never retries or rolls back, and remains unverified until a new full control snapshot confirms Zones 1–7 unchanged and Zone 8 exactly at `2026-09-05`.
@@ -72,7 +72,7 @@ The primary Bottom Tab Bar is:
 Система · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for zones 1–8 and lets the user assign a bundled illustration or a neutral gray tile to each zone. This visual choice is stored only in the browser. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. The fixed Zone 8 experiment requires local transport, physical Auto/ON, idle state and a fresh complete baseline; it then sends one masked 20-byte block and requires a separate all-zone control snapshot. Production-zone recovery remains disabled.
+The `Программа` tab shows the complete decoded DP38 schedule for the physical zones selected in `Система → Настройки`. The same settings screen assigns a bundled illustration or neutral gray tile to each selected zone; both visibility and artwork choices are stored only in the browser. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone schedule write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. The fixed Zone 8 experiment requires local transport, physical Auto/ON, idle state and a fresh complete baseline; it then sends one masked 20-byte block and requires a separate all-zone control snapshot. Production-zone recovery remains disabled.
 
 ### Full-field Overview v0.4.3
 
@@ -147,15 +147,15 @@ This build uses a stable production filename plus query-string cache busting. Co
 
 ## Safety boundary
 
-- Zones 1–6 are production irrigation zones.
-- Zone 8 is reserved for controlled development/diagnostic tests and is not exposed as a normal user zone.
+- Zones 1–8 can be marked as physically connected in the browser-local System settings; the panel displays only that selection.
+- Zone 8 schedule writes remain reserved for controlled diagnostic tests; normal read-only display and the verified DP45 manual queue may use Zone 8 when it is marked as physically connected.
 - `unknown` and `unavailable` are unreliable states, never normal/off.
 - The frontend must never construct or send raw Tuya DP payloads.
 - Every controller write follows local draft → explicit action → confirmation → integration-owned command → factual read-back.
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
 - Manual watering writes only after confirmed queue start/stop/Auto actions and verifies DP101/107/108.
-- Seasonal correction is display-only on `Система`; the current compact Program workspace remains read-only.
+- Seasonal correction is edited only in `Система → Настройки` with explicit apply, confirmation and controller read-back; the compact Program workspace remains read-only.
 
 ## Device scope
 
