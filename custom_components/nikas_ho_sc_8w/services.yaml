@@ -66,19 +66,3 @@ probe_zone8_dp38_hex:
         select:
           options:
             - ZONE8_DP38_HEX_PROBE
-
-test_zone8_anchor_date_write:
-  name: Test Zone 8 anchor-date write
-  description: Writes Zone 8 once, changing only its anchor date from 2026-09-03 to 2026-09-02, then verifies repeated DP38 read-back.
-  fields:
-    config_entry_id:
-      selector:
-        config_entry:
-          integration: nikas_ho_sc_8w
-    confirmation:
-      required: true
-      example: WRITE_ZONE8_ANCHOR_DATE_2026_09_02_ONCE
-      selector:
-        select:
-          options:
-            - WRITE_ZONE8_ANCHOR_DATE_2026_09_02_ONCE

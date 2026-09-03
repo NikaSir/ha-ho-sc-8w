@@ -122,13 +122,13 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "zone_8_schedule_lab": {
                     "zone": 8,
                     "write_enabled": False,
-                    "mode": "decoded_read_only_with_fixed_anchor_date_test",
+                    "mode": "decoded_read_only_after_cross_zone_write_incident",
                     "decoded_editor_source": (
                         "latest_repeated_valid_zone_8_raw_dp38"
                     ),
                     "hex_probe_enabled": True,
                     "recovery_enabled": False,
-                    "anchor_date_test_enabled": True,
+                    "anchor_date_test_enabled": False,
                     "anchor_date_test_from_hex": (
                         "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311"
                     ),
@@ -147,10 +147,17 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                     "explicit_restore": False,
                     "readback_dps": [38],
                     "maximum_generic_writes_per_action": 0,
-                    "anchor_date_test_maximum_writes_per_action": 1,
+                    "anchor_date_test_maximum_writes_per_action": 0,
                     "automatic_retry": False,
                     "automatic_rollback": False,
-                    "production_zones_untouched": [1, 2, 3, 4, 5, 6],
+                    "observed_cross_zone_write": {
+                        "requested_zone": 8,
+                        "affected_zone": 4,
+                        "zone_8_unchanged": True,
+                        "destination_selection": "not_isolated",
+                        "cycle_encoding": "not_isolated",
+                    },
+                    "production_zones_untouched": [1, 2, 3, 5, 6],
                 },
             },
             "typography": {

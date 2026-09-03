@@ -297,6 +297,11 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
         and hass.services.has_service(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)
     ):
         hass.services.async_remove(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)
+    if (
+        not ZONE8_ANCHOR_DATE_TEST_ENABLED
+        and hass.services.has_service(DOMAIN, SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE)
+    ):
+        hass.services.async_remove(DOMAIN, SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE)
     if not hass.services.has_service(DOMAIN, SERVICE_START_MANUAL_QUEUE):
         hass.services.async_register(
             DOMAIN,
