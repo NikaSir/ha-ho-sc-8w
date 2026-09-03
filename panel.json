@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.61",
+    "dashboard_version": "0.6.62",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0661.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0662.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -46,7 +46,7 @@
     },
     "status_layout": {
       "reference": "compact_system_workspace",
-      "sections": ["controller_and_standard_connection", "full_width_system_readiness", "active_or_next_zone_rain_pressure_seasonal", "settings_action_above_tab_bar"],
+      "sections": ["controller_and_standard_connection", "full_width_system_readiness", "mode_rain_pressure_seasonal", "wide_active_or_next_zone_status", "settings_action_above_tab_bar"],
       "settings": ["physical_zones", "zone_artwork", "operation", "rain_sensor", "seasonal_adjustment"]
     },
     "control_actions": {
