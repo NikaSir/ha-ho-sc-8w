@@ -66,19 +66,3 @@ probe_zone8_dp38_hex:
         select:
           options:
             - ZONE8_DP38_HEX_PROBE
-
-restore_zone8_known_backup:
-  name: Restore the known Zone 8 backup
-  description: Writes one exact approved Zone 8 DP38 backup only after an exact damaged-block match, then verifies repeated read-back.
-  fields:
-    config_entry_id:
-      selector:
-        config_entry:
-          integration: nikas_ho_sc_8w
-    confirmation:
-      required: true
-      example: RESTORE_ZONE8_KNOWN_BACKUP
-      selector:
-        select:
-          options:
-            - RESTORE_ZONE8_KNOWN_BACKUP
