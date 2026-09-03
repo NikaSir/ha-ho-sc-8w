@@ -53,7 +53,7 @@
   "services": {
     "start_manual_queue": {
       "name": "Start manual irrigation queue",
-      "description": "Starts zones 1–6 sequentially with individual durations and verifies controller read-back.",
+      "description": "Starts the selected physical zones sequentially with individual durations and verifies controller read-back.",
       "fields": {
         "config_entry_id": {
           "name": "Config entry",

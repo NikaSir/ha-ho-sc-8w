@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.58",
+    "dashboard_version": "0.6.59",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0658.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0659.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -46,13 +46,14 @@
     },
     "status_layout": {
       "reference": "compact_system_workspace",
-      "sections": ["controller_and_standard_connection", "full_width_system_readiness", "mode_rain_pressure_seasonal"]
+      "sections": ["controller_and_standard_connection", "full_width_system_readiness", "active_or_next_zone_rain_pressure_seasonal", "settings_action_above_tab_bar"],
+      "settings": ["physical_zones", "zone_artwork", "operation", "rain_sensor", "seasonal_adjustment"]
     },
     "control_actions": {
       "policy": "draft_explicit_apply_confirmation_write_readback",
       "frontend_raw_dp_writes": false,
       "manual_queue": {
-        "production_zones": [1, 2, 3, 4, 5, 6],
+        "production_zones": [1, 2, 3, 4, 5, 6, 7, 8],
         "per_zone_duration_minutes": [1, 120],
         "execution_order": "top_to_bottom_controller_order",
         "start_confirmation": true,
@@ -63,14 +64,14 @@
         "operation_mode_dp101_write": false,
         "stop_all": "dp45_command_1_all_zero_durations",
         "skip_current": "dp45_revised_queue_from_integration_runtime_plan",
-        "ui": "zone_cards_with_per_zone_duration_and_switches"
+        "ui": "browser_selected_physical_zone_cards_with_per_zone_duration_and_switches"
       },
       "seasonal_adjustment": {
         "range_percent": [-90, 100],
         "step_percent": 10,
         "status_view": "read_only",
-        "editable_view": "not_exposed_in_panel",
-        "apply_location": "none",
+        "editable_view": "system_settings",
+        "apply_location": "system_settings",
         "explicit_apply": true,
         "confirmation": true,
         "readback": [103]
@@ -83,7 +84,7 @@
         "zone_scope": [1, 2, 3, 4, 5, 6, 7, 8],
         "zone_form": "complete_decoded_zone_detail_read_only",
         "zone_artwork": "browser_local_presets_or_neutral_gray",
-        "zone_artwork_trigger": "tap_selected_zone_image",
+        "zone_artwork_trigger": "system_settings_zone_image",
         "vertical_scroll": "central_work_area_only"
       },
       "zone_8_schedule_lab": {
@@ -147,11 +148,12 @@
     },
     "system_visualization": {
       "controller": "INKBIRD / HiOazo HO-SC-8W with LCD and Wi-Fi",
-      "production_zones": [1, 2, 3, 4, 5, 6],
-      "zone_8": "diagnostics_only",
+      "production_zones": [1, 2, 3, 4, 5, 6, 7, 8],
+      "zone_visibility": "browser_selected_physical_zones",
+      "zone_8_schedule_writes": "diagnostics_only",
       "hydraulic_path": "not_rendered_on_status_view",
       "mainline_connection_side": "left_direct_to_manifold",
-      "electrical_path": "controller_to_six_numbered_zone_nodes",
+      "electrical_path": "not_rendered_on_status_view",
       "rain_sensor_path": "direct_horizontal_midline_to_controller",
       "water_passes_through_controller": false,
       "zone_routing": "orthogonal_vertical_one_to_one",

@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.58",
-  "integration_version": "1.0.0-b005.78",
+  "panel_version": "0.6.59",
+  "integration_version": "1.0.0-b005.79",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -10,11 +10,18 @@
     "view_switching": "lazy_dom_cache_and_reattach",
     "preserve_on_update": ["header", "zoom_viewport", "scroll", "bottom_tab_bar"]
   },
+  "system_settings": {
+    "entry": "gear_action_above_system_tab_bar",
+    "physical_zones": "browser_local_subset_1_8",
+    "zone_artwork": "browser_local_presets_or_neutral_gray",
+    "seasonal_adjustment": "confirmed_controller_write",
+    "reference_values": ["operation", "rain_sensor"]
+  },
   "control_actions": {
     "policy": "draft_explicit_apply_confirmation_write_readback",
     "frontend_raw_dp_writes": false,
     "manual_queue": {
-      "zones": [1, 2, 3, 4, 5, 6],
+      "zones": [1, 2, 3, 4, 5, 6, 7, 8],
       "per_zone_duration_minutes": [1, 120],
       "execution_order": "top_to_bottom_controller_order",
       "write_dp": 45,
@@ -22,14 +29,14 @@
       "operation_mode_dp101_write": false,
       "stop_all": "dp45_command_1_all_zero_durations",
       "skip_current": "dp45_revised_queue_from_integration_runtime_plan",
-      "ui": "zone_cards_with_per_zone_duration_and_switches"
+      "ui": "browser_selected_physical_zone_cards_with_per_zone_duration_and_switches"
     },
     "seasonal_adjustment": {
       "range_percent": [-90, 100],
       "step_percent": 10,
       "status_view": "read_only",
-      "editable_view": "not_exposed_in_panel",
-      "apply_location": "none",
+      "editable_view": "system_settings",
+      "apply_location": "system_settings",
       "explicit_apply": true,
       "readback_dps": [103]
     },
@@ -41,7 +48,7 @@
       "zone_scope": [1, 2, 3, 4, 5, 6, 7, 8],
       "zone_form": "complete_decoded_zone_detail_read_only",
       "zone_artwork": "browser_local_presets_or_neutral_gray",
-      "zone_artwork_trigger": "tap_selected_zone_image",
+      "zone_artwork_trigger": "system_settings_zone_image",
       "vertical_scroll": "central_work_area_only"
     },
     "zone_8_schedule_lab": {
@@ -116,7 +123,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0658.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0659.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
