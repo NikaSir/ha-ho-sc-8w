@@ -66,14 +66,15 @@ probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0642.mjs")
 refresh_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0643.mjs").read_text(encoding="utf-8")
 read_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0644.mjs").read_text(encoding="utf-8")
 sample_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0645.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source
+raw_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0646.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.65"
-assert panel["panel"]["dashboard_version"] == "0.6.45"
-assert panel_manifest["panel_version"] == "0.6.45"
+assert manifest["version"] == "1.0.0-b005.66"
+assert panel["panel"]["dashboard_version"] == "0.6.46"
+assert panel_manifest["panel_version"] == "0.6.46"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.45"' in const_source
-assert 'irrigation-panel-v0645.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.46"' in const_source
+assert 'irrigation-panel-v0646.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
@@ -107,6 +108,10 @@ assert 'Текущий блок зоны 8 прочитан без записи'
 assert 'const UI_VERSION = "0.6.45"' in sample_probe_wrapper_source
 assert 'Контроллер вернул разные ответы' in sample_probe_wrapper_source
 assert 'hex_probe_samples' in sample_probe_wrapper_source
+assert 'const UI_VERSION = "0.6.46"' in raw_probe_wrapper_source
+assert 'Собираются все ответы DP38 без фильтра по зоне' in raw_probe_wrapper_source
+assert 'hex_probe_trace' in raw_probe_wrapper_source
+assert 'Контроллер не вернул DP38' in raw_probe_wrapper_source
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True

@@ -82,6 +82,7 @@ class HOSC8WDevice:
         self.zone8_hex_probe_status = "idle"
         self.zone8_hex_probe_detail = ""
         self.zone8_hex_probe_samples: list[dict[str, Any]] = []
+        self.zone8_hex_probe_trace: dict[str, Any] = {}
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -846,80 +847,115 @@ class HOSC8WAPI:
             self._command_lock.release()
 
     def _collect_zone8_dp38_samples(
-        self, timeout_seconds: float = 8.0
+        self, timeout_seconds: float = 12.0
     ) -> list[bytes]:
-        """Collect every valid fresh Zone 8 DP38 block without writing."""
+        """Observe all fresh DP38 replies and return valid Zone 8 blocks."""
         if self.active_transport != CONNECTION_MODE_LOCAL:
             raise RuntimeError("The DP38 HEX probe is local-transport only")
-        self._reset_connection()
         device = self._ensure_connection()
         if not device:
             raise RuntimeError("Local controller connection is unavailable")
         samples: list[bytes] = []
+        observed: dict[bytes, dict[str, Any]] = {}
         safety_dps_seen: set[int] = set()
+        dps_seen: set[int] = set()
+        response_count = 0
 
-        def ingest(response: Any) -> None:
+        def ingest(source: str, response: Any) -> None:
+            nonlocal response_count
             if not isinstance(response, dict) or response.get("Err"):
                 return
             dps = response.get("dps")
             if not isinstance(dps, dict):
                 return
+            response_count += 1
+            for key in dps:
+                try:
+                    dps_seen.add(int(key))
+                except (TypeError, ValueError):
+                    continue
+            normalized_dps = {str(key): value for key, value in dps.items()}
             for dp in (DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE):
-                if str(dp) in dps:
+                if str(dp) in normalized_dps:
                     safety_dps_seen.add(dp)
-            self.device.update_from_dps(dps)
-            if str(DP_NORMAL_TIME) not in dps:
+            # Update operational state, but do not let an exploratory DP38
+            # response replace the schedule cache before it is classified.
+            operational_dps = {
+                key: value
+                for key, value in normalized_dps.items()
+                if key != str(DP_NORMAL_TIME)
+            }
+            self.device.update_from_dps(operational_dps)
+            dp38_value = normalized_dps.get(str(DP_NORMAL_TIME))
+            if dp38_value is None:
                 return
-            raw = self.device._parse_raw_dp(dps[str(DP_NORMAL_TIME)])
+            raw = self.device._parse_raw_dp(dp38_value)
             for offset in range(0, len(raw), 20):
                 block = raw[offset : offset + 20]
-                if len(block) != 20 or block[0] != 8:
-                    continue
                 current = bytes(block)
+                entry = observed.setdefault(
+                    current,
+                    {
+                        "raw_hex": current.hex().upper(),
+                        "length": len(current),
+                        "station": current[0] if current else None,
+                        "count": 0,
+                        "sources": [],
+                        "fresh": True,
+                        "valid": False,
+                    },
+                )
+                entry["count"] += 1
+                if source not in entry["sources"]:
+                    entry["sources"].append(source)
                 try:
-                    validate_dp38_block(current, expected_zone=8)
-                except ValueError:
+                    validate_dp38_block(current)
+                except ValueError as exc:
+                    entry["error"] = str(exc)
                     continue
-                samples.append(current)
+                entry["valid"] = True
+                channel = decode_dp38(current)[0]
+                entry.update(channel.as_dict())
+                if current[0] == 8:
+                    samples.append(current)
 
         device.set_socketTimeout(1)
         request_count = 0
         try:
             deadline = time.monotonic() + timeout_seconds
-            while len(samples) < 4 and time.monotonic() < deadline:
-                # Hardware testing established that status/updatedps only
-                # return Zone 8 after it became the last DP38 station. Keep
-                # every valid reply so alternating controller values remain
-                # visible to diagnostics instead of being discarded.
+            while (
+                request_count < 12
+                and len(observed) < 6
+                and len(samples) < 4
+                and time.monotonic() < deadline
+            ):
                 try:
-                    ingest(device.status())
+                    ingest("status", device.status())
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
-                if len(samples) >= 4:
+                if len(observed) >= 6 or len(samples) >= 4 or request_count >= 12:
                     break
                 try:
-                    ingest(device.updatedps([DP_NORMAL_TIME]))
+                    ingest("updatedps", device.updatedps([DP_NORMAL_TIME]))
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
                 try:
-                    ingest(device.receive())
+                    ingest("receive", device.receive())
                 except Exception:  # noqa: BLE001
                     time.sleep(0.05)
         finally:
             device.set_socketTimeout(5)
-        if not samples:
-            raise RuntimeError(
-                "Zone 8 DP38 was not returned after "
-                f"{request_count} active requests"
-            )
-        required_safety_dps = {DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE}
-        if safety_dps_seen != required_safety_dps:
-            missing = sorted(required_safety_dps - safety_dps_seen)
-            raise RuntimeError(
-                f"Fresh controller safety state is incomplete; missing DPs: {missing}"
-            )
+        self.device.zone8_hex_probe_samples = list(observed.values())
+        self.device.zone8_hex_probe_trace = {
+            "active_requests": request_count,
+            "responses": response_count,
+            "dps_seen": sorted(dps_seen),
+            "safety_dps_seen": sorted(safety_dps_seen),
+            "dp38_variants": len(observed),
+            "zone8_replies": len(samples),
+        }
         return samples
 
     def _collect_confirmed_zone8_dp38(
@@ -927,6 +963,8 @@ class HOSC8WAPI:
     ) -> bytes:
         """Read the same valid Zone 8 DP38 block twice plus fresh safety DPs."""
         samples = self._collect_zone8_dp38_samples(timeout_seconds)
+        if not samples:
+            raise RuntimeError("Fresh Zone 8 DP38 was not observed")
         for index, candidate in enumerate(samples):
             if candidate in samples[index + 1 :]:
                 self.device.ingest_schedule_block(candidate, source="controller")
@@ -979,28 +1017,65 @@ class HOSC8WAPI:
                             **channel.as_dict(),
                         }
                     )
-                self.device.zone8_hex_probe_samples = observations
+                fresh_all = list(self.device.zone8_hex_probe_samples)
+                if samples and not fresh_all:
+                    fresh_all = observations
+                    self.device.zone8_hex_probe_samples = observations
                 stable = len(counts) == 1 and len(samples) >= 2
-                original = samples[-1]
-                if stable:
+                original = samples[-1] if samples else None
+                if stable and original is not None:
                     self.device.ingest_schedule_block(original, source="controller")
-                self.device.zone8_hex_probe_status = (
-                    "verified" if stable else "observed_variants"
-                )
-                variants = "; ".join(
-                    f"{item['raw_hex']} (x{item['count']})" for item in observations
-                )
-                self.device.zone8_hex_probe_detail = (
-                    ("Стабильный ответ: " if stable else "Получены разные ответы: ")
-                    + variants
-                )
+                trace = self.device.zone8_hex_probe_trace
+                if samples:
+                    self.device.zone8_hex_probe_status = (
+                        "verified" if stable else "observed_variants"
+                    )
+                    variants = "; ".join(
+                        f"{item['raw_hex']} (x{item['count']})" for item in observations
+                    )
+                    self.device.zone8_hex_probe_detail = (
+                        ("Стабильный ответ зоны 8: " if stable else "Разные ответы зоны 8: ")
+                        + variants
+                    )
+                elif fresh_all:
+                    zones = sorted(
+                        {item.get("station") for item in fresh_all if item.get("valid")}
+                    )
+                    self.device.zone8_hex_probe_status = "observed_other_zones"
+                    self.device.zone8_hex_probe_detail = (
+                        f"DP38 получен, но зоны 8 среди ответов нет. Зоны: {zones or 'нет валидных'}"
+                    )
+                else:
+                    cached = self.device.schedule_blocks.get(8)
+                    if cached:
+                        channel = decode_dp38(cached)[0]
+                        self.device.zone8_hex_probe_samples = [
+                            {
+                                "raw_hex": cached.hex().upper(),
+                                "count": 1,
+                                "sources": ["cache"],
+                                "fresh": False,
+                                "valid": True,
+                                **channel.as_dict(),
+                            }
+                        ]
+                        self.device.zone8_hex_probe_status = "cached_only"
+                        self.device.zone8_hex_probe_detail = (
+                            "Свежий DP38 не пришёл; показан последний ранее полученный блок зоны 8"
+                        )
+                    else:
+                        self.device.zone8_hex_probe_status = "no_dp38"
+                        self.device.zone8_hex_probe_detail = (
+                            "DP38 отсутствовал во всех ответах контроллера"
+                        )
                 return {
                     "verified": stable,
                     "read_only": True,
                     "writes_performed": 0,
                     "zone": 8,
-                    "raw_hex": original.hex().upper(),
-                    "samples": observations,
+                    "raw_hex": original.hex().upper() if original else "",
+                    "samples": self.device.zone8_hex_probe_samples,
+                    "trace": trace,
                 }
         except Exception as exc:
             self.device.zone8_hex_probe_status = "failed"
