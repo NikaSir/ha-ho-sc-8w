@@ -44,6 +44,7 @@ from .const import (
     SERVICE_PROBE_ZONE8_DP38_HEX,
     SERVICE_RESUME_AUTOMATIC,
     SERVICE_RESTORE_ZONE8_SCHEDULE,
+    SERVICE_RESTORE_ZONE8_KNOWN_BACKUP,
     SERVICE_SET_SEASONAL_ADJUSTMENT,
     SERVICE_SET_ZONE8_SCHEDULE_FIELD,
     SERVICE_SKIP_CURRENT_MANUAL,
@@ -132,6 +133,14 @@ _ZONE8_HEX_PROBE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
         vol.Required(ATTR_CONFIRMATION): vol.In({"ZONE8_DP38_HEX_PROBE"}),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+_ZONE8_KNOWN_RESTORE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_CONFIRMATION): vol.In({"RESTORE_ZONE8_KNOWN_BACKUP"}),
     },
     extra=vol.PREVENT_EXTRA,
 )
@@ -242,6 +251,18 @@ async def _async_probe_zone8_dp38_hex(
         raise HomeAssistantError(str(exc)) from exc
 
 
+async def _async_restore_zone8_known_backup(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_restore_zone8_known_backup(
+            str(call.data[ATTR_CONFIRMATION])
+        )
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
@@ -281,6 +302,12 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             SERVICE_PROBE_ZONE8_DP38_HEX,
             partial(_async_probe_zone8_dp38_hex, hass),
             schema=_ZONE8_HEX_PROBE_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_RESTORE_ZONE8_KNOWN_BACKUP,
+            partial(_async_restore_zone8_known_backup, hass),
+            schema=_ZONE8_KNOWN_RESTORE_SCHEMA,
         )
     return True
 

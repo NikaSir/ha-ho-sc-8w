@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.46",
+    "dashboard_version": "0.6.47",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -80,13 +80,17 @@
         "write_enabled": false,
         "mode": "read_only_incident_hold",
         "hex_probe_enabled": true,
-        "recovery_enabled": false,
+        "recovery_enabled": true,
+        "recovery_scope": "exact_zone8_known_block_only",
+        "expected_damaged_hex": "08EFEFEFEFEFEFFF8A9FDFEFFBFF007F1A090311",
+        "known_backup_hex": "0800FFFFFFFFFFFFFFFFFFFFFFFF007F16010111",
         "hex_probe_transport": "uppercase_ascii_hex",
         "hex_probe_scope": "all_dp38_raw_observer_read_only",
         "persistent_exact_backup": true,
         "requires_idle_controller": true,
         "readback": [38],
-        "writes_performed": 0,
+        "maximum_writes_per_action": 1,
+        "automatic_rollback": false,
         "production_zones_untouched": [1, 2, 3, 4, 5, 6]
       }
     },

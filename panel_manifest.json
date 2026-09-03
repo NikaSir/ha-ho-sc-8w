@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.46",
-  "integration_version": "1.0.0-b005.66",
+  "panel_version": "0.6.47",
+  "integration_version": "1.0.0-b005.67",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -38,13 +38,17 @@
       "write_enabled": false,
       "mode": "read_only_incident_hold",
       "hex_probe_enabled": true,
-      "recovery_enabled": false,
+      "recovery_enabled": true,
+      "recovery_scope": "exact_zone8_known_block_only",
+      "expected_damaged_hex": "08EFEFEFEFEFEFFF8A9FDFEFFBFF007F1A090311",
+      "known_backup_hex": "0800FFFFFFFFFFFFFFFFFFFFFFFF007F16010111",
       "hex_probe_transport": "uppercase_ascii_hex",
       "hex_probe_scope": "all_dp38_raw_observer_read_only",
       "persistent_exact_backup": true,
       "requires_idle_controller": true,
       "readback_dps": [38],
-      "writes_performed": 0,
+      "maximum_writes_per_action": 1,
+      "automatic_rollback": false,
       "production_zones_untouched": [1, 2, 3, 4, 5, 6]
     }
   },

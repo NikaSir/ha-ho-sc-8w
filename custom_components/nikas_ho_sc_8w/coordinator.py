@@ -188,6 +188,19 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
                 self.async_set_updated_data(self.api.device)
             return result
 
+    async def async_restore_zone8_known_backup(
+        self, confirmation: str
+    ) -> dict[str, object]:
+        """Run the single-purpose guarded Zone 8 recovery and publish read-back."""
+        async with self._transport_lock:
+            try:
+                result = await self.hass.async_add_executor_job(
+                    self.api.restore_zone8_known_backup, confirmation
+                )
+            finally:
+                self.async_set_updated_data(self.api.device)
+            return result
+
     async def async_start_listener(self) -> None:
         if self._transport_task is None:
             self._transport_task = self.hass.async_create_background_task(

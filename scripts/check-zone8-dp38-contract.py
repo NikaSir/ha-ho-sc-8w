@@ -294,6 +294,108 @@ except PermissionError:
 else:
     raise AssertionError("The HEX probe must require its exact confirmation token")
 
+
+class GuardedRestoreAPI(FakeZone8API):
+    def __init__(self, reads: list[bytes]) -> None:
+        super().__init__()
+        self._connected = True
+        self.reads = list(reads)
+        self.device.operation_mode = "OFF"
+        self.device.active_zone = 0
+        self.device.queued_zone = 0
+        for zone in range(1, 8):
+            self.device.ingest_schedule_block(block(zone), source="controller")
+
+    def _collect_zone8_dp38_samples(
+        self, timeout_seconds: float = 12.0
+    ) -> list[bytes]:
+        del timeout_seconds
+        current = self.reads.pop(0)
+        try:
+            models.validate_dp38_block(current, expected_zone=8)
+            valid = True
+            error = ""
+        except ValueError as exc:
+            valid = False
+            error = str(exc)
+        self.device.zone8_hex_probe_samples = [{
+            "raw_hex": current.hex().upper(),
+            "length": 20,
+            "station": 8,
+            "count": 2,
+            "sources": ["status", "updatedps"],
+            "fresh": True,
+            "valid": valid,
+            "error": error,
+        }]
+        self.device.zone8_hex_probe_trace = {
+            "safety_dps_seen": [
+                const.DP_OPERATION_MODE,
+                const.DP_ACTIVE_ZONE,
+                const.DP_QUEUED_ZONE,
+            ]
+        }
+        return [current] if valid else []
+
+
+damaged = bytes.fromhex(const.ZONE8_DAMAGED_BLOCK_HEX)
+backup = bytes.fromhex(const.ZONE8_KNOWN_BACKUP_HEX)
+restore = GuardedRestoreAPI([damaged, backup])
+production_before = dict(restore.device.schedule_blocks)
+recovered = restore.restore_zone8_known_backup(
+    const.ZONE8_KNOWN_RESTORE_CONFIRMATION
+)
+assert recovered["verified"] is True
+assert recovered["writes_performed"] == 1
+assert recovered["from_hex"] == const.ZONE8_DAMAGED_BLOCK_HEX
+assert recovered["to_hex"] == const.ZONE8_KNOWN_BACKUP_HEX
+assert len(restore.writes) == 1
+assert restore.writes[0][0] == DP_NORMAL_TIME
+assert restore.writes[0][1] == const.ZONE8_KNOWN_BACKUP_HEX
+assert all(
+    restore.device.schedule_blocks[zone] == production_before[zone]
+    for zone in range(1, 8)
+)
+assert restore.device.zone8_restore_status == "restored"
+assert restore.device.zone8_restore_readback_hex == const.ZONE8_KNOWN_BACKUP_HEX
+
+mismatch = bytearray(backup)
+mismatch[16:19] = bytes((26, 9, 4))
+bad_readback = GuardedRestoreAPI([damaged, bytes(mismatch)])
+try:
+    bad_readback.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
+except RuntimeError as exc:
+    assert "no rollback" in str(exc)
+else:
+    raise AssertionError("A mismatched read-back must fail")
+assert len(bad_readback.writes) == 1, "Read-back failure must never auto-rollback"
+
+wrong_current = GuardedRestoreAPI([backup])
+try:
+    wrong_current.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
+except RuntimeError as exc:
+    assert "does not exactly match" in str(exc)
+else:
+    raise AssertionError("A changed current block must stop before writing")
+assert wrong_current.writes == []
+
+wrong_mode = GuardedRestoreAPI([damaged])
+wrong_mode.device.operation_mode = "Auto"
+try:
+    wrong_mode.restore_zone8_known_backup(const.ZONE8_KNOWN_RESTORE_CONFIRMATION)
+except RuntimeError as exc:
+    assert "physical controller to OFF" in str(exc)
+else:
+    raise AssertionError("Recovery must require physical OFF")
+assert wrong_mode.writes == []
+
+try:
+    GuardedRestoreAPI([damaged]).restore_zone8_known_backup("wrong")
+except PermissionError:
+    pass
+else:
+    raise AssertionError("Recovery must require its exact confirmation token")
+
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
@@ -303,10 +405,13 @@ for marker in (
     '"cached_only"',
     '"no_dp38"',
     '"observed_variants"',
+    '"corrupt_zone8"',
     '"writes_performed": 0',
     '"read_only": True',
     "block.hex().upper()",
+    "restore_zone8_known_backup",
+    "automatic rollback was not attempted",
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
-print("DP38 raw observer and write hold: PASS")
+print("DP38 raw observer and guarded Zone 8 recovery: PASS")
