@@ -52,6 +52,8 @@ set_seasonal_adjustment:
           mode: box
 
 probe_zone8_dp38_hex:
+  name: Read Zone 8 DP38
+  description: Reads the current Zone 8 DP38 block twice without sending any write command.
   fields:
     config_entry_id:
       selector:
