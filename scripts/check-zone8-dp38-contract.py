@@ -129,8 +129,8 @@ class ActiveRefreshAPI(HOSC8WAPI):
 active_refresh = ActiveRefreshAPI()
 fresh = active_refresh._collect_confirmed_zone8_dp38(timeout_seconds=1)
 assert fresh == block(8)
-assert active_refresh.fake_device.status_calls == 1
-assert active_refresh.fake_device.refresh_calls == 1
+assert active_refresh.fake_device.status_calls == 2
+assert active_refresh.fake_device.refresh_calls == 2
 assert active_refresh.fake_device.timeouts == [1, 5]
 assert active_refresh.device.schedule_sources[8] == "controller"
 
@@ -194,29 +194,51 @@ class IsolatedProbeAPI(FakeZone8API):
             self.device.ingest_schedule_block(block(zone), source="controller")
         self.reads = 0
 
-    def _collect_confirmed_zone8_dp38(
+    def _collect_zone8_dp38_samples(
         self, timeout_seconds: float = 8.0
-    ) -> bytes:
+    ) -> list[bytes]:
         del timeout_seconds
         self.reads += 1
-        return self.device.schedule_blocks[8]
+        return [self.device.schedule_blocks[8], self.device.schedule_blocks[8]]
 
 
 isolated = IsolatedProbeAPI()
 before_probe = dict(isolated.device.schedule_blocks)
 result = isolated.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
-assert result == {
-    "verified": True,
-    "read_only": True,
-    "writes_performed": 0,
-    "zone": 8,
-    "raw_hex": before_probe[8].hex().upper(),
-}
+assert result["verified"] is True
+assert result["read_only"] is True
+assert result["writes_performed"] == 0
+assert result["zone"] == 8
+assert result["raw_hex"] == before_probe[8].hex().upper()
+assert result["samples"][0]["raw_hex"] == before_probe[8].hex().upper()
+assert result["samples"][0]["count"] == 2
 assert isolated.reads == 1
 assert isolated.writes == []
 assert isolated.device.schedule_blocks == before_probe
 assert isolated.device.zone8_hex_probe_status == "verified"
 assert before_probe[8].hex().upper() in isolated.device.zone8_hex_probe_detail
+
+
+class AlternatingProbeAPI(IsolatedProbeAPI):
+    def _collect_zone8_dp38_samples(
+        self, timeout_seconds: float = 8.0
+    ) -> list[bytes]:
+        del timeout_seconds
+        first = self.device.schedule_blocks[8]
+        second = bytearray(first)
+        second[16:19] = bytes((26, 9, 3))
+        return [first, bytes(second)]
+
+
+alternating = AlternatingProbeAPI()
+alternating_before = dict(alternating.device.schedule_blocks)
+alternating_result = alternating.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
+assert alternating_result["verified"] is False
+assert alternating_result["writes_performed"] == 0
+assert len(alternating_result["samples"]) == 2
+assert alternating.device.zone8_hex_probe_status == "observed_variants"
+assert alternating.writes == []
+assert alternating.device.schedule_blocks == alternating_before
 
 blocked = IsolatedProbeAPI()
 blocked.device.operation_mode = "Auto"
@@ -240,11 +262,12 @@ for marker in (
     "safety_dps_seen",
     "required_safety_dps",
     "device.updatedps([DP_NORMAL_TIME])",
-    "matching_reads < 2",
+    "zone8_hex_probe_samples",
+    '"observed_variants"',
     '"writes_performed": 0',
     '"read_only": True',
     "block.hex().upper()",
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
-print("Zone 8 DP38 double-read inspection and write hold: PASS")
+print("Zone 8 DP38 multi-sample inspection and write hold: PASS")
