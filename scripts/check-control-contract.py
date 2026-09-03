@@ -61,14 +61,16 @@ manual_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0637.mjs"
 wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0638.mjs").read_text(encoding="utf-8")
 zone8_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0639.mjs").read_text(encoding="utf-8")
 draft_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0640.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source
+incident_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0641.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.60"
-assert panel["panel"]["dashboard_version"] == "0.6.40"
-assert panel_manifest["panel_version"] == "0.6.40"
+assert manifest["version"] == "1.0.0-b005.61"
+assert panel["panel"]["dashboard_version"] == "0.6.41"
+assert panel_manifest["panel_version"] == "0.6.41"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.40"' in const_source
-assert 'irrigation-panel-v0640.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.41"' in const_source
+assert 'irrigation-panel-v0641.mjs' in const_source
+assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
 assert 'irrigation-panel-v0637.mjs' in wrapper_source
 assert 'className = "manualZoneRemaining"' in wrapper_source
@@ -83,6 +85,12 @@ assert 'const UI_VERSION = "0.6.40"' in draft_wrapper_source
 assert 'this._ensureZone8LabEvents()' in draft_wrapper_source
 assert 'if (this._zone8LabEventsBound) return' in draft_wrapper_source
 assert '"[data-zone8-field]"' in draft_wrapper_source
+assert 'const UI_VERSION = "0.6.41"' in incident_wrapper_source
+assert "Запись DP38 аварийно отключена" in incident_wrapper_source
+assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
+assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
+assert "partial(_async_restore_zone8_schedule, hass)" not in setup_source
 assert 'replace("<small>ПРОГРАММА</small>", "")' in compact_wrapper_source
 assert "Зоны — просмотр. Сезон — изменение с подтверждением." in fit_wrapper_source
 assert ".programPageIntro{padding-bottom:8px}" in fit_wrapper_source

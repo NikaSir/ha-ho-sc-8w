@@ -70,7 +70,7 @@ The primary Bottom Tab Bar is:
 Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. Diagnostics contains the isolated Zone 8 laboratory: each confirmed action changes one decoded DP38 field, preserves the other 19-byte block content, requires exact controller read-back and keeps a persistent original block for restoration.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. The Zone 8 DP38 laboratory in Diagnostics is on a read-only incident hold after a Base64 payload was sent to the String DP38 `normal_time` field and produced invalid production schedules. The corrected encoder uses one 20-byte station block represented by 40 uppercase ASCII HEX characters, but both write and restore services remain disabled until a controlled Zone 8 round trip verifies the hardware behavior and all eight stations remain unchanged except the target.
 
 ### Full-field Overview v0.4.3
 

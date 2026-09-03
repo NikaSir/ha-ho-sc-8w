@@ -8,7 +8,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, NUM_ZONES
+from .const import DOMAIN, NUM_ZONES, ZONE8_DP38_WRITES_ENABLED
 from .coordinator import HOSC8WCoordinator
 from .entity import HOSC8WEntity
 
@@ -119,7 +119,8 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                     "lab_requested_value": device.zone8_lab_requested_value,
                     "lab_last_readback_raw": device.zone8_lab_last_readback_raw,
                     "lab_write_allowed": (
-                        len(device.schedule_blocks) == NUM_ZONES
+                        ZONE8_DP38_WRITES_ENABLED
+                        and len(device.schedule_blocks) == NUM_ZONES
                         and device.schedule_sources.get(8) == "controller"
                         and not device.active_zone
                         and not device.queued_zone

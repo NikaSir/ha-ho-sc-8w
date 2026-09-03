@@ -6,6 +6,7 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.61` / panel `0.6.41`: emergency-disable every DP38 write and the Zone 8 restore action after hardware testing exposed invalid production schedules. Root cause: DP38 `normal_time` is a String DP requiring a 40-character ASCII HEX station block, while the laboratory sent the Base64 encoding used by RAW DP45. The corrected HEX encoder remains hardware-write-disabled pending a Zone 8 round-trip test and eight-zone comparison.
 - `1.0.0-b005.59`: prefixes the integration/HACS name with `NikaS` and
   republishes the approved local brand icon.
 - `1.0.0-b005.60` / panel `0.6.40`: bind the Zone 8 laboratory draft and action handlers from the first rendered view as well as from `connectedCallback`, preventing an entered start time from reverting when focus moves to another field.

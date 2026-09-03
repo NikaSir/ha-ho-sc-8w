@@ -18,6 +18,7 @@ from .const import (
     CONNECTION_MODE_CLOUD,
     CONNECTION_MODE_LOCAL,
     CONNECTION_MODES,
+    ZONE8_DP38_WRITES_ENABLED,
 )
 from .schedule_cache import HOSC8WScheduleCache
 
@@ -140,6 +141,8 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
         self, field: str, value: str
     ) -> dict[str, object]:
         """Persist a safety backup, change one Zone 8 field and publish read-back."""
+        if not ZONE8_DP38_WRITES_ENABLED:
+            raise RuntimeError("DP38 schedule writes are disabled for controller safety")
         async with self._transport_lock:
             current = await self.hass.async_add_executor_job(
                 self.api.snapshot_zone8_schedule_for_lab
@@ -158,6 +161,8 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
 
     async def async_restore_zone8_schedule(self) -> dict[str, object]:
         """Restore the exact persistent Zone 8 laboratory backup."""
+        if not ZONE8_DP38_WRITES_ENABLED:
+            raise RuntimeError("DP38 schedule restoration is disabled for controller safety")
         async with self._transport_lock:
             backup = self.schedule_cache.zone8_lab_backup
             if backup is None:

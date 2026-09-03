@@ -37,6 +37,7 @@ from .const import (
     SEASONAL_ADJUST_MIN,
     SEASONAL_ADJUST_STEP,
     TUYA_VERSION,
+    ZONE8_DP38_WRITES_ENABLED,
 )
 from .models import (
     PROFILE,
@@ -704,7 +705,7 @@ class HOSC8WAPI:
             modes = {"weekly": 0, "odd": 1, "even": 2, "interval": 3}
             if value not in modes:
                 raise ValueError("Cycle mode must be weekly, odd, even or interval")
-            requested[14] = modes[value]
+            requested[14] = (requested[14] & 0xFC) | modes[value]
         if field == "cycle_value":
             cycle_value = int(value)
             if not 0 <= cycle_value <= 255:
@@ -748,6 +749,10 @@ class HOSC8WAPI:
         self, field: str, value: str, expected_current: bytes
     ) -> dict[str, Any]:
         """Write one Zone 8 DP38 field and require an exact controller read-back."""
+        if not ZONE8_DP38_WRITES_ENABLED:
+            raise RuntimeError(
+                "DP38 schedule writes are disabled after a Zone 8 write changed production schedules"
+            )
         validate_dp38_block(expected_current, expected_zone=8)
         requested = self._zone8_block_with_field(expected_current, field, value)
         if not self._command_lock.acquire(blocking=False):
@@ -772,7 +777,11 @@ class HOSC8WAPI:
                     self.device.zone8_lab_last_readback_raw = current.hex().upper()
                     return {"verified": True, "changed": False, "raw_hex": current.hex().upper()}
                 self.device.zone8_lab_last_status = "waiting_readback"
-                encoded = base64.b64encode(requested).decode("ascii")
+                # DP38 `normal_time` is a Tuya String DP. The controller data
+                # model requires one 20-byte station block encoded as 40 ASCII
+                # hexadecimal characters. Base64 is correct for RAW DP45, but
+                # corrupts DP38 because the firmware parses it as hexadecimal.
+                encoded = requested.hex().upper()
                 self._write_command_value(
                     DP_NORMAL_TIME,
                     encoded,
@@ -796,6 +805,10 @@ class HOSC8WAPI:
 
     def restore_zone8_schedule(self, backup: bytes) -> dict[str, Any]:
         """Restore the exact saved Zone 8 block and verify controller read-back."""
+        if not ZONE8_DP38_WRITES_ENABLED:
+            raise RuntimeError(
+                "DP38 schedule restoration is disabled because a single-zone write is not isolated"
+            )
         validate_dp38_block(backup, expected_zone=8)
         current = self.snapshot_zone8_schedule_for_lab()
         if current == backup:
@@ -809,7 +822,7 @@ class HOSC8WAPI:
                 self.device.zone8_lab_last_status = "restoring"
                 self._write_command_value(
                     DP_NORMAL_TIME,
-                    base64.b64encode(backup).decode("ascii"),
+                    backup.hex().upper(),
                     cloud_code="normal_time",
                     cloud_value=backup.hex().upper(),
                 )

@@ -254,18 +254,6 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             partial(_async_set_seasonal_adjustment, hass),
             schema=_SEASONAL_ADJUSTMENT_SCHEMA,
         )
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SET_ZONE8_SCHEDULE_FIELD,
-            partial(_async_set_zone8_schedule_field, hass),
-            schema=_ZONE8_SCHEDULE_FIELD_SCHEMA,
-        )
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_RESTORE_ZONE8_SCHEDULE,
-            partial(_async_restore_zone8_schedule, hass),
-            schema=_ENTRY_COMMAND_SCHEMA,
-        )
     return True
 
 

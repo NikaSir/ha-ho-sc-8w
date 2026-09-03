@@ -14,6 +14,7 @@ MANUAL_DURATION_MAX = 120
 SEASONAL_ADJUST_MIN = -90
 SEASONAL_ADJUST_MAX = 100
 SEASONAL_ADJUST_STEP = 10
+ZONE8_DP38_WRITES_ENABLED = False
 
 SERVICE_START_MANUAL_QUEUE = "start_manual_queue"
 SERVICE_SKIP_CURRENT_MANUAL = "skip_current_manual"
@@ -64,6 +65,6 @@ PANEL_ICON = "mdi:sprinkler"
 PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
-PANEL_VERSION = "0.6.40"
+PANEL_VERSION = "0.6.41"
 PANEL_STATIC_URL = "/nikas-ho-sc-8w"
-PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0640.mjs"
+PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0641.mjs"

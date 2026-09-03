@@ -121,7 +121,8 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 },
                 "zone_8_schedule_lab": {
                     "zone": 8,
-                    "field_granularity": "one_field_per_confirmed_write",
+                    "write_enabled": False,
+                    "mode": "read_only_incident_hold",
                     "requires_complete_cache": True,
                     "requires_controller_source": True,
                     "requires_idle_controller": True,
