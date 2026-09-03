@@ -126,7 +126,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                     "hex_probe_enabled": True,
                     "recovery_enabled": False,
                     "hex_probe_transport": "uppercase_ascii_hex",
-                    "hex_probe_scope": "zone_8_multi_sample_read_only",
+                    "hex_probe_scope": "all_dp38_raw_observer_read_only",
                     "requires_complete_cache": False,
                     "requires_controller_source": True,
                     "requires_idle_controller": True,

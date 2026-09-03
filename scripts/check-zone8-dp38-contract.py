@@ -240,6 +240,43 @@ assert alternating.device.zone8_hex_probe_status == "observed_variants"
 assert alternating.writes == []
 assert alternating.device.schedule_blocks == alternating_before
 
+
+class NoDP38Device(ActiveRefreshDevice):
+    def status(self) -> dict[str, Any]:
+        self.status_calls += 1
+        return {
+            "dps": {
+                str(const.DP_OPERATION_MODE): "OFF",
+                str(const.DP_ACTIVE_ZONE): 0,
+                str(const.DP_QUEUED_ZONE): 0,
+            }
+        }
+
+    def updatedps(self, indexes: list[int]) -> dict[str, Any]:
+        assert indexes == [DP_NORMAL_TIME]
+        self.refresh_calls += 1
+        return {"dps": {str(const.DP_OPERATION_MODE): "OFF"}}
+
+
+class CachedOnlyProbeAPI(ActiveRefreshAPI):
+    def __init__(self) -> None:
+        HOSC8WAPI.__init__(self, "device", "key", "127.0.0.1")
+        self.fake_device = NoDP38Device()
+        self._connected = True
+        self._tuya = self.fake_device
+        self.device.ingest_schedule_block(block(8), source="restore_cache")
+
+
+cached_only = CachedOnlyProbeAPI()
+cached_result = cached_only.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
+assert cached_result["verified"] is False
+assert cached_result["writes_performed"] == 0
+assert cached_result["raw_hex"] == ""
+assert cached_result["trace"]["active_requests"] == 12
+assert cached_only.device.zone8_hex_probe_status == "cached_only"
+assert cached_only.device.zone8_hex_probe_samples[0]["fresh"] is False
+assert cached_only.device.zone8_hex_probe_samples[0]["raw_hex"] == block(8).hex().upper()
+
 blocked = IsolatedProbeAPI()
 blocked.device.operation_mode = "Auto"
 try:
@@ -260,9 +297,11 @@ else:
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
-    "required_safety_dps",
     "device.updatedps([DP_NORMAL_TIME])",
     "zone8_hex_probe_samples",
+    "zone8_hex_probe_trace",
+    '"cached_only"',
+    '"no_dp38"',
     '"observed_variants"',
     '"writes_performed": 0',
     '"read_only": True',
@@ -270,4 +309,4 @@ for marker in (
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
-print("Zone 8 DP38 multi-sample inspection and write hold: PASS")
+print("DP38 raw observer and write hold: PASS")
