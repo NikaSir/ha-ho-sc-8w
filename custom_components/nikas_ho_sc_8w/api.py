@@ -44,6 +44,10 @@ from .const import (
     ZONE8_ANCHOR_DATE_TEST_TARGET_HEX,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
+    ZONE8_FULL_FRAME_TEST_CONFIRMATION,
+    ZONE8_FULL_FRAME_TEST_CURRENT_HEX,
+    ZONE8_FULL_FRAME_TEST_ENABLED,
+    ZONE8_FULL_FRAME_TEST_TARGET_HEX,
     ZONE8_DAMAGED_BLOCK_HEX,
     ZONE8_KNOWN_BACKUP_HEX,
     ZONE8_KNOWN_RESTORE_CONFIRMATION,
@@ -111,6 +115,11 @@ class HOSC8WDevice:
         self.dp38_snapshot_baseline_at = ""
         self.dp38_snapshot_current_at = ""
         self.dp38_snapshot_trace: dict[str, Any] = {}
+        self.zone8_full_frame_test_status = "idle"
+        self.zone8_full_frame_test_detail = ""
+        self.zone8_full_frame_test_attempted = False
+        self.zone8_full_frame_test_from_hex = ZONE8_FULL_FRAME_TEST_CURRENT_HEX
+        self.zone8_full_frame_test_to_hex = ZONE8_FULL_FRAME_TEST_TARGET_HEX
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -1147,6 +1156,125 @@ class HOSC8WAPI:
             "changes": changes,
         }
 
+    @staticmethod
+    def _dp38_full_frame(snapshot: dict[int, dict[str, Any]]) -> bytes:
+        """Return an exact, ordered eight-zone DP38 frame."""
+        if set(snapshot) != set(range(1, NUM_ZONES + 1)):
+            raise RuntimeError("A complete zones 1-8 DP38 snapshot is required")
+        blocks: list[bytes] = []
+        for zone in range(1, NUM_ZONES + 1):
+            try:
+                block = bytes.fromhex(str(snapshot[zone]["raw_hex"]))
+            except (KeyError, TypeError, ValueError) as exc:
+                raise RuntimeError(f"Zone {zone} snapshot block is invalid") from exc
+            validate_dp38_block(block, expected_zone=zone)
+            blocks.append(block)
+        frame = b"".join(blocks)
+        if len(frame) != NUM_ZONES * 20:
+            raise RuntimeError("DP38 full frame must be exactly 160 bytes")
+        return frame
+
+    def _write_dp38_full_frame(self, frame: bytes) -> None:
+        """Dispatch one complete eight-zone frame as uppercase ASCII HEX."""
+        if len(frame) != NUM_ZONES * 20:
+            raise ValueError("DP38 full-frame write requires exactly 160 bytes")
+        for zone in range(1, NUM_ZONES + 1):
+            block = frame[(zone - 1) * 20 : zone * 20]
+            validate_dp38_block(block, expected_zone=zone)
+        encoded = frame.hex().upper()
+        if len(encoded) != 320:
+            raise RuntimeError("DP38 full-frame transport must contain 320 HEX characters")
+        self._write_command_value(
+            DP_NORMAL_TIME,
+            encoded,
+            cloud_code="normal_time",
+            cloud_value=encoded,
+        )
+
+    def test_zone8_full_frame_write(self, confirmation: str) -> dict[str, Any]:
+        """Advance Zone 8 with one frame; no automatic rollback or retry."""
+        if not ZONE8_FULL_FRAME_TEST_ENABLED:
+            raise RuntimeError("The Zone 8 full-frame write test is disabled")
+        if confirmation != ZONE8_FULL_FRAME_TEST_CONFIRMATION:
+            raise PermissionError("Explicit full-frame write confirmation is required")
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("The DP38 full-frame write test is local-transport only")
+        if self.device.zone8_full_frame_test_attempted:
+            raise RuntimeError("The DP38 full-frame write was already attempted")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller action is still in progress")
+        dispatched = False
+        try:
+            with self._io_lock:
+                self.device.zone8_full_frame_test_status = "preflight"
+                self.device.zone8_full_frame_test_detail = ""
+                self._require_fresh_command_state()
+                if str(self.device.operation_mode).lower() != "auto":
+                    raise RuntimeError("Set the physical controller to ON/Auto before the write")
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before the DP38 write")
+                if self.device.dp38_snapshot_status != "baseline_saved":
+                    raise RuntimeError("Capture a fresh baseline snapshot immediately before the write")
+                try:
+                    baseline_at = datetime.fromisoformat(
+                        self.device.dp38_snapshot_baseline_at
+                    )
+                except ValueError as exc:
+                    raise RuntimeError("The baseline snapshot timestamp is invalid") from exc
+                baseline_age = (datetime.now(timezone.utc) - baseline_at).total_seconds()
+                if baseline_age < 0 or baseline_age > 15 * 60:
+                    raise RuntimeError(
+                        "The baseline snapshot is older than 15 minutes; capture it again"
+                    )
+
+                before = self._dp38_full_frame(self.device.dp38_snapshot_baseline)
+                zone8_offset = (8 - 1) * 20
+                current_zone8 = before[zone8_offset : zone8_offset + 20]
+                expected = bytes.fromhex(ZONE8_FULL_FRAME_TEST_CURRENT_HEX)
+                target_zone8 = bytes.fromhex(ZONE8_FULL_FRAME_TEST_TARGET_HEX)
+                if current_zone8 != expected:
+                    raise RuntimeError(
+                        "Fresh baseline Zone 8 must be exactly 2026-09-04 before this test"
+                    )
+
+                after = bytearray(before)
+                after[zone8_offset : zone8_offset + 20] = target_zone8
+                changed_offsets = [
+                    index
+                    for index, (old, new) in enumerate(zip(before, after, strict=True))
+                    if old != new
+                ]
+                if changed_offsets != [zone8_offset + 18]:
+                    raise RuntimeError("The full-frame test must change only Zone 8 byte 18")
+
+                self.device.zone8_full_frame_test_attempted = True
+                self.device.zone8_full_frame_test_status = "writing_once"
+                self._write_dp38_full_frame(bytes(after))
+                dispatched = True
+                self.device.zone8_full_frame_test_status = "awaiting_compare"
+                self.device.zone8_full_frame_test_detail = (
+                    "One 160-byte DP38 frame was sent; capture a control snapshot of zones 1-8"
+                )
+                return {
+                    "verified": False,
+                    "awaiting_control_snapshot": True,
+                    "writes_performed": 1,
+                    "frame_bytes": len(after),
+                    "hex_characters": len(after.hex()),
+                    "changed_zone": 8,
+                    "changed_byte_offset": 18,
+                    "from_hex": expected.hex().upper(),
+                    "to_hex": target_zone8.hex().upper(),
+                }
+        except Exception as exc:
+            self.device.zone8_full_frame_test_status = (
+                "dispatch_unknown" if dispatched else "blocked"
+            )
+            self.device.zone8_full_frame_test_detail = str(exc)
+            raise
+        finally:
+            self._command_lock.release()
+
     def capture_dp38_snapshot(
         self, phase: str, confirmation: str
     ) -> dict[str, Any]:
@@ -1237,6 +1365,27 @@ class HOSC8WAPI:
                         if changed
                         else "All eight DP38 blocks match the baseline"
                     )
+                    if self.device.zone8_full_frame_test_status == "awaiting_compare":
+                        expected_before = ZONE8_FULL_FRAME_TEST_CURRENT_HEX
+                        expected_after = ZONE8_FULL_FRAME_TEST_TARGET_HEX
+                        changes = self.device.dp38_snapshot_diff.get("changes", [])
+                        confirmed = (
+                            len(changes) == 1
+                            and changes[0].get("zone") == 8
+                            and changes[0].get("before_hex") == expected_before
+                            and changes[0].get("after_hex") == expected_after
+                            and changes[0].get("offsets") == [18]
+                            and self.device.dp38_snapshot_diff.get("unchanged_zones")
+                            == list(range(1, 8))
+                        )
+                        self.device.zone8_full_frame_test_status = (
+                            "confirmed" if confirmed else "comparison_mismatch"
+                        )
+                        self.device.zone8_full_frame_test_detail = (
+                            "Only Zone 8 anchor day changed from 04 to 05"
+                            if confirmed
+                            else "Control snapshot did not match the one-byte full-frame target"
+                        )
                 return {
                     "verified": True,
                     "read_only": True,

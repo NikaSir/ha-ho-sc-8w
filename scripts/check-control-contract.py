@@ -76,14 +76,15 @@ safety_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0651.mjs"
 program_form_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0652.mjs").read_text(encoding="utf-8")
 snapshot_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0653.mjs").read_text(encoding="utf-8")
 snapshot_mode_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0654.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source
+full_frame_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0655.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.74"
-assert panel["panel"]["dashboard_version"] == "0.6.54"
-assert panel_manifest["panel_version"] == "0.6.54"
+assert manifest["version"] == "1.0.0-b005.75"
+assert panel["panel"]["dashboard_version"] == "0.6.55"
+assert panel_manifest["panel_version"] == "0.6.55"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.54"' in const_source
-assert 'irrigation-panel-v0654.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.55"' in const_source
+assert 'irrigation-panel-v0655.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -195,8 +196,13 @@ assert 'operation !== "auto"' in snapshot_mode_wrapper_source
 assert 'контроллер и установите режим Auto' in snapshot_mode_wrapper_source
 assert 'Контроллер должен быть включён, находиться в режиме Auto' in snapshot_mode_wrapper_source
 assert 'Команды записи DP38 не отправляются' in snapshot_mode_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0654.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0654.mjs")
+assert 'const UI_VERSION = "0.6.55"' in full_frame_wrapper_source
+assert 'irrigation-panel-v0654.mjs' in full_frame_wrapper_source
+assert 'test_zone8_full_frame_write' in full_frame_wrapper_source
+assert 'Будут отправлены все восемь исходных блоков' in full_frame_wrapper_source
+assert 'Повтора и автоматического отката не будет' in full_frame_wrapper_source
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0655.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0655.mjs")
 expected_program_subtabs = ["general_parameters", "zone_parameters"]
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
@@ -235,6 +241,13 @@ snapshot_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_s
 assert snapshot_meta["zones"] == list(range(1, 9))
 assert snapshot_meta["read_only"] is True
 assert snapshot_meta["writes_performed"] == 0
+full_frame_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_frame_test"]
+assert full_frame_meta["enabled"] is True
+assert full_frame_meta["zones"] == list(range(1, 9))
+assert full_frame_meta["frame_bytes"] == 160
+assert full_frame_meta["maximum_writes_per_action"] == 1
+assert full_frame_meta["automatic_retry"] is False
+assert full_frame_meta["automatic_rollback"] is False
 assert snapshot_meta["requires_physical_mode"] == "AUTO_ON"
 assert snapshot_meta["requires_idle_controller"] is True
 assert '"hex_probe_allowed"' in sensor_source

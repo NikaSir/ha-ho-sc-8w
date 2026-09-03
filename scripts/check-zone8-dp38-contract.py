@@ -561,6 +561,88 @@ assert compare_result["diff"]["changes"][0]["bytes"] == [
 ]
 assert full_snapshot.writes == []
 
+
+class FullFrameWriteAPI(FullSnapshotAPI):
+    """Model the one-shot 160-byte DP38 write and later physical read-back."""
+
+    def _write_command_value(
+        self,
+        dp: int,
+        value: Any,
+        *,
+        cloud_code: str,
+        cloud_value: Any | None = None,
+        nowait: bool = False,
+    ) -> None:
+        del nowait
+        assert dp == DP_NORMAL_TIME
+        assert cloud_code == "normal_time"
+        assert isinstance(value, str) and len(value) == 320
+        assert value == value.upper() == cloud_value
+        frame = bytes.fromhex(value)
+        assert len(frame) == 160
+        self.writes.append((dp, value, cloud_code, cloud_value))
+
+
+full_frame = FullFrameWriteAPI()
+full_frame.snapshot_blocks[7] = bytes.fromhex(
+    const.DP38_KNOWN_BACKUP_HEX_BY_ZONE[7]
+)
+full_frame.snapshot_blocks[8] = bytes.fromhex(
+    const.ZONE8_FULL_FRAME_TEST_CURRENT_HEX
+)
+full_frame_baseline = full_frame.capture_dp38_snapshot(
+    "baseline", const.DP38_SNAPSHOT_CONFIRMATION
+)
+before_frame = b"".join(
+    bytes.fromhex(full_frame_baseline["blocks"][str(zone)])
+    for zone in range(1, 9)
+)
+write_result = full_frame.test_zone8_full_frame_write(
+    const.ZONE8_FULL_FRAME_TEST_CONFIRMATION
+)
+assert write_result["verified"] is False
+assert write_result["awaiting_control_snapshot"] is True
+assert write_result["writes_performed"] == 1
+assert write_result["frame_bytes"] == 160
+assert write_result["hex_characters"] == 320
+assert len(full_frame.writes) == 1
+sent_frame = bytes.fromhex(full_frame.writes[0][1])
+assert [
+    index
+    for index, (before, after) in enumerate(
+        zip(before_frame, sent_frame, strict=True)
+    )
+    if before != after
+] == [7 * 20 + 18]
+assert sent_frame[: 7 * 20] == before_frame[: 7 * 20]
+assert sent_frame[7 * 20 :] == bytes.fromhex(
+    const.ZONE8_FULL_FRAME_TEST_TARGET_HEX
+)
+assert full_frame.device.zone8_full_frame_test_status == "awaiting_compare"
+
+try:
+    full_frame.test_zone8_full_frame_write(
+        const.ZONE8_FULL_FRAME_TEST_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "already attempted" in str(exc)
+else:
+    raise AssertionError("The full-frame test must never dispatch twice")
+assert len(full_frame.writes) == 1
+
+full_frame.snapshot_blocks[8] = bytes.fromhex(
+    const.ZONE8_FULL_FRAME_TEST_TARGET_HEX
+)
+verified_compare = full_frame.capture_dp38_snapshot(
+    "compare", const.DP38_SNAPSHOT_CONFIRMATION
+)
+assert verified_compare["diff"]["changed_zones"] == [8]
+assert verified_compare["diff"]["changes"][0]["offsets"] == [18]
+assert verified_compare["diff"]["unchanged_zones"] == list(range(1, 8))
+assert full_frame.device.zone8_full_frame_test_status == "confirmed"
+assert len(full_frame.writes) == 1
+
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
@@ -588,6 +670,13 @@ for marker in (
     "zone8_anchor_date_test_attempted = True",
     "no retry or rollback was sent",
     "Single-block DP38 writes are disabled after a Zone 8 command affected Zone 4",
+    "def _write_dp38_full_frame",
+    "len(encoded) != 320",
+    "changed_offsets != [zone8_offset + 18]",
+    "baseline_age > 15 * 60",
+    "zone8_full_frame_test_attempted = True",
+    '"awaiting_control_snapshot": True',
+    "no automatic rollback",
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
@@ -604,4 +693,11 @@ assert "_write_command_value" not in snapshot_source
 assert "_write_dp38_hex_block" not in snapshot_source
 assert "_write_local_dps" not in snapshot_source
 
-print("DP38 read-only observer and cross-zone write lockout: PASS")
+full_frame_writer_source = api_source.split("def _write_dp38_full_frame", 1)[1].split(
+    "def test_zone8_full_frame_write", 1
+)[0]
+assert "_write_command_value" in full_frame_writer_source
+assert "DP_NORMAL_TIME" in full_frame_writer_source
+assert "len(encoded) != 320" in full_frame_writer_source
+
+print("DP38 snapshots, single-block lockout and guarded full-frame write: PASS")

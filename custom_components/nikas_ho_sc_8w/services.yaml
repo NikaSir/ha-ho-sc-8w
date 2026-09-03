@@ -89,3 +89,19 @@ capture_dp38_snapshot:
         select:
           options:
             - DP38_FULL_SNAPSHOT_READ_ONLY
+
+test_zone8_full_frame_write:
+  name: Test Zone 8 with a full DP38 frame
+  description: Sends exactly one 160-byte DP38 frame built from a fresh zones 1-8 baseline. Only Zone 8 anchor day 04 to 05 may differ. No retry or rollback is sent.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    confirmation:
+      required: true
+      example: WRITE_FULL_DP38_FRAME_ZONE8_DATE_2026_09_05_ONCE
+      selector:
+        select:
+          options:
+            - WRITE_FULL_DP38_FRAME_ZONE8_DATE_2026_09_05_ONCE

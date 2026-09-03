@@ -229,6 +229,19 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
                 self.async_set_updated_data(self.api.device)
             return result
 
+    async def async_test_zone8_full_frame_write(
+        self, confirmation: str
+    ) -> dict[str, object]:
+        """Send the guarded one-shot eight-zone DP38 frame."""
+        async with self._transport_lock:
+            try:
+                result = await self.hass.async_add_executor_job(
+                    self.api.test_zone8_full_frame_write, confirmation
+                )
+            finally:
+                self.async_set_updated_data(self.api.device)
+            return result
+
     async def async_start_listener(self) -> None:
         if self._transport_task is None:
             self._transport_task = self.hass.async_create_background_task(

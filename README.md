@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.54** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.55** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -62,7 +62,9 @@ The user-facing application model is domain-oriented rather than protocol-orient
 - **Зоны** — production zones 1–6 with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
 - **Программа** — read-only decoded automatic zone program plus the confirmed seasonal-correction editor on the `Сезон` tile;
 - **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
-- **Диагн.** — integration health, a decoded read-only Zone 8 program card and the isolated read-only DP38 observer. Every DP38 schedule write is disabled after a single-block test affected Zone 4 instead of Zone 8.
+- **Диагн.** — integration health, decoded Zone 8 state, full snapshots of zones 1–8 and one guarded full-frame transport test. Generic and single-block DP38 schedule writes remain disabled after a single-block test affected Zone 4 instead of Zone 8.
+
+The only enabled DP38 schedule write is a fixed field experiment: it requires a fresh exact baseline for all eight zones with Zone 8 at `2026-09-04`, sends all eight 20-byte blocks as one 160-byte/320-character uppercase HEX frame, and changes only Zone 8 byte 18 from `04` to `05`. It sends once, never retries or rolls back, and remains unverified until a new full control snapshot confirms Zones 1–7 unchanged and Zone 8 exactly at `2026-09-05`.
 
 The primary Bottom Tab Bar is:
 
