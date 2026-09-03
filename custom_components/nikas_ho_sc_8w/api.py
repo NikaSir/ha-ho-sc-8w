@@ -39,6 +39,10 @@ from .const import (
     TUYA_VERSION,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
+    ZONE8_DAMAGED_BLOCK_HEX,
+    ZONE8_KNOWN_BACKUP_HEX,
+    ZONE8_KNOWN_RESTORE_CONFIRMATION,
+    ZONE8_KNOWN_RESTORE_ENABLED,
 )
 from .models import (
     PROFILE,
@@ -83,6 +87,11 @@ class HOSC8WDevice:
         self.zone8_hex_probe_detail = ""
         self.zone8_hex_probe_samples: list[dict[str, Any]] = []
         self.zone8_hex_probe_trace: dict[str, Any] = {}
+        self.zone8_restore_status = "idle"
+        self.zone8_restore_detail = ""
+        self.zone8_restore_from_hex = ""
+        self.zone8_restore_to_hex = ZONE8_KNOWN_BACKUP_HEX
+        self.zone8_restore_readback_hex = ""
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -985,6 +994,109 @@ class HOSC8WAPI:
             cloud_value=block.hex().upper(),
         )
 
+    def _stable_raw_zone8_observation(self) -> bytes:
+        """Return one repeated 20-byte Zone 8 observation, valid or corrupt."""
+        matches: list[tuple[bytes, int]] = []
+        for item in self.device.zone8_hex_probe_samples:
+            if item.get("station") != 8 or item.get("length") != 20:
+                continue
+            try:
+                block = bytes.fromhex(str(item.get("raw_hex", "")))
+            except ValueError:
+                continue
+            if len(block) == 20:
+                matches.append((block, int(item.get("count", 0))))
+        repeated = [(block, count) for block, count in matches if count >= 2]
+        if len(repeated) != 1:
+            variants = ", ".join(
+                f"{block.hex().upper()} (x{count})" for block, count in matches
+            )
+            raise RuntimeError(
+                "Zone 8 did not return one stable raw DP38 block twice"
+                + (f"; observed: {variants}" if variants else "")
+            )
+        return repeated[0][0]
+
+    def restore_zone8_known_backup(self, confirmation: str) -> dict[str, Any]:
+        """Replace one exact known corrupt Zone 8 block with its exact backup."""
+        if not ZONE8_KNOWN_RESTORE_ENABLED:
+            raise RuntimeError("The guarded Zone 8 recovery is disabled")
+        if confirmation != ZONE8_KNOWN_RESTORE_CONFIRMATION:
+            raise PermissionError("Explicit Zone 8 recovery confirmation is required")
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("The guarded Zone 8 recovery is local-transport only")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        expected = bytes.fromhex(ZONE8_DAMAGED_BLOCK_HEX)
+        target = bytes.fromhex(ZONE8_KNOWN_BACKUP_HEX)
+        validate_dp38_block(target, expected_zone=8)
+        try:
+            with self._io_lock:
+                self.device.zone8_restore_status = "reading_before"
+                self.device.zone8_restore_detail = ""
+                self.device.zone8_restore_from_hex = ""
+                self.device.zone8_restore_readback_hex = ""
+                self._collect_zone8_dp38_samples()
+                required_safety = {
+                    DP_OPERATION_MODE,
+                    DP_ACTIVE_ZONE,
+                    DP_QUEUED_ZONE,
+                }
+                seen_safety = set(
+                    self.device.zone8_hex_probe_trace.get("safety_dps_seen", [])
+                )
+                if not required_safety.issubset(seen_safety):
+                    raise RuntimeError("Fresh DP101/107/108 safety state was not received")
+                if str(self.device.operation_mode).lower() != "off":
+                    raise RuntimeError(
+                        "Set the physical controller to OFF before Zone 8 recovery"
+                    )
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before Zone 8 recovery")
+                current = self._stable_raw_zone8_observation()
+                self.device.zone8_restore_from_hex = current.hex().upper()
+                if current != expected:
+                    raise RuntimeError(
+                        "Zone 8 current DP38 does not exactly match the approved damaged block"
+                    )
+
+                self.device.zone8_restore_status = "writing_once"
+                self._write_dp38_hex_block(target)
+                time.sleep(1.0)
+
+                self.device.zone8_restore_status = "reading_after"
+                self._collect_zone8_dp38_samples()
+                readback = self._stable_raw_zone8_observation()
+                self.device.zone8_restore_readback_hex = readback.hex().upper()
+                if readback != target:
+                    self.device.zone8_restore_status = "readback_mismatch"
+                    self.device.zone8_restore_detail = (
+                        "Sent one write only; automatic rollback was not attempted"
+                    )
+                    raise RuntimeError(
+                        "Zone 8 recovery read-back did not match the known backup; no rollback was sent"
+                    )
+                self.device.ingest_schedule_block(target, source="controller")
+                self.device.zone8_restore_status = "restored"
+                self.device.zone8_restore_detail = (
+                    "Zone 8 known backup was written once and confirmed by repeated reads"
+                )
+                return {
+                    "verified": True,
+                    "writes_performed": 1,
+                    "zone": 8,
+                    "from_hex": expected.hex().upper(),
+                    "to_hex": target.hex().upper(),
+                    "readback_hex": readback.hex().upper(),
+                }
+        except Exception as exc:
+            if self.device.zone8_restore_status != "readback_mismatch":
+                self.device.zone8_restore_status = "blocked"
+                self.device.zone8_restore_detail = str(exc)
+            raise
+        finally:
+            self._command_lock.release()
+
     def probe_zone8_dp38_hex(self, confirmation: str) -> dict[str, Any]:
         """Read and decode the current Zone 8 DP38 block without writing."""
         if not ZONE8_DP38_HEX_PROBE_ENABLED:
@@ -1038,13 +1150,25 @@ class HOSC8WAPI:
                         + variants
                     )
                 elif fresh_all:
+                    corrupt_zone8 = any(
+                        item.get("station") == 8
+                        and item.get("length") == 20
+                        and item.get("valid") is False
+                        for item in fresh_all
+                    )
                     zones = sorted(
                         {item.get("station") for item in fresh_all if item.get("valid")}
                     )
-                    self.device.zone8_hex_probe_status = "observed_other_zones"
-                    self.device.zone8_hex_probe_detail = (
-                        f"DP38 получен, но зоны 8 среди ответов нет. Зоны: {zones or 'нет валидных'}"
-                    )
+                    if corrupt_zone8:
+                        self.device.zone8_hex_probe_status = "corrupt_zone8"
+                        self.device.zone8_hex_probe_detail = (
+                            "Получен повторяющийся повреждённый блок DP38 зоны 8"
+                        )
+                    else:
+                        self.device.zone8_hex_probe_status = "observed_other_zones"
+                        self.device.zone8_hex_probe_detail = (
+                            f"DP38 получен, но зоны 8 среди ответов нет. Зоны: {zones or 'нет валидных'}"
+                        )
                 else:
                     cached = self.device.schedule_blocks.get(8)
                     if cached:

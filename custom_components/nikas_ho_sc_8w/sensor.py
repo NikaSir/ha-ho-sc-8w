@@ -14,6 +14,9 @@ from .const import (
     NUM_ZONES,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
+    ZONE8_DAMAGED_BLOCK_HEX,
+    ZONE8_KNOWN_BACKUP_HEX,
+    ZONE8_KNOWN_RESTORE_ENABLED,
 )
 from .coordinator import HOSC8WCoordinator
 from .entity import HOSC8WEntity
@@ -137,6 +140,21 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                     "hex_probe_trace": device.zone8_hex_probe_trace,
                     "hex_probe_allowed": (
                         ZONE8_DP38_HEX_PROBE_ENABLED
+                        and self.coordinator.api.active_transport
+                        == CONNECTION_MODE_LOCAL
+                        and str(device.operation_mode).lower() == "off"
+                        and not device.active_zone
+                        and not device.queued_zone
+                    ),
+                    "known_restore_status": device.zone8_restore_status,
+                    "known_restore_detail": device.zone8_restore_detail,
+                    "known_restore_from_hex": device.zone8_restore_from_hex,
+                    "known_restore_to_hex": device.zone8_restore_to_hex,
+                    "known_restore_readback_hex": device.zone8_restore_readback_hex,
+                    "known_restore_expected_from_hex": ZONE8_DAMAGED_BLOCK_HEX,
+                    "known_restore_expected_to_hex": ZONE8_KNOWN_BACKUP_HEX,
+                    "known_restore_allowed": (
+                        ZONE8_KNOWN_RESTORE_ENABLED
                         and self.coordinator.api.active_transport
                         == CONNECTION_MODE_LOCAL
                         and str(device.operation_mode).lower() == "off"
