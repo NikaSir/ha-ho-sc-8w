@@ -462,6 +462,7 @@ class FullSnapshotAPI(FakeZone8API):
     def __init__(self) -> None:
         super().__init__()
         self._connected = True
+        self.snapshot_operation = "Auto"
         self.snapshot_blocks = {
             zone: bytes.fromhex(raw_hex)
             for zone, raw_hex in const.DP38_KNOWN_BACKUP_HEX_BY_ZONE.items()
@@ -499,7 +500,7 @@ class FullSnapshotAPI(FakeZone8API):
                 observation["valid"] = False
                 observation["error"] = str(exc)
             observations.append(observation)
-        self.device.operation_mode = "OFF"
+        self.device.operation_mode = self.snapshot_operation
         self.device.active_zone = 0
         self.device.queued_zone = 0
         self.device.zone8_hex_probe_samples = observations
@@ -526,6 +527,19 @@ assert baseline_result["phase"] == "baseline"
 assert set(baseline_result["blocks"]) == {str(zone) for zone in range(1, 9)}
 assert full_snapshot.device.dp38_snapshot_status == "baseline_saved"
 assert full_snapshot.device.dp38_snapshot_baseline[7]["valid"] is False
+assert full_snapshot.device.operation_mode == "Auto"
+
+blocked_snapshot = FullSnapshotAPI()
+blocked_snapshot.snapshot_operation = "OFF"
+try:
+    blocked_snapshot.capture_dp38_snapshot(
+        "baseline", const.DP38_SNAPSHOT_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "ON/Auto" in str(exc)
+else:
+    raise AssertionError("The full snapshot must require physical ON/Auto")
+assert blocked_snapshot.writes == []
 
 changed_zone8 = bytearray(full_snapshot.snapshot_blocks[8])
 changed_zone8[1] = 1
@@ -566,6 +580,7 @@ for marker in (
     '"read_only": True',
     "capture_dp38_snapshot",
     "required_zones=set(range(1, NUM_ZONES + 1))",
+    "Set the physical controller to ON/Auto before the DP38 snapshot",
     "restore_zone8_known_backup",
     "automatic rollback was not attempted",
     "test_zone8_anchor_date_write",

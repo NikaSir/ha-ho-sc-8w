@@ -1185,9 +1185,9 @@ class HOSC8WAPI:
                 )
                 if not required_safety.issubset(seen_safety):
                     raise RuntimeError("Fresh DP101/107/108 safety state was not received")
-                if str(self.device.operation_mode).lower() != "off":
+                if str(self.device.operation_mode).lower() != "auto":
                     raise RuntimeError(
-                        "Set the physical controller to OFF before the DP38 snapshot"
+                        "Set the physical controller to ON/Auto before the DP38 snapshot"
                     )
                 if self.device.active_zone or self.device.queued_zone:
                     raise RuntimeError("Stop all watering before the DP38 snapshot")
