@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.61",
-  "integration_version": "1.0.0-b005.81",
+  "panel_version": "0.6.62",
+  "integration_version": "1.0.0-b005.82",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -11,7 +11,7 @@
     "preserve_on_update": ["header", "zoom_viewport", "scroll", "bottom_tab_bar"]
   },
   "system_settings": {
-    "entry": "gear_action_above_system_tab_bar",
+    "entry": "white_gear_action_immediately_above_system_tab_bar",
     "physical_zones": "browser_local_subset_1_8",
     "zone_artwork": "browser_local_presets_or_neutral_gray",
     "seasonal_adjustment": "confirmed_controller_write",
@@ -123,7 +123,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0661.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0662.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
@@ -155,7 +155,7 @@
     "rain_sensor_follow"
   ],
   "zone_thumbnail_visuals": {"defaults": {"1": "lawn", "2": "lawn", "3": "lawn", "4": "flowerbed", "5": "shrubs", "6": "greenhouse", "7": "none", "8": "none"}, "choices": ["lawn", "flowerbed", "shrubs", "greenhouse", "none"], "storage": "browser_local"},
-  "status_layout": "compact_controller_connection_readiness_and_system_parameters",
+  "status_layout": "compact_controller_connection_readiness_parameters_and_wide_zone_status",
   "reference_canvas_px": [1280, 800],
   "desktop_max_width_px": 1280,
   "rain_sensor_connection": "direct_horizontal_midline_to_controller",
