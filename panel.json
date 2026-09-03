@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.51",
+    "dashboard_version": "0.6.52",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0651.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0652.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -168,6 +168,16 @@
       "rain_sensor_connection": "direct_horizontal_midline_to_controller",
       "zone_thumbnail_content": "image_zone_number_activity_program_duration",
       "zone_time_layout": "duration_muted_line_all_start_times_separate_bold_line",
+      "zone_detail_fields": [
+        "base_duration",
+        "six_start_slots",
+        "cycle_mode_and_value",
+        "weekly_days",
+        "cycle_anchor_date",
+        "seasonal_adjustment",
+        "calculated_next_start",
+        "rain_sensor_follow"
+      ],
       "zone_thumbnail_visuals": {"1": "lawn", "2": "lawn", "3": "lawn", "4": "flowerbed", "5": "shrubs", "6": "greenhouse"},
       "rain_sensor_state_semantics": "dp102_follow_enabled_or_bypassed_current_wet_contact_not_exposed",
       "control_wire_caption": false,

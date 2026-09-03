@@ -73,14 +73,15 @@ sequential_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0648.
 emergency_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0649.mjs").read_text(encoding="utf-8")
 anchor_date_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0650.mjs").read_text(encoding="utf-8")
 safety_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0651.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source
+program_form_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0652.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.71"
-assert panel["panel"]["dashboard_version"] == "0.6.51"
-assert panel_manifest["panel_version"] == "0.6.51"
+assert manifest["version"] == "1.0.0-b005.72"
+assert panel["panel"]["dashboard_version"] == "0.6.52"
+assert panel_manifest["panel_version"] == "0.6.52"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.51"' in const_source
-assert 'irrigation-panel-v0651.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.52"' in const_source
+assert 'irrigation-panel-v0652.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -148,6 +149,31 @@ assert 'зона 8 осталась без изменений' in safety_wrapper
 assert 'зоне 4' in safety_wrapper_source
 assert 'Только чтение' in safety_wrapper_source
 assert 'data-zone8-anchor-date-test' not in safety_wrapper_source
+assert 'const UI_VERSION = "0.6.52"' in program_form_wrapper_source
+assert 'irrigation-panel-v0651.mjs' in program_form_wrapper_source
+assert 'Базовая длительность' in program_form_wrapper_source
+assert 'Все шесть слотов' in program_form_wrapper_source
+assert 'Каждый день' in program_form_wrapper_source
+assert 'По дням недели' in program_form_wrapper_source
+assert 'Дата начала цикла' in program_form_wrapper_source
+assert 'Сезонная коррекция' in program_form_wrapper_source
+assert 'Ближайший запуск' in program_form_wrapper_source
+assert 'Датчик дождя' in program_form_wrapper_source
+assert '.zoneProgramDetail{min-height:0!important' in program_form_wrapper_source
+assert 'background-size:cover!important' in program_form_wrapper_source
+assert 'data-zone8-anchor-date-test' not in program_form_wrapper_source
+expected_zone_detail_fields = [
+    "base_duration",
+    "six_start_slots",
+    "cycle_mode_and_value",
+    "weekly_days",
+    "cycle_anchor_date",
+    "seasonal_adjustment",
+    "calculated_next_start",
+    "rain_sensor_follow",
+]
+assert panel["panel"]["system_visualization"]["zone_detail_fields"] == expected_zone_detail_fields
+assert panel_manifest["zone_detail_fields"] == expected_zone_detail_fields
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True

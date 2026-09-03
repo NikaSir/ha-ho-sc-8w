@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.51",
-  "integration_version": "1.0.0-b005.71",
+  "panel_version": "0.6.52",
+  "integration_version": "1.0.0-b005.72",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -81,7 +81,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0651.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0652.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
@@ -102,6 +102,16 @@
   ],
   "zone_thumbnail_content": "image_zone_number_activity_program_duration",
   "zone_time_layout": "duration_muted_line_all_start_times_separate_bold_line",
+  "zone_detail_fields": [
+    "base_duration",
+    "six_start_slots",
+    "cycle_mode_and_value",
+    "weekly_days",
+    "cycle_anchor_date",
+    "seasonal_adjustment",
+    "calculated_next_start",
+    "rain_sensor_follow"
+  ],
   "zone_thumbnail_visuals": {"1": "lawn", "2": "lawn", "3": "lawn", "4": "flowerbed", "5": "shrubs", "6": "greenhouse"},
   "status_layout": "system_state_connection_pressure_informative_zones_program_mode_seasonal_read_only_fit_without_scroll",
   "reference_canvas_px": [1280, 800],
