@@ -48,6 +48,10 @@ class HOSC8WScheduleCache:
         blocks = stored.get("blocks", {})
         sources = stored.get("sources", {})
         backup_hex = stored.get("zone8_lab_backup")
+        snapshot_blocks = stored.get("dp38_snapshot_baseline", {})
+        if not isinstance(snapshot_blocks, dict):
+            snapshot_blocks = {}
+        snapshot_at = str(stored.get("dp38_snapshot_baseline_at") or "")
         if backup_hex:
             try:
                 backup = bytes.fromhex(str(backup_hex))
@@ -73,8 +77,46 @@ class HOSC8WScheduleCache:
                 block,
                 source=str(sources.get(str(zone), "persistent_cache")),
             )
+        snapshot: dict[int, dict[str, Any]] = {}
+        for zone_text, raw_hex in snapshot_blocks.items():
+            try:
+                zone = int(zone_text)
+                block = bytes.fromhex(str(raw_hex))
+                if not 1 <= zone <= NUM_ZONES or len(block) != 20 or block[0] != zone:
+                    raise ValueError("snapshot block identity or size is invalid")
+            except (TypeError, ValueError) as exc:
+                _LOGGER.warning(
+                    "Ignoring invalid persisted DP38 snapshot block for zone %s: %s",
+                    zone_text,
+                    exc,
+                )
+                continue
+            snapshot[zone] = {
+                "zone": zone,
+                "raw_hex": block.hex().upper(),
+                "count": 0,
+                "fresh": False,
+                "valid": self._snapshot_block_is_valid(block, zone),
+                "sources": ["persistent_snapshot"],
+            }
+        if set(snapshot) == set(range(1, NUM_ZONES + 1)):
+            self.device.dp38_snapshot_baseline = snapshot
+            self.device.dp38_snapshot_baseline_at = snapshot_at
+            self.device.dp38_snapshot_status = "baseline_saved"
+            self.device.dp38_snapshot_detail = (
+                "Complete persisted read-only baseline for zones 1-8 was loaded"
+            )
         await self.async_bootstrap_from_legacy_snapshot()
         await self.async_save()
+
+    @staticmethod
+    def _snapshot_block_is_valid(block: bytes, zone: int) -> bool:
+        """Return decoded validity without rejecting forensic raw data."""
+        try:
+            validate_dp38_block(block, expected_zone=zone)
+        except ValueError:
+            return False
+        return True
 
     async def async_bootstrap_from_legacy_snapshot(self) -> int:
         """Import missing raw blocks from the verified legacy HA snapshot sensor."""
@@ -129,6 +171,13 @@ class HOSC8WScheduleCache:
                 if self._zone8_lab_backup is not None
                 else None
             ),
+            "dp38_snapshot_baseline": {
+                str(zone): str(item.get("raw_hex", "")).upper()
+                for zone, item in sorted(
+                    self.device.dp38_snapshot_baseline.items()
+                )
+            },
+            "dp38_snapshot_baseline_at": self.device.dp38_snapshot_baseline_at,
         }
         await self._store.async_save(data)
 

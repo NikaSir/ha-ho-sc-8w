@@ -21,6 +21,7 @@ from .const import (
     ATTR_CONFIRMATION,
     ATTR_DURATION_MINUTES,
     ATTR_FIELD,
+    ATTR_PHASE,
     ATTR_VALUE,
     ATTR_ZONE,
     ATTR_ZONES,
@@ -34,6 +35,7 @@ from .const import (
     CONNECTION_MODE_AUTO,
     CONNECTION_MODE_CLOUD,
     CONNECTION_MODE_LOCAL,
+    DP38_SNAPSHOT_CONFIRMATION,
     DOMAIN,
     MANUAL_DURATION_MAX,
     MANUAL_DURATION_MIN,
@@ -41,6 +43,7 @@ from .const import (
     SEASONAL_ADJUST_MAX,
     SEASONAL_ADJUST_MIN,
     SEASONAL_ADJUST_STEP,
+    SERVICE_CAPTURE_DP38_SNAPSHOT,
     SERVICE_PROBE_ZONE8_DP38_HEX,
     SERVICE_RESUME_AUTOMATIC,
     SERVICE_RESTORE_ZONE8_SCHEDULE,
@@ -137,6 +140,15 @@ _ZONE8_HEX_PROBE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
         vol.Required(ATTR_CONFIRMATION): vol.In({"ZONE8_DP38_HEX_PROBE"}),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+_DP38_SNAPSHOT_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_PHASE): vol.In({"baseline", "compare"}),
+        vol.Required(ATTR_CONFIRMATION): vol.In({DP38_SNAPSHOT_CONFIRMATION}),
     },
     extra=vol.PREVENT_EXTRA,
 )
@@ -265,6 +277,18 @@ async def _async_probe_zone8_dp38_hex(
         raise HomeAssistantError(str(exc)) from exc
 
 
+async def _async_capture_dp38_snapshot(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_capture_dp38_snapshot(
+            str(call.data[ATTR_PHASE]), str(call.data[ATTR_CONFIRMATION])
+        )
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def _async_restore_zone8_known_backup(
     hass: HomeAssistant, call: ServiceCall
 ) -> None:
@@ -353,6 +377,13 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
                 partial(_async_restore_zone8_known_backup, hass),
                 schema=_ZONE8_KNOWN_RESTORE_SCHEMA,
             )
+    if not hass.services.has_service(DOMAIN, SERVICE_CAPTURE_DP38_SNAPSHOT):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_CAPTURE_DP38_SNAPSHOT,
+            partial(_async_capture_dp38_snapshot, hass),
+            schema=_DP38_SNAPSHOT_SCHEMA,
+        )
     return True
 
 

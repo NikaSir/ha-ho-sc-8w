@@ -188,6 +188,21 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
                 self.async_set_updated_data(self.api.device)
             return result
 
+    async def async_capture_dp38_snapshot(
+        self, phase: str, confirmation: str
+    ) -> dict[str, object]:
+        """Capture or compare a read-only full DP38 snapshot."""
+        async with self._transport_lock:
+            try:
+                result = await self.hass.async_add_executor_job(
+                    self.api.capture_dp38_snapshot, phase, confirmation
+                )
+                if phase == "baseline":
+                    await self.schedule_cache.async_save()
+            finally:
+                self.async_set_updated_data(self.api.device)
+            return result
+
     async def async_restore_zone8_known_backup(
         self, confirmation: str
     ) -> dict[str, object]:

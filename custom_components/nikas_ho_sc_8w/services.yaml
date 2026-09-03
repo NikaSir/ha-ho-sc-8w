@@ -66,3 +66,26 @@ probe_zone8_dp38_hex:
         select:
           options:
             - ZONE8_DP38_HEX_PROBE
+
+capture_dp38_snapshot:
+  name: Capture full DP38 snapshot
+  description: Captures all eight DP38 schedule blocks or compares them with the saved baseline. No write command is sent.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    phase:
+      required: true
+      selector:
+        select:
+          options:
+            - baseline
+            - compare
+    confirmation:
+      required: true
+      example: DP38_FULL_SNAPSHOT_READ_ONLY
+      selector:
+        select:
+          options:
+            - DP38_FULL_SNAPSHOT_READ_ONLY
