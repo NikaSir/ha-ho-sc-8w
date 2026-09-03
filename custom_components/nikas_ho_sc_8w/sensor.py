@@ -170,7 +170,7 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                     "dp38_snapshot_allowed": (
                         self.coordinator.api.active_transport
                         == CONNECTION_MODE_LOCAL
-                        and str(device.operation_mode).lower() == "off"
+                        and str(device.operation_mode).lower() == "auto"
                         and not device.active_zone
                         and not device.queued_zone
                     ),

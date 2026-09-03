@@ -69,7 +69,7 @@ probe_zone8_dp38_hex:
 
 capture_dp38_snapshot:
   name: Capture full DP38 snapshot
-  description: Captures all eight DP38 schedule blocks or compares them with the saved baseline. No write command is sent.
+  description: Captures all eight DP38 schedule blocks or compares them with the saved baseline while the powered controller is in Auto and idle. No write command is sent.
   fields:
     config_entry_id:
       selector:

@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.53",
+    "dashboard_version": "0.6.54",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title_or_program_zone_selector",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0653.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0654.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -110,6 +110,8 @@
         "full_snapshot": {
           "zones": [1, 2, 3, 4, 5, 6, 7, 8],
           "phases": ["baseline", "compare"],
+          "requires_physical_mode": "AUTO_ON",
+          "requires_idle_controller": true,
           "persistent_baseline": true,
           "byte_level_diff": true,
           "read_only": true,

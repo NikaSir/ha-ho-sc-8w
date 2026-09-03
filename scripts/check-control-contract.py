@@ -75,14 +75,15 @@ anchor_date_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0650
 safety_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0651.mjs").read_text(encoding="utf-8")
 program_form_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0652.mjs").read_text(encoding="utf-8")
 snapshot_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0653.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source
+snapshot_mode_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0654.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.73"
-assert panel["panel"]["dashboard_version"] == "0.6.53"
-assert panel_manifest["panel_version"] == "0.6.53"
+assert manifest["version"] == "1.0.0-b005.74"
+assert panel["panel"]["dashboard_version"] == "0.6.54"
+assert panel_manifest["panel_version"] == "0.6.54"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.53"' in const_source
-assert 'irrigation-panel-v0653.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.54"' in const_source
+assert 'irrigation-panel-v0654.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -188,8 +189,14 @@ assert 'Сезонный коэффициент' in snapshot_wrapper_source
 assert 'programExpandedList' not in snapshot_wrapper_source
 assert 'Первый запуск' not in snapshot_wrapper_source
 assert 'data-zone8-anchor-date-test' not in snapshot_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0653.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0653.mjs")
+assert 'const UI_VERSION = "0.6.54"' in snapshot_mode_wrapper_source
+assert 'irrigation-panel-v0653.mjs' in snapshot_mode_wrapper_source
+assert 'operation !== "auto"' in snapshot_mode_wrapper_source
+assert 'контроллер и установите режим Auto' in snapshot_mode_wrapper_source
+assert 'Контроллер должен быть включён, находиться в режиме Auto' in snapshot_mode_wrapper_source
+assert 'Команды записи DP38 не отправляются' in snapshot_mode_wrapper_source
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0654.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0654.mjs")
 expected_program_subtabs = ["general_parameters", "zone_parameters"]
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
@@ -228,6 +235,8 @@ snapshot_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_s
 assert snapshot_meta["zones"] == list(range(1, 9))
 assert snapshot_meta["read_only"] is True
 assert snapshot_meta["writes_performed"] == 0
+assert snapshot_meta["requires_physical_mode"] == "AUTO_ON"
+assert snapshot_meta["requires_idle_controller"] is True
 assert '"hex_probe_allowed"' in sensor_source
 assert '"anchor_date_test_allowed"' in sensor_source
 assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
