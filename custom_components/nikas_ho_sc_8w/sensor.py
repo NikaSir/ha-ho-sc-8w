@@ -133,6 +133,7 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                     ),
                     "hex_probe_status": device.zone8_hex_probe_status,
                     "hex_probe_detail": device.zone8_hex_probe_detail,
+                    "hex_probe_samples": device.zone8_hex_probe_samples,
                     "hex_probe_allowed": (
                         ZONE8_DP38_HEX_PROBE_ENABLED
                         and self.coordinator.api.active_transport

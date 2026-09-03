@@ -81,6 +81,7 @@ class HOSC8WDevice:
         self.zone8_lab_last_readback_raw = ""
         self.zone8_hex_probe_status = "idle"
         self.zone8_hex_probe_detail = ""
+        self.zone8_hex_probe_samples: list[dict[str, Any]] = []
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -844,18 +845,17 @@ class HOSC8WAPI:
         finally:
             self._command_lock.release()
 
-    def _collect_confirmed_zone8_dp38(
+    def _collect_zone8_dp38_samples(
         self, timeout_seconds: float = 8.0
-    ) -> bytes:
-        """Read the same valid Zone 8 DP38 block twice plus fresh safety DPs."""
+    ) -> list[bytes]:
+        """Collect every valid fresh Zone 8 DP38 block without writing."""
         if self.active_transport != CONNECTION_MODE_LOCAL:
             raise RuntimeError("The DP38 HEX probe is local-transport only")
         self._reset_connection()
         device = self._ensure_connection()
         if not device:
             raise RuntimeError("Local controller connection is unavailable")
-        candidate: bytes | None = None
-        matching_reads = 0
+        samples: list[bytes] = []
         safety_dps_seen: set[int] = set()
 
         def ingest(response: Any) -> None:
@@ -871,7 +871,6 @@ class HOSC8WAPI:
             if str(DP_NORMAL_TIME) not in dps:
                 return
             raw = self.device._parse_raw_dp(dps[str(DP_NORMAL_TIME)])
-            nonlocal candidate, matching_reads
             for offset in range(0, len(raw), 20):
                 block = raw[offset : offset + 20]
                 if len(block) != 20 or block[0] != 8:
@@ -881,26 +880,23 @@ class HOSC8WAPI:
                     validate_dp38_block(current, expected_zone=8)
                 except ValueError:
                     continue
-                if current == candidate:
-                    matching_reads += 1
-                else:
-                    candidate = current
-                    matching_reads = 1
+                samples.append(current)
 
         device.set_socketTimeout(1)
         request_count = 0
         try:
             deadline = time.monotonic() + timeout_seconds
-            while matching_reads < 2 and time.monotonic() < deadline:
+            while len(samples) < 4 and time.monotonic() < deadline:
                 # Hardware testing established that status/updatedps only
-                # return Zone 8 after it became the last DP38 station. Require
-                # two identical fresh reports before publishing the result.
+                # return Zone 8 after it became the last DP38 station. Keep
+                # every valid reply so alternating controller values remain
+                # visible to diagnostics instead of being discarded.
                 try:
                     ingest(device.status())
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
-                if matching_reads >= 2:
+                if len(samples) >= 4:
                     break
                 try:
                     ingest(device.updatedps([DP_NORMAL_TIME]))
@@ -913,9 +909,9 @@ class HOSC8WAPI:
                     time.sleep(0.05)
         finally:
             device.set_socketTimeout(5)
-        if candidate is None or matching_reads < 2:
+        if not samples:
             raise RuntimeError(
-                "Zone 8 DP38 was not returned identically twice after "
+                "Zone 8 DP38 was not returned after "
                 f"{request_count} active requests"
             )
         required_safety_dps = {DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE}
@@ -924,8 +920,21 @@ class HOSC8WAPI:
             raise RuntimeError(
                 f"Fresh controller safety state is incomplete; missing DPs: {missing}"
             )
-        self.device.ingest_schedule_block(candidate, source="controller")
-        return candidate
+        return samples
+
+    def _collect_confirmed_zone8_dp38(
+        self, timeout_seconds: float = 8.0
+    ) -> bytes:
+        """Read the same valid Zone 8 DP38 block twice plus fresh safety DPs."""
+        samples = self._collect_zone8_dp38_samples(timeout_seconds)
+        for index, candidate in enumerate(samples):
+            if candidate in samples[index + 1 :]:
+                self.device.ingest_schedule_block(candidate, source="controller")
+                return candidate
+        variants = ", ".join(dict.fromkeys(block.hex().upper() for block in samples))
+        raise RuntimeError(
+            "Zone 8 DP38 was not returned identically twice; observed: " + variants
+        )
 
     def _write_dp38_hex_block(self, block: bytes) -> None:
         """Write one station block using DP38's required ASCII HEX transport."""
@@ -949,24 +958,49 @@ class HOSC8WAPI:
         try:
             with self._io_lock:
                 self.device.zone8_hex_probe_status = "reading_before"
-                original = self._collect_confirmed_zone8_dp38()
+                samples = self._collect_zone8_dp38_samples()
                 if str(self.device.operation_mode).lower() != "off":
                     raise RuntimeError(
                         "Set the physical controller to OFF before the DP38 HEX probe"
                     )
                 if self.device.active_zone or self.device.queued_zone:
                     raise RuntimeError("Stop all watering before the DP38 HEX probe")
-                validate_dp38_block(original, expected_zone=8)
-                self.device.zone8_hex_probe_status = "verified"
+                counts: dict[bytes, int] = {}
+                for sample in samples:
+                    validate_dp38_block(sample, expected_zone=8)
+                    counts[sample] = counts.get(sample, 0) + 1
+                observations = []
+                for sample, count in counts.items():
+                    channel = decode_dp38(sample)[0]
+                    observations.append(
+                        {
+                            "raw_hex": sample.hex().upper(),
+                            "count": count,
+                            **channel.as_dict(),
+                        }
+                    )
+                self.device.zone8_hex_probe_samples = observations
+                stable = len(counts) == 1 and len(samples) >= 2
+                original = samples[-1]
+                if stable:
+                    self.device.ingest_schedule_block(original, source="controller")
+                self.device.zone8_hex_probe_status = (
+                    "verified" if stable else "observed_variants"
+                )
+                variants = "; ".join(
+                    f"{item['raw_hex']} (x{item['count']})" for item in observations
+                )
                 self.device.zone8_hex_probe_detail = (
-                    f"Прочитано без записи: {original.hex().upper()}"
+                    ("Стабильный ответ: " if stable else "Получены разные ответы: ")
+                    + variants
                 )
                 return {
-                    "verified": True,
+                    "verified": stable,
                     "read_only": True,
                     "writes_performed": 0,
                     "zone": 8,
                     "raw_hex": original.hex().upper(),
+                    "samples": observations,
                 }
         except Exception as exc:
             self.device.zone8_hex_probe_status = "failed"
