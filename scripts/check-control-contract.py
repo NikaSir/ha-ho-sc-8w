@@ -79,14 +79,15 @@ snapshot_mode_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v06
 full_frame_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0655.mjs").read_text(encoding="utf-8")
 program_navigation_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0656.mjs").read_text(encoding="utf-8")
 mask_write_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0657.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source
+system_artwork_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0658.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.77"
-assert panel["panel"]["dashboard_version"] == "0.6.57"
-assert panel_manifest["panel_version"] == "0.6.57"
+assert manifest["version"] == "1.0.0-b005.78"
+assert panel["panel"]["dashboard_version"] == "0.6.58"
+assert panel_manifest["panel_version"] == "0.6.58"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.57"' in const_source
-assert 'irrigation-panel-v0657.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.58"' in const_source
+assert 'irrigation-panel-v0658.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -211,8 +212,18 @@ assert 'irrigation-panel-v0656.mjs' in mask_write_wrapper_source
 assert 'test_zone8_mask_write' in mask_write_wrapper_source
 assert 'Первый байт записи: 80' in mask_write_wrapper_source
 assert 'Передаётся ровно 20 байт' in mask_write_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0657.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0657.mjs")
+assert 'data-program-section' not in program_navigation_wrapper_source
+assert 'programZoneContext' not in program_navigation_wrapper_source
+assert 'const UI_VERSION = "0.6.58"' in system_artwork_wrapper_source
+assert 'irrigation-panel-v0657.mjs' in system_artwork_wrapper_source
+assert '["status", "mdi:tune-variant", "Система"]' in system_artwork_wrapper_source
+assert 'Состояние контроллера' not in system_artwork_wrapper_source
+assert 'data-zone-artwork-open' in system_artwork_wrapper_source
+assert 'Без картинки' in system_artwork_wrapper_source
+assert 'window.localStorage' in system_artwork_wrapper_source
+assert 'role="switch"' in manual_wrapper_source
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0658.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0658.mjs")
 expected_program_subtabs = []
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
@@ -223,6 +234,10 @@ assert program_meta["zone_selector"] == "button_row_below_header"
 assert program_meta["selected_zone_status"] == "inside_zone_form"
 assert program_meta["zone_scope"] == list(range(1, 9))
 assert program_meta["zone_form"] == "complete_decoded_zone_detail_read_only"
+assert program_meta["zone_artwork"] == "browser_local_presets_or_neutral_gray"
+assert program_meta["zone_artwork_trigger"] == "tap_selected_zone_image"
+assert manifest_program_meta["zone_artwork"] == program_meta["zone_artwork"]
+assert manifest_program_meta["zone_artwork_trigger"] == program_meta["zone_artwork_trigger"]
 assert program_meta["vertical_scroll"] == "central_work_area_only"
 expected_zone_detail_fields = [
     "base_duration",

@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.6.57",
+    "dashboard_version": "0.6.58",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0657.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0658.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "query_string_version",
@@ -45,8 +45,8 @@
       "view_switching": "lazy_dom_cache_and_reattach"
     },
     "status_layout": {
-      "reference": "approved_system_state_render",
-      "sections": ["system_state", "connection_and_pressure", "controller_rain_and_informative_zone_schematic", "program_mode_seasonal_adjustment_read_only", "primary_actions"]
+      "reference": "compact_system_workspace",
+      "sections": ["controller_and_standard_connection", "full_width_system_readiness", "mode_rain_pressure_seasonal"]
     },
     "control_actions": {
       "policy": "draft_explicit_apply_confirmation_write_readback",
@@ -82,6 +82,8 @@
         "selected_zone_status": "inside_zone_form",
         "zone_scope": [1, 2, 3, 4, 5, 6, 7, 8],
         "zone_form": "complete_decoded_zone_detail_read_only",
+        "zone_artwork": "browser_local_presets_or_neutral_gray",
+        "zone_artwork_trigger": "tap_selected_zone_image",
         "vertical_scroll": "central_work_area_only"
       },
       "zone_8_schedule_lab": {
