@@ -844,17 +844,18 @@ class HOSC8WAPI:
         finally:
             self._command_lock.release()
 
-    def _collect_fresh_dp38_round(
-        self, timeout_seconds: float = 14.0
-    ) -> dict[int, bytes]:
-        """Actively request and collect one fresh DP38 report for every station."""
+    def _collect_confirmed_zone8_dp38(
+        self, timeout_seconds: float = 8.0
+    ) -> bytes:
+        """Read the same valid Zone 8 DP38 block twice plus fresh safety DPs."""
         if self.active_transport != CONNECTION_MODE_LOCAL:
             raise RuntimeError("The DP38 HEX probe is local-transport only")
         self._reset_connection()
         device = self._ensure_connection()
         if not device:
             raise RuntimeError("Local controller connection is unavailable")
-        collected: dict[int, bytes] = {}
+        candidate: bytes | None = None
+        matching_reads = 0
         safety_dps_seen: set[int] = set()
 
         def ingest(response: Any) -> None:
@@ -870,28 +871,36 @@ class HOSC8WAPI:
             if str(DP_NORMAL_TIME) not in dps:
                 return
             raw = self.device._parse_raw_dp(dps[str(DP_NORMAL_TIME)])
+            nonlocal candidate, matching_reads
             for offset in range(0, len(raw), 20):
                 block = raw[offset : offset + 20]
-                if len(block) != 20 or not 1 <= block[0] <= NUM_ZONES:
+                if len(block) != 20 or block[0] != 8:
                     continue
-                collected[block[0]] = bytes(block)
+                current = bytes(block)
+                try:
+                    validate_dp38_block(current, expected_zone=8)
+                except ValueError:
+                    continue
+                if current == candidate:
+                    matching_reads += 1
+                else:
+                    candidate = current
+                    matching_reads = 1
 
         device.set_socketTimeout(1)
         request_count = 0
         try:
             deadline = time.monotonic() + timeout_seconds
-            while len(collected) < NUM_ZONES and time.monotonic() < deadline:
-                # HO-SC-8W exposes only one 20-byte station block in each DP38
-                # report.  One status query therefore cannot establish a safe
-                # before/after image of the complete schedule table.  Repeat
-                # both the ordinary status query and TinyTuya's read-only DPS
-                # refresh request, ingesting every direct or delayed response.
+            while matching_reads < 2 and time.monotonic() < deadline:
+                # Hardware testing established that status/updatedps only
+                # return Zone 8 after it became the last DP38 station. Require
+                # two identical fresh reports before publishing the result.
                 try:
                     ingest(device.status())
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
-                if len(collected) >= NUM_ZONES:
+                if matching_reads >= 2:
                     break
                 try:
                     ingest(device.updatedps([DP_NORMAL_TIME]))
@@ -904,13 +913,10 @@ class HOSC8WAPI:
                     time.sleep(0.05)
         finally:
             device.set_socketTimeout(5)
-        if set(collected) != set(range(1, NUM_ZONES + 1)):
-            missing = sorted(set(range(1, NUM_ZONES + 1)) - set(collected))
-            present = sorted(collected)
+        if candidate is None or matching_reads < 2:
             raise RuntimeError(
-                "Incomplete fresh DP38 round after "
-                f"{request_count} active requests; present zones: {present}; "
-                f"missing zones: {missing}"
+                "Zone 8 DP38 was not returned identically twice after "
+                f"{request_count} active requests"
             )
         required_safety_dps = {DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE}
         if safety_dps_seen != required_safety_dps:
@@ -918,9 +924,8 @@ class HOSC8WAPI:
             raise RuntimeError(
                 f"Fresh controller safety state is incomplete; missing DPs: {missing}"
             )
-        for zone, block in collected.items():
-            self.device.ingest_schedule_block(block, source="controller")
-        return collected
+        self.device.ingest_schedule_block(candidate, source="controller")
+        return candidate
 
     def _write_dp38_hex_block(self, block: bytes) -> None:
         """Write one station block using DP38's required ASCII HEX transport."""
@@ -934,7 +939,7 @@ class HOSC8WAPI:
         )
 
     def probe_zone8_dp38_hex(self, confirmation: str) -> dict[str, Any]:
-        """Verify no-op, mutation and rollback HEX writes on the unused Zone 8."""
+        """Read and decode the current Zone 8 DP38 block without writing."""
         if not ZONE8_DP38_HEX_PROBE_ENABLED:
             raise RuntimeError("The Zone 8 DP38 HEX probe is disabled")
         if confirmation != "ZONE8_DP38_HEX_PROBE":
@@ -944,52 +949,24 @@ class HOSC8WAPI:
         try:
             with self._io_lock:
                 self.device.zone8_hex_probe_status = "reading_before"
-                before = self._collect_fresh_dp38_round()
+                original = self._collect_confirmed_zone8_dp38()
                 if str(self.device.operation_mode).lower() != "off":
                     raise RuntimeError(
                         "Set the physical controller to OFF before the DP38 HEX probe"
                     )
                 if self.device.active_zone or self.device.queued_zone:
                     raise RuntimeError("Stop all watering before the DP38 HEX probe")
-                original = before[8]
                 validate_dp38_block(original, expected_zone=8)
-
-                self.device.zone8_hex_probe_status = "testing_no_change"
-                self._write_dp38_hex_block(original)
-                time.sleep(0.6)
-                after_no_change = self._collect_fresh_dp38_round()
-                if after_no_change != before:
-                    raise RuntimeError("Exact Zone 8 HEX write changed the DP38 table")
-
-                candidate = bytearray(original)
-                candidate[19] ^= 0x01
-                candidate = bytes(candidate)
-                self.device.zone8_hex_probe_status = "testing_change"
-                rollback: dict[int, bytes] | None = None
-                try:
-                    self._write_dp38_hex_block(candidate)
-                    time.sleep(0.6)
-                    changed = self._collect_fresh_dp38_round()
-                    if changed[8] != candidate:
-                        raise RuntimeError("Zone 8 HEX mutation was not read back exactly")
-                    if any(changed[zone] != before[zone] for zone in range(1, 8)):
-                        raise RuntimeError("Zone 8 HEX mutation changed another zone")
-                finally:
-                    self.device.zone8_hex_probe_status = "restoring_zone8"
-                    self._write_dp38_hex_block(original)
-                    time.sleep(0.6)
-                    rollback = self._collect_fresh_dp38_round()
-                if rollback != before:
-                    raise RuntimeError("Zone 8 HEX rollback did not restore the full table")
                 self.device.zone8_hex_probe_status = "verified"
                 self.device.zone8_hex_probe_detail = (
-                    "ASCII HEX confirmed; Zones 1-7 unchanged; Zone 8 restored"
+                    f"Прочитано без записи: {original.hex().upper()}"
                 )
                 return {
                     "verified": True,
-                    "wire_encoding": "uppercase_ascii_hex",
-                    "zones_compared": NUM_ZONES,
-                    "zone8_restored": True,
+                    "read_only": True,
+                    "writes_performed": 0,
+                    "zone": 8,
+                    "raw_hex": original.hex().upper(),
                 }
         except Exception as exc:
             self.device.zone8_hex_probe_status = "failed"

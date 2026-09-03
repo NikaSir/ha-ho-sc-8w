@@ -80,10 +80,9 @@ def block(zone: int) -> bytes:
 
 
 class ActiveRefreshDevice:
-    """Model a controller that returns one station per DP38 refresh request."""
+    """Model the observed controller: every DP38 read returns only Zone 8."""
 
     def __init__(self) -> None:
-        self.refresh_zones = list(range(1, 8))
         self.status_calls = 0
         self.refresh_calls = 0
         self.timeouts: list[int] = []
@@ -105,8 +104,7 @@ class ActiveRefreshDevice:
     def updatedps(self, indexes: list[int]) -> dict[str, Any]:
         assert indexes == [DP_NORMAL_TIME]
         self.refresh_calls += 1
-        zone = self.refresh_zones.pop(0) if self.refresh_zones else 8
-        return {"dps": {str(DP_NORMAL_TIME): block(zone).hex().upper()}}
+        return {"dps": {str(DP_NORMAL_TIME): block(8).hex().upper()}}
 
     def receive(self) -> None:
         return None
@@ -129,15 +127,12 @@ class ActiveRefreshAPI(HOSC8WAPI):
 
 
 active_refresh = ActiveRefreshAPI()
-fresh = active_refresh._collect_fresh_dp38_round(timeout_seconds=1)
-assert sorted(fresh) == list(range(1, 9))
-assert active_refresh.fake_device.status_calls >= 7
-assert active_refresh.fake_device.refresh_calls == 7
+fresh = active_refresh._collect_confirmed_zone8_dp38(timeout_seconds=1)
+assert fresh == block(8)
+assert active_refresh.fake_device.status_calls == 1
+assert active_refresh.fake_device.refresh_calls == 1
 assert active_refresh.fake_device.timeouts == [1, 5]
-assert all(
-    active_refresh.device.schedule_sources[zone] == "controller"
-    for zone in range(1, 9)
-)
+assert active_refresh.device.schedule_sources[8] == "controller"
 
 
 api = FakeZone8API()
@@ -197,14 +192,14 @@ class IsolatedProbeAPI(FakeZone8API):
         super().__init__()
         for zone in range(1, 9):
             self.device.ingest_schedule_block(block(zone), source="controller")
-        self.rounds = 0
+        self.reads = 0
 
-    def _collect_fresh_dp38_round(
-        self, timeout_seconds: float = 14.0
-    ) -> dict[int, bytes]:
+    def _collect_confirmed_zone8_dp38(
+        self, timeout_seconds: float = 8.0
+    ) -> bytes:
         del timeout_seconds
-        self.rounds += 1
-        return dict(self.device.schedule_blocks)
+        self.reads += 1
+        return self.device.schedule_blocks[8]
 
 
 isolated = IsolatedProbeAPI()
@@ -212,19 +207,16 @@ before_probe = dict(isolated.device.schedule_blocks)
 result = isolated.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
 assert result == {
     "verified": True,
-    "wire_encoding": "uppercase_ascii_hex",
-    "zones_compared": 8,
-    "zone8_restored": True,
+    "read_only": True,
+    "writes_performed": 0,
+    "zone": 8,
+    "raw_hex": before_probe[8].hex().upper(),
 }
-assert isolated.rounds == 4
-assert len(isolated.writes) == 3
-assert all(write[0] == DP_NORMAL_TIME for write in isolated.writes)
-assert all(isinstance(write[1], str) and len(write[1]) == 40 for write in isolated.writes)
-assert isolated.writes[0][1] == before_probe[8].hex().upper()
-assert bytes.fromhex(isolated.writes[1][1])[19] == (before_probe[8][19] ^ 0x01)
-assert isolated.writes[2][1] == before_probe[8].hex().upper()
+assert isolated.reads == 1
+assert isolated.writes == []
 assert isolated.device.schedule_blocks == before_probe
 assert isolated.device.zone8_hex_probe_status == "verified"
+assert before_probe[8].hex().upper() in isolated.device.zone8_hex_probe_detail
 
 blocked = IsolatedProbeAPI()
 blocked.device.operation_mode = "Auto"
@@ -248,13 +240,11 @@ for marker in (
     "safety_dps_seen",
     "required_safety_dps",
     "device.updatedps([DP_NORMAL_TIME])",
-    "request_count",
-    "after_no_change != before",
-    "changed[zone] != before[zone] for zone in range(1, 8)",
-    "finally:",
-    "rollback != before",
+    "matching_reads < 2",
+    '"writes_performed": 0',
+    '"read_only": True',
     "block.hex().upper()",
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
-print("Zone 8 DP38 read-only hold and isolated ASCII HEX probe: PASS")
+print("Zone 8 DP38 double-read inspection and write hold: PASS")

@@ -64,14 +64,15 @@ draft_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0640.mjs")
 incident_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0641.mjs").read_text(encoding="utf-8")
 probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0642.mjs").read_text(encoding="utf-8")
 refresh_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0643.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source
+read_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0644.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.63"
-assert panel["panel"]["dashboard_version"] == "0.6.43"
-assert panel_manifest["panel_version"] == "0.6.43"
+assert manifest["version"] == "1.0.0-b005.64"
+assert panel["panel"]["dashboard_version"] == "0.6.44"
+assert panel_manifest["panel_version"] == "0.6.44"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.43"' in const_source
-assert 'irrigation-panel-v0643.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.44"' in const_source
+assert 'irrigation-panel-v0644.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
@@ -98,10 +99,15 @@ assert 'Тест не восстанавливает зоны 1, 2 и 4' in prob
 assert 'const UI_VERSION = "0.6.43"' in refresh_probe_wrapper_source
 assert 'Активный сбор свежих DP38' in refresh_probe_wrapper_source
 assert 'Тест остановлен защитой до записи' in refresh_probe_wrapper_source
+assert 'const UI_VERSION = "0.6.44"' in read_probe_wrapper_source
+assert 'Прочитать зону 8' in read_probe_wrapper_source
+assert 'Команды записи не отправляются' in read_probe_wrapper_source
+assert 'Текущий блок зоны 8 прочитан без записи' in read_probe_wrapper_source
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["recovery_enabled"] is False
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["writes_performed"] == 0
 assert '"hex_probe_allowed"' in sensor_source
 assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
 assert "partial(_async_restore_zone8_schedule, hass)" not in setup_source
