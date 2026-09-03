@@ -82,14 +82,15 @@ mask_write_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0657.
 system_artwork_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0658.mjs").read_text(encoding="utf-8")
 settings_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0659.mjs").read_text(encoding="utf-8")
 layout_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0660.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source
+scroll_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0661.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source + scroll_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.80"
-assert panel["panel"]["dashboard_version"] == "0.6.60"
-assert panel_manifest["panel_version"] == "0.6.60"
+assert manifest["version"] == "1.0.0-b005.81"
+assert panel["panel"]["dashboard_version"] == "0.6.61"
+assert panel_manifest["panel_version"] == "0.6.61"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.60"' in const_source
-assert 'irrigation-panel-v0660.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.61"' in const_source
+assert 'irrigation-panel-v0661.mjs' in const_source
 assert "NUM_PRODUCTION_ZONES = 8" in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
@@ -242,9 +243,15 @@ assert 'irrigation-panel-v0659.mjs' in layout_wrapper_source
 assert 'viewport.classList.remove("zonesFitsViewport", "manualFitsViewport")' in layout_wrapper_source
 assert '.programZoneTabs{position:sticky' in layout_wrapper_source
 assert 'background-size:contain!important' in layout_wrapper_source
+assert 'const UI_VERSION = "0.6.61"' in scroll_wrapper_source
+assert 'irrigation-panel-v0660.mjs' in scroll_wrapper_source
+assert 'viewport.classList.toggle("longContentViewport", longContent)' in scroll_wrapper_source
+assert '.workViewport.isNative.longContentViewport .workCanvas{height:auto' in scroll_wrapper_source
+assert 'manualStartTop manualStartWide' in scroll_wrapper_source
+assert '<span>Старт полива</span>' in scroll_wrapper_source
 assert 'role="switch"' in manual_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0660.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0660.mjs")
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0661.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0661.mjs")
 expected_program_subtabs = []
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
