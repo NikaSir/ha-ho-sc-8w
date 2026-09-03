@@ -455,6 +455,98 @@ assert decoded_affected_zone4.cycle_value == 127
 assert decoded_affected_zone4.anchor_date == (2026, 9, 2)
 assert decoded_affected_zone4.rain_sensor_follow_inferred is True
 
+
+class FullSnapshotAPI(FakeZone8API):
+    """Return one deterministic read-only DP38 block for every zone."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._connected = True
+        self.snapshot_blocks = {
+            zone: bytes.fromhex(raw_hex)
+            for zone, raw_hex in const.DP38_KNOWN_BACKUP_HEX_BY_ZONE.items()
+        }
+        # A full forensic snapshot must preserve a malformed zone instead of
+        # discarding it; this reproduces the damaged start bytes seen on hardware.
+        self.snapshot_blocks[7] = bytes.fromhex(
+            "07EFEFEFEFEFEFFF8A9FDFEFFBFF007F1A090311"
+        )
+
+    def _collect_zone8_dp38_samples(
+        self,
+        timeout_seconds: float = 12.0,
+        *,
+        required_zones: set[int] | None = None,
+        max_requests: int = 24,
+    ) -> list[bytes]:
+        del timeout_seconds, max_requests
+        assert required_zones == set(range(1, 9))
+        observations = []
+        for zone, raw in sorted(self.snapshot_blocks.items()):
+            observation = {
+                "raw_hex": raw.hex().upper(),
+                "length": 20,
+                "station": zone,
+                "count": 1,
+                "sources": ["status"],
+                "fresh": True,
+                "valid": True,
+            }
+            try:
+                models.validate_dp38_block(raw, expected_zone=zone)
+                observation.update(models.decode_dp38(raw)[0].as_dict())
+            except ValueError as exc:
+                observation["valid"] = False
+                observation["error"] = str(exc)
+            observations.append(observation)
+        self.device.operation_mode = "OFF"
+        self.device.active_zone = 0
+        self.device.queued_zone = 0
+        self.device.zone8_hex_probe_samples = observations
+        self.device.zone8_hex_probe_trace = {
+            "safety_dps_seen": [
+                const.DP_OPERATION_MODE,
+                const.DP_ACTIVE_ZONE,
+                const.DP_QUEUED_ZONE,
+            ],
+            "zones_seen": list(range(1, 9)),
+            "target_collected": True,
+        }
+        return [self.snapshot_blocks[8]]
+
+
+full_snapshot = FullSnapshotAPI()
+baseline_result = full_snapshot.capture_dp38_snapshot(
+    "baseline", const.DP38_SNAPSHOT_CONFIRMATION
+)
+assert baseline_result["verified"] is True
+assert baseline_result["read_only"] is True
+assert baseline_result["writes_performed"] == 0
+assert baseline_result["phase"] == "baseline"
+assert set(baseline_result["blocks"]) == {str(zone) for zone in range(1, 9)}
+assert full_snapshot.device.dp38_snapshot_status == "baseline_saved"
+assert full_snapshot.device.dp38_snapshot_baseline[7]["valid"] is False
+
+changed_zone8 = bytearray(full_snapshot.snapshot_blocks[8])
+changed_zone8[1] = 1
+full_snapshot.snapshot_blocks[8] = bytes(changed_zone8)
+compare_result = full_snapshot.capture_dp38_snapshot(
+    "compare", const.DP38_SNAPSHOT_CONFIRMATION
+)
+assert compare_result["verified"] is True
+assert compare_result["writes_performed"] == 0
+assert compare_result["diff"]["changed_zones"] == [8]
+assert compare_result["diff"]["changes"][0]["offsets"] == [1]
+assert compare_result["diff"]["changes"][0]["bytes"] == [
+    {
+        "offset": 1,
+        "field": "duration_minutes",
+        "before": "00",
+        "after": "01",
+    }
+]
+assert full_snapshot.writes == []
+
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
@@ -463,7 +555,7 @@ for marker in (
     '"zones_seen"',
     '"complete_round"',
     "DP38_KNOWN_BACKUP_HEX_BY_ZONE",
-    "request_count < 24",
+    "request_count < max_requests",
     "zone8_hex_probe_samples",
     "zone8_hex_probe_trace",
     '"cached_only"',
@@ -472,6 +564,8 @@ for marker in (
     '"corrupt_zone8"',
     '"writes_performed": 0',
     '"read_only": True',
+    "capture_dp38_snapshot",
+    "required_zones=set(range(1, NUM_ZONES + 1))",
     "restore_zone8_known_backup",
     "automatic rollback was not attempted",
     "test_zone8_anchor_date_write",
@@ -487,5 +581,12 @@ writer_source = api_source.split("def _write_dp38_hex_block", 1)[1].split(
 )[0]
 assert "_write_command_value" not in writer_source
 assert "raise RuntimeError" in writer_source
+
+snapshot_source = api_source.split("def capture_dp38_snapshot", 1)[1].split(
+    "def _collect_confirmed_zone8_dp38", 1
+)[0]
+assert "_write_command_value" not in snapshot_source
+assert "_write_dp38_hex_block" not in snapshot_source
+assert "_write_local_dps" not in snapshot_source
 
 print("DP38 read-only observer and cross-zone write lockout: PASS")

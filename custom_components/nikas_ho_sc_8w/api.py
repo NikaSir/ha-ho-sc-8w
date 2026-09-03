@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-from datetime import date
+from datetime import date, datetime, timezone
 import logging
 import struct
 import threading
@@ -17,6 +17,7 @@ from .const import (
     CONNECTION_MODE_CLOUD,
     CONNECTION_MODE_LOCAL,
     CONNECTION_MODES,
+    DP38_SNAPSHOT_CONFIRMATION,
     DP_ACTIVE_ZONE,
     DP38_KNOWN_BACKUP_HEX_BY_ZONE,
     DP_CANCEL_ALARM_VOICE,
@@ -102,6 +103,14 @@ class HOSC8WDevice:
         self.zone8_anchor_date_test_to_hex = ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
         self.zone8_anchor_date_test_readback_hex = ""
         self.zone8_anchor_date_test_attempted = False
+        self.dp38_snapshot_status = "idle"
+        self.dp38_snapshot_detail = ""
+        self.dp38_snapshot_baseline: dict[int, dict[str, Any]] = {}
+        self.dp38_snapshot_current: dict[int, dict[str, Any]] = {}
+        self.dp38_snapshot_diff: dict[str, Any] = {}
+        self.dp38_snapshot_baseline_at = ""
+        self.dp38_snapshot_current_at = ""
+        self.dp38_snapshot_trace: dict[str, Any] = {}
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -855,9 +864,17 @@ class HOSC8WAPI:
             self._command_lock.release()
 
     def _collect_zone8_dp38_samples(
-        self, timeout_seconds: float = 12.0
+        self,
+        timeout_seconds: float = 12.0,
+        *,
+        required_zones: set[int] | None = None,
+        max_requests: int = 24,
     ) -> list[bytes]:
-        """Observe all fresh DP38 replies and return valid Zone 8 blocks."""
+        """Observe fresh DP38 replies and return valid Zone 8 blocks.
+
+        The optional ``required_zones`` target is used only by the read-only
+        full snapshot.  The legacy Zone 8 probe keeps its original stop rule.
+        """
         if self.active_transport != CONNECTION_MODE_LOCAL:
             raise RuntimeError("The DP38 HEX probe is local-transport only")
         device = self._ensure_connection()
@@ -957,13 +974,18 @@ class HOSC8WAPI:
                 and has_repeated_zone8()
             )
 
+        def target_collected() -> bool:
+            if required_zones is not None:
+                return required_zones.issubset(zones_observed())
+            return has_complete_round()
+
         device.set_socketTimeout(1)
         request_count = 0
         try:
             deadline = time.monotonic() + timeout_seconds
             while (
-                request_count < 24
-                and not has_complete_round()
+                request_count < max_requests
+                and not target_collected()
                 and time.monotonic() < deadline
             ):
                 try:
@@ -971,7 +993,7 @@ class HOSC8WAPI:
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
-                if has_complete_round() or request_count >= 24:
+                if target_collected() or request_count >= max_requests:
                     break
                 try:
                     ingest("updatedps", device.updatedps([DP_NORMAL_TIME]))
@@ -998,8 +1020,242 @@ class HOSC8WAPI:
                 observed_zones == list(range(1, NUM_ZONES + 1))
                 and has_repeated_zone8()
             ),
+            "required_zones": sorted(required_zones or []),
+            "target_collected": target_collected(),
         }
         return samples
+
+    @staticmethod
+    def _dp38_snapshot_field(offset: int) -> str:
+        """Return a human-readable field name for one DP38 byte offset."""
+        if offset == 0:
+            return "zone_identifier"
+        if offset == 1:
+            return "duration_minutes"
+        if 2 <= offset <= 7:
+            return f"start_time_{offset - 1}_hour"
+        if 8 <= offset <= 13:
+            return f"start_time_{offset - 7}_minute"
+        return {
+            14: "cycle_mode",
+            15: "cycle_value",
+            16: "anchor_year",
+            17: "anchor_month",
+            18: "anchor_day",
+            19: "flags",
+        }[offset]
+
+    def _build_full_dp38_snapshot(self) -> dict[int, dict[str, Any]]:
+        """Build one unambiguous fresh 20-byte observation for every zone."""
+        candidates: dict[int, list[dict[str, Any]]] = {
+            zone: [] for zone in range(1, NUM_ZONES + 1)
+        }
+        for item in self.device.zone8_hex_probe_samples:
+            try:
+                station = int(item.get("station"))
+                raw = bytes.fromhex(str(item.get("raw_hex", "")))
+            except (TypeError, ValueError):
+                continue
+            if station not in candidates or len(raw) != 20 or raw[0] != station:
+                continue
+            candidates[station].append(item)
+
+        missing = [zone for zone, items in candidates.items() if not items]
+        ambiguous = [zone for zone, items in candidates.items() if len(items) > 1]
+        if missing or ambiguous:
+            details = []
+            if missing:
+                details.append("missing zones: " + ", ".join(map(str, missing)))
+            if ambiguous:
+                details.append(
+                    "multiple variants for zones: "
+                    + ", ".join(map(str, ambiguous))
+                )
+            raise RuntimeError("Incomplete DP38 snapshot; " + "; ".join(details))
+
+        snapshot: dict[int, dict[str, Any]] = {}
+        for zone, items in candidates.items():
+            observed = items[0]
+            raw = bytes.fromhex(str(observed["raw_hex"]))
+            entry = {
+                "zone": zone,
+                "raw_hex": raw.hex().upper(),
+                "count": int(observed.get("count", 0)),
+                "fresh": observed.get("fresh") is not False,
+                "valid": observed.get("valid") is not False,
+                "error": str(observed.get("error", "")),
+                "sources": list(observed.get("sources", [])),
+            }
+            try:
+                validate_dp38_block(raw, expected_zone=zone)
+                entry.update(decode_dp38(raw)[0].as_dict())
+            except ValueError:
+                # A forensic snapshot must preserve malformed production data
+                # byte-for-byte instead of dropping the affected zone.
+                entry["valid"] = False
+            entry["start_slots"] = [
+                (
+                    None
+                    if raw[2 + slot] == 0xFF and raw[8 + slot] == 0xFF
+                    else f"{raw[2 + slot]:02d}:{raw[8 + slot]:02d}"
+                )
+                for slot in range(6)
+            ]
+            snapshot[zone] = entry
+        return snapshot
+
+    def _compare_dp38_snapshots(
+        self,
+        baseline: dict[int, dict[str, Any]],
+        current: dict[int, dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Return exact byte changes between two complete snapshots."""
+        changes: list[dict[str, Any]] = []
+        unchanged: list[int] = []
+        for zone in range(1, NUM_ZONES + 1):
+            before = bytes.fromhex(str(baseline[zone]["raw_hex"]))
+            after = bytes.fromhex(str(current[zone]["raw_hex"]))
+            offsets = [
+                offset
+                for offset, (old, new) in enumerate(zip(before, after, strict=True))
+                if old != new
+            ]
+            if not offsets:
+                unchanged.append(zone)
+                continue
+            changes.append(
+                {
+                    "zone": zone,
+                    "before_hex": before.hex().upper(),
+                    "after_hex": after.hex().upper(),
+                    "offsets": offsets,
+                    "bytes": [
+                        {
+                            "offset": offset,
+                            "field": self._dp38_snapshot_field(offset),
+                            "before": f"{before[offset]:02X}",
+                            "after": f"{after[offset]:02X}",
+                        }
+                        for offset in offsets
+                    ],
+                }
+            )
+        return {
+            "changed": bool(changes),
+            "changed_zones": [item["zone"] for item in changes],
+            "unchanged_zones": unchanged,
+            "changes": changes,
+        }
+
+    def capture_dp38_snapshot(
+        self, phase: str, confirmation: str
+    ) -> dict[str, Any]:
+        """Capture or compare all eight DP38 blocks without any write command."""
+        if confirmation != DP38_SNAPSHOT_CONFIRMATION:
+            raise PermissionError(
+                "Explicit read-only DP38 snapshot confirmation is required"
+            )
+        if phase not in {"baseline", "compare"}:
+            raise ValueError("DP38 snapshot phase must be baseline or compare")
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("The full DP38 snapshot is local-transport only")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller action is still in progress")
+        try:
+            with self._io_lock:
+                self.device.dp38_snapshot_status = (
+                    "capturing_baseline" if phase == "baseline" else "capturing_compare"
+                )
+                self.device.dp38_snapshot_detail = ""
+                self._collect_zone8_dp38_samples(
+                    timeout_seconds=35.0,
+                    required_zones=set(range(1, NUM_ZONES + 1)),
+                    max_requests=80,
+                )
+                self.device.dp38_snapshot_trace = dict(
+                    self.device.zone8_hex_probe_trace
+                )
+                required_safety = {
+                    DP_OPERATION_MODE,
+                    DP_ACTIVE_ZONE,
+                    DP_QUEUED_ZONE,
+                }
+                seen_safety = set(
+                    self.device.zone8_hex_probe_trace.get("safety_dps_seen", [])
+                )
+                if not required_safety.issubset(seen_safety):
+                    raise RuntimeError("Fresh DP101/107/108 safety state was not received")
+                if str(self.device.operation_mode).lower() != "off":
+                    raise RuntimeError(
+                        "Set the physical controller to OFF before the DP38 snapshot"
+                    )
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before the DP38 snapshot")
+
+                snapshot = self._build_full_dp38_snapshot()
+                captured_at = datetime.now(timezone.utc).isoformat()
+                for entry in snapshot.values():
+                    if entry["valid"]:
+                        self.device.ingest_schedule_block(
+                            bytes.fromhex(entry["raw_hex"]), source="controller"
+                        )
+
+                if phase == "baseline":
+                    self.device.dp38_snapshot_baseline = snapshot
+                    self.device.dp38_snapshot_current = {}
+                    self.device.dp38_snapshot_diff = {
+                        "changed": False,
+                        "changed_zones": [],
+                        "unchanged_zones": list(range(1, NUM_ZONES + 1)),
+                        "changes": [],
+                    }
+                    self.device.dp38_snapshot_baseline_at = captured_at
+                    self.device.dp38_snapshot_current_at = ""
+                    self.device.dp38_snapshot_status = "baseline_saved"
+                    self.device.dp38_snapshot_detail = (
+                        "Complete read-only baseline for zones 1-8 was saved"
+                    )
+                else:
+                    if set(self.device.dp38_snapshot_baseline) != set(
+                        range(1, NUM_ZONES + 1)
+                    ):
+                        raise RuntimeError(
+                            "Capture a complete baseline before the comparison snapshot"
+                        )
+                    self.device.dp38_snapshot_current = snapshot
+                    self.device.dp38_snapshot_current_at = captured_at
+                    self.device.dp38_snapshot_diff = self._compare_dp38_snapshots(
+                        self.device.dp38_snapshot_baseline,
+                        snapshot,
+                    )
+                    changed = self.device.dp38_snapshot_diff["changed"]
+                    self.device.dp38_snapshot_status = (
+                        "compared_changes" if changed else "compared_unchanged"
+                    )
+                    self.device.dp38_snapshot_detail = (
+                        "Read-only comparison found changed DP38 bytes"
+                        if changed
+                        else "All eight DP38 blocks match the baseline"
+                    )
+                return {
+                    "verified": True,
+                    "read_only": True,
+                    "writes_performed": 0,
+                    "phase": phase,
+                    "captured_at": captured_at,
+                    "blocks": {
+                        str(zone): item["raw_hex"]
+                        for zone, item in snapshot.items()
+                    },
+                    "diff": self.device.dp38_snapshot_diff,
+                    "trace": self.device.dp38_snapshot_trace,
+                }
+        except Exception as exc:
+            self.device.dp38_snapshot_status = "incomplete"
+            self.device.dp38_snapshot_detail = str(exc)
+            raise
+        finally:
+            self._command_lock.release()
 
     def _collect_confirmed_zone8_dp38(
         self, timeout_seconds: float = 8.0

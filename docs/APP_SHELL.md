@@ -6,11 +6,11 @@ The integration implements **NikaS Specialized Panel UI Standard v1.9** and the 
 
 The application has three persistent rows:
 
-1. **Header** — native Home Assistant menu, centered panel identity and Refresh.
+1. **Header** — native Home Assistant menu, centered panel identity and Refresh; the `Параметры зон` Program subtab contextually exposes the selected-zone control and state in the same fixed row.
 2. **Work viewport** — irrigation status, zones, program, manual preparation and diagnostics.
 3. **Bottom Tab Bar** — the five primary panel sections.
 
-HO-SC-8W is one physical controller. Irrigation zones are subordinate channels, so there is no peer-device selector.
+HO-SC-8W is one physical controller. Irrigation zones are subordinate channels, so there is no peer-device selector. The compact zone control shown only inside `Программа → Параметры зон` selects which subordinate form is displayed; it does not change the physical device.
 
 Header, viewport and Bottom Tab Bar mount once. Home Assistant telemetry point-patches existing content and must not recreate these nodes, reload imagery, jump scroll position or interrupt pinch/pan. Explicit tab or zone-detail transitions may replace only work-area children.
 
@@ -26,6 +26,7 @@ Header, viewport and Bottom Tab Bar mount once. Home Assistant telemetry point-p
 - icons: `ha-icon` with `mdi:menu` / `mdi:refresh`, 25 px;
 - title/subtitle: 23/14 px, narrow 21/13 px;
 - the left control only emits bubbling/composed `hass-toggle-menu`;
+- in `Программа → Параметры зон`, the still-mounted title and Refresh nodes are hidden while the centre shows the Zone 1–6 selector and the right plaque shows the factual state of that selected zone;
 - Back, integration menus and irrigation actions are forbidden in the permanent Header;
 - safe area is consumed once below Dynamic Island/notch.
 

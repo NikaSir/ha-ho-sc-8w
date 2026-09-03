@@ -42,6 +42,7 @@ SERVICE_SET_SEASONAL_ADJUSTMENT = "set_seasonal_adjustment"
 SERVICE_SET_ZONE8_SCHEDULE_FIELD = "set_zone8_schedule_field"
 SERVICE_RESTORE_ZONE8_SCHEDULE = "restore_zone8_schedule"
 SERVICE_PROBE_ZONE8_DP38_HEX = "probe_zone8_dp38_hex"
+SERVICE_CAPTURE_DP38_SNAPSHOT = "capture_dp38_snapshot"
 SERVICE_RESTORE_ZONE8_KNOWN_BACKUP = "restore_zone8_known_backup"
 SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE = "test_zone8_anchor_date_write"
 
@@ -52,6 +53,9 @@ ATTR_DURATION_MINUTES = "duration_minutes"
 ATTR_VALUE = "value"
 ATTR_FIELD = "field"
 ATTR_CONFIRMATION = "confirmation"
+ATTR_PHASE = "phase"
+
+DP38_SNAPSHOT_CONFIRMATION = "DP38_FULL_SNAPSHOT_READ_ONLY"
 
 DP_NORMAL_TIME = 38
 DP_IRRIGATION_MODE = 44
@@ -87,6 +91,6 @@ PANEL_ICON = "mdi:sprinkler"
 PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
-PANEL_VERSION = "0.6.52"
+PANEL_VERSION = "0.6.53"
 PANEL_STATIC_URL = "/nikas-ho-sc-8w"
-PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0652.mjs"
+PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0653.mjs"

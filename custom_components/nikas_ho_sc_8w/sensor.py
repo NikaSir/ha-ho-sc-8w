@@ -148,6 +148,32 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                         and not device.active_zone
                         and not device.queued_zone
                     ),
+                    "dp38_snapshot_status": device.dp38_snapshot_status,
+                    "dp38_snapshot_detail": device.dp38_snapshot_detail,
+                    "dp38_snapshot_baseline": [
+                        device.dp38_snapshot_baseline[zone]
+                        for zone in sorted(device.dp38_snapshot_baseline)
+                    ],
+                    "dp38_snapshot_current": [
+                        device.dp38_snapshot_current[zone]
+                        for zone in sorted(device.dp38_snapshot_current)
+                    ],
+                    "dp38_snapshot_diff": device.dp38_snapshot_diff,
+                    "dp38_snapshot_baseline_at": (
+                        device.dp38_snapshot_baseline_at
+                    ),
+                    "dp38_snapshot_current_at": device.dp38_snapshot_current_at,
+                    "dp38_snapshot_trace": device.dp38_snapshot_trace,
+                    "dp38_snapshot_baseline_available": (
+                        len(device.dp38_snapshot_baseline) == NUM_ZONES
+                    ),
+                    "dp38_snapshot_allowed": (
+                        self.coordinator.api.active_transport
+                        == CONNECTION_MODE_LOCAL
+                        and str(device.operation_mode).lower() == "off"
+                        and not device.active_zone
+                        and not device.queued_zone
+                    ),
                     "known_restore_status": device.zone8_restore_status,
                     "known_restore_detail": device.zone8_restore_detail,
                     "known_restore_from_hex": device.zone8_restore_from_hex,

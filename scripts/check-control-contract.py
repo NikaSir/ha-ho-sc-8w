@@ -74,14 +74,15 @@ emergency_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0649.m
 anchor_date_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0650.mjs").read_text(encoding="utf-8")
 safety_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0651.mjs").read_text(encoding="utf-8")
 program_form_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0652.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source
+snapshot_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0653.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.72"
-assert panel["panel"]["dashboard_version"] == "0.6.52"
-assert panel_manifest["panel_version"] == "0.6.52"
+assert manifest["version"] == "1.0.0-b005.73"
+assert panel["panel"]["dashboard_version"] == "0.6.53"
+assert panel_manifest["panel_version"] == "0.6.53"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.52"' in const_source
-assert 'irrigation-panel-v0652.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.53"' in const_source
+assert 'irrigation-panel-v0653.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -162,6 +163,44 @@ assert 'Датчик дождя' in program_form_wrapper_source
 assert '.zoneProgramDetail{min-height:0!important' in program_form_wrapper_source
 assert 'background-size:cover!important' in program_form_wrapper_source
 assert 'data-zone8-anchor-date-test' not in program_form_wrapper_source
+assert 'const UI_VERSION = "0.6.53"' in snapshot_wrapper_source
+assert 'irrigation-panel-v0652.mjs' in snapshot_wrapper_source
+assert 'capture_dp38_snapshot' in snapshot_wrapper_source
+assert 'DP38_FULL_SNAPSHOT_READ_ONLY' in snapshot_wrapper_source
+assert 'Снять исходный снимок 1–8' in snapshot_wrapper_source
+assert 'Снять контрольный снимок и сравнить' in snapshot_wrapper_source
+assert 'Команды записи DP38 не отправляются' in snapshot_wrapper_source
+assert 'data-program-section="general"' in snapshot_wrapper_source
+assert 'data-program-section="zones"' in snapshot_wrapper_source
+assert 'Общие параметры' in snapshot_wrapper_source
+assert 'Параметры зон' in snapshot_wrapper_source
+assert 'data-program-zone-select' in snapshot_wrapper_source
+assert 'data-program-zone-state' in snapshot_wrapper_source
+assert 'this.zoneDetail(e, zone)' in snapshot_wrapper_source
+assert 'this._programSection === "zones" ? "zones" : "general"' in snapshot_wrapper_source
+assert 'title.hidden = zoneMode' in snapshot_wrapper_source
+assert 'refresh.hidden = zoneMode' in snapshot_wrapper_source
+assert 'zoneState.hidden = !zoneMode' in snapshot_wrapper_source
+assert '.headerProgramContext{display:grid;place-items:center' in snapshot_wrapper_source
+assert 'Разрешение полива' in snapshot_wrapper_source
+assert 'Пауза полива' in snapshot_wrapper_source
+assert 'Сезонный коэффициент' in snapshot_wrapper_source
+assert 'programExpandedList' not in snapshot_wrapper_source
+assert 'Первый запуск' not in snapshot_wrapper_source
+assert 'data-zone8-anchor-date-test' not in snapshot_wrapper_source
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0653.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0653.mjs")
+expected_program_subtabs = ["general_parameters", "zone_parameters"]
+program_meta = panel["panel"]["control_actions"]["program_view"]
+manifest_program_meta = panel_manifest["control_actions"]["program_view"]
+assert program_meta["subtabs"] == expected_program_subtabs
+assert manifest_program_meta["subtabs"] == expected_program_subtabs
+assert program_meta["default_subtab"] == "general_parameters"
+assert program_meta["zone_selector"] == "header_center"
+assert program_meta["selected_zone_status"] == "header_right"
+assert program_meta["zone_scope"] == list(range(1, 7))
+assert program_meta["zone_form"] == "complete_decoded_zone_detail_read_only"
+assert program_meta["vertical_scroll"] == "central_work_area_only"
 expected_zone_detail_fields = [
     "base_duration",
     "six_start_slots",
@@ -185,6 +224,10 @@ assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["observed_cross_
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["observed_cross_zone_write"]["zone_8_unchanged"] is True
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_retry"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_rollback"] is False
+snapshot_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_snapshot"]
+assert snapshot_meta["zones"] == list(range(1, 9))
+assert snapshot_meta["read_only"] is True
+assert snapshot_meta["writes_performed"] == 0
 assert '"hex_probe_allowed"' in sensor_source
 assert '"anchor_date_test_allowed"' in sensor_source
 assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
