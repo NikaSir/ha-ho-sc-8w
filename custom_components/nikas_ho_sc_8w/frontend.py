@@ -158,6 +158,18 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                         "cycle_encoding": "not_isolated",
                     },
                     "production_zones_untouched": [1, 2, 3, 5, 6],
+                    "full_frame_test": {
+                        "enabled": True,
+                        "zones": list(range(1, 9)),
+                        "frame_bytes": 160,
+                        "transport": "320_uppercase_ascii_hex_characters",
+                        "change": "zone_8_anchor_day_04_to_05_at_byte_18",
+                        "maximum_writes_per_action": 1,
+                        "requires_fresh_baseline": True,
+                        "requires_control_snapshot": True,
+                        "automatic_retry": False,
+                        "automatic_rollback": False,
+                    },
                 },
             },
             "typography": {
