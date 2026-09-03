@@ -68,14 +68,15 @@ read_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0644.
 sample_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0645.mjs").read_text(encoding="utf-8")
 raw_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0646.mjs").read_text(encoding="utf-8")
 restore_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0647.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source
+sequential_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0648.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.67"
-assert panel["panel"]["dashboard_version"] == "0.6.47"
-assert panel_manifest["panel_version"] == "0.6.47"
+assert manifest["version"] == "1.0.0-b005.68"
+assert panel["panel"]["dashboard_version"] == "0.6.48"
+assert panel_manifest["panel_version"] == "0.6.48"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.47"' in const_source
-assert 'irrigation-panel-v0647.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.48"' in const_source
+assert 'irrigation-panel-v0648.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
@@ -118,6 +119,8 @@ assert 'Получен повреждённый блок зоны 8' in restore_
 assert 'restore_zone8_known_backup' in restore_wrapper_source
 assert 'Восстановить исходную зону 8' in restore_wrapper_source
 assert 'Зоны 1–6 не записываются' in restore_wrapper_source
+assert 'const UI_VERSION = "0.6.48"' in sequential_wrapper_source
+assert 'irrigation-panel-v0647.mjs' in sequential_wrapper_source
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True
