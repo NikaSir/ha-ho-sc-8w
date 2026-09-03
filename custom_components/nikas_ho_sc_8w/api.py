@@ -928,14 +928,21 @@ class HOSC8WAPI:
                 if current[0] == 8:
                     samples.append(current)
 
+        def has_repeated_zone8() -> bool:
+            return any(
+                item.get("station") == 8
+                and item.get("length") == 20
+                and int(item.get("count", 0)) >= 2
+                for item in observed.values()
+            )
+
         device.set_socketTimeout(1)
         request_count = 0
         try:
             deadline = time.monotonic() + timeout_seconds
             while (
-                request_count < 12
-                and len(observed) < 6
-                and len(samples) < 4
+                request_count < 24
+                and not has_repeated_zone8()
                 and time.monotonic() < deadline
             ):
                 try:
@@ -943,7 +950,7 @@ class HOSC8WAPI:
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
-                if len(observed) >= 6 or len(samples) >= 4 or request_count >= 12:
+                if has_repeated_zone8() or request_count >= 24:
                     break
                 try:
                     ingest("updatedps", device.updatedps([DP_NORMAL_TIME]))

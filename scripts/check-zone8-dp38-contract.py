@@ -129,10 +129,50 @@ class ActiveRefreshAPI(HOSC8WAPI):
 active_refresh = ActiveRefreshAPI()
 fresh = active_refresh._collect_confirmed_zone8_dp38(timeout_seconds=1)
 assert fresh == block(8)
-assert active_refresh.fake_device.status_calls == 2
-assert active_refresh.fake_device.refresh_calls == 2
+assert active_refresh.fake_device.status_calls == 1
+assert active_refresh.fake_device.refresh_calls == 1
 assert active_refresh.fake_device.timeouts == [1, 5]
 assert active_refresh.device.schedule_sources[8] == "controller"
+
+
+class SequentialRefreshDevice(ActiveRefreshDevice):
+    """Return one station per response, with Zone 8 only after six others."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.response_index = 0
+        self.sequence = [2, 3, 4, 5, 6, 7, 8] * 2
+
+    def _response(self, include_safety: bool) -> dict[str, Any]:
+        zone = self.sequence[self.response_index]
+        self.response_index += 1
+        dps: dict[str, Any] = {str(DP_NORMAL_TIME): block(zone).hex().upper()}
+        if include_safety:
+            dps.update({
+                str(const.DP_OPERATION_MODE): "OFF",
+                str(const.DP_ACTIVE_ZONE): 0,
+                str(const.DP_QUEUED_ZONE): 0,
+            })
+        return {"dps": dps}
+
+    def status(self) -> dict[str, Any]:
+        self.status_calls += 1
+        return self._response(True)
+
+    def updatedps(self, indexes: list[int]) -> dict[str, Any]:
+        assert indexes == [DP_NORMAL_TIME]
+        self.refresh_calls += 1
+        return self._response(False)
+
+
+sequential = ActiveRefreshAPI()
+sequential.fake_device = SequentialRefreshDevice()
+sequential._tuya = sequential.fake_device
+sequential_fresh = sequential._collect_confirmed_zone8_dp38(timeout_seconds=2)
+assert sequential_fresh == block(8)
+assert sequential.fake_device.response_index == 14
+assert sequential.device.zone8_hex_probe_trace["active_requests"] == 14
+assert sequential.device.zone8_hex_probe_trace["dp38_variants"] == 7
 
 
 api = FakeZone8API()
@@ -272,7 +312,7 @@ cached_result = cached_only.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
 assert cached_result["verified"] is False
 assert cached_result["writes_performed"] == 0
 assert cached_result["raw_hex"] == ""
-assert cached_result["trace"]["active_requests"] == 12
+assert cached_result["trace"]["active_requests"] == 24
 assert cached_only.device.zone8_hex_probe_status == "cached_only"
 assert cached_only.device.zone8_hex_probe_samples[0]["fresh"] is False
 assert cached_only.device.zone8_hex_probe_samples[0]["raw_hex"] == block(8).hex().upper()
@@ -400,6 +440,8 @@ api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
     "device.updatedps([DP_NORMAL_TIME])",
+    "has_repeated_zone8",
+    "request_count < 24",
     "zone8_hex_probe_samples",
     "zone8_hex_probe_trace",
     '"cached_only"',
