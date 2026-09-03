@@ -79,6 +79,67 @@ def block(zone: int) -> bytes:
     )
 
 
+class ActiveRefreshDevice:
+    """Model a controller that returns one station per DP38 refresh request."""
+
+    def __init__(self) -> None:
+        self.refresh_zones = list(range(1, 8))
+        self.status_calls = 0
+        self.refresh_calls = 0
+        self.timeouts: list[int] = []
+
+    def set_socketTimeout(self, value: int) -> None:
+        self.timeouts.append(value)
+
+    def status(self) -> dict[str, Any]:
+        self.status_calls += 1
+        return {
+            "dps": {
+                str(DP_NORMAL_TIME): block(8).hex().upper(),
+                str(const.DP_OPERATION_MODE): "OFF",
+                str(const.DP_ACTIVE_ZONE): 0,
+                str(const.DP_QUEUED_ZONE): 0,
+            }
+        }
+
+    def updatedps(self, indexes: list[int]) -> dict[str, Any]:
+        assert indexes == [DP_NORMAL_TIME]
+        self.refresh_calls += 1
+        zone = self.refresh_zones.pop(0) if self.refresh_zones else 8
+        return {"dps": {str(DP_NORMAL_TIME): block(zone).hex().upper()}}
+
+    def receive(self) -> None:
+        return None
+
+
+class ActiveRefreshAPI(HOSC8WAPI):
+    def __init__(self) -> None:
+        super().__init__("device", "key", "127.0.0.1")
+        self.fake_device = ActiveRefreshDevice()
+        self._connected = True
+        self._tuya = self.fake_device
+
+    def _reset_connection(self) -> None:
+        # Keep the deterministic fake connection across the collector reset.
+        self._connected = True
+        self._tuya = self.fake_device
+
+    def _ensure_connection(self) -> ActiveRefreshDevice:
+        return self.fake_device
+
+
+active_refresh = ActiveRefreshAPI()
+fresh = active_refresh._collect_fresh_dp38_round(timeout_seconds=1)
+assert sorted(fresh) == list(range(1, 9))
+assert active_refresh.fake_device.status_calls >= 7
+assert active_refresh.fake_device.refresh_calls == 7
+assert active_refresh.fake_device.timeouts == [1, 5]
+assert all(
+    active_refresh.device.schedule_sources[zone] == "controller"
+    for zone in range(1, 9)
+)
+
+
 api = FakeZone8API()
 for zone in range(1, 9):
     api.device.ingest_schedule_block(block(zone), source="controller")
@@ -186,6 +247,8 @@ api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
     "required_safety_dps",
+    "device.updatedps([DP_NORMAL_TIME])",
+    "request_count",
     "after_no_change != before",
     "changed[zone] != before[zone] for zone in range(1, 8)",
     "finally:",
