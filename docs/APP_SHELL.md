@@ -42,7 +42,7 @@ Header, viewport and Bottom Tab Bar mount once. Home Assistant telemetry point-p
 ## Bottom Tab Bar
 
 ```text
-Состояние · Зоны · Программа · Ручной · Диагн.
+Система · Зоны · Программа · Ручной · Диагн.
 ```
 
 The bar is a native-scale grid row outside the viewport, full width and safe-area aware. Every tab is at least 52 px high, uses an MDI `ha-icon` at 28 px and a one-line 12 px/700 label. The active tab uses the theme primary colour and approximately 11% primary tint without a detached shadow.

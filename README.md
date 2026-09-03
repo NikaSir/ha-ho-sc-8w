@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.57** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.58** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -58,7 +58,7 @@ It also conforms to **NikaS Integration Panel Template v1.9**.
 
 The user-facing application model is domain-oriented rather than protocol-oriented:
 
-- **Состояние** — factual controller state, six-axis zone schematic and display-only program, mode and seasonal values;
+- **Система** — compact controller readiness, standard connection badge, mode, rain, pressure and seasonal values;
 - **Зоны** — production zones 1–6 with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
 - **Программа** — direct 1–8 zone switching below the Header and the complete decoded read-only automatic program for the selected zone;
 - **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
@@ -69,10 +69,10 @@ The only enabled DP38 schedule write is a fixed field experiment based on the co
 The primary Bottom Tab Bar is:
 
 ```text
-Состояние · Зоны · Программа · Ручной · Диагн.
+Система · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. The fixed Zone 8 experiment requires local transport, physical Auto/ON, idle state and a fresh complete baseline; it then sends one masked block and requires a separate all-zone control snapshot. Production-zone recovery remains disabled.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–8 and lets the user assign a bundled illustration or a neutral gray tile to each zone. This visual choice is stored only in the browser. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. The fixed Zone 8 experiment requires local transport, physical Auto/ON, idle state and a fresh complete baseline; it then sends one masked 20-byte block and requires a separate all-zone control snapshot. Production-zone recovery remains disabled.
 
 ### Full-field Overview v0.4.3
 
@@ -155,7 +155,7 @@ This build uses a stable production filename plus query-string cache busting. Co
 - Header and Bottom Tab Bar elements never execute device actions.
 - Long press on factual Home Assistant entity-backed controls opens standard Home Assistant more-info.
 - Manual watering writes only after confirmed queue start/stop/Auto actions and verifies DP101/107/108.
-- Seasonal correction is display-only on `Состояние`; only the `Сезон` tile on `Программа` can apply −90…100% in 10% steps, with confirmation and DP103 read-back.
+- Seasonal correction is display-only on `Система`; the current compact Program workspace remains read-only.
 
 ## Device scope
 
