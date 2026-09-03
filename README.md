@@ -62,7 +62,7 @@ The user-facing application model is domain-oriented rather than protocol-orient
 - **Зоны** — production zones 1–6 with factual drill-down;
 - **Программа** — read-only decoded automatic zone program plus the confirmed seasonal-correction editor on the `Сезон` tile;
 - **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
-- **Диагн.** — integration health and a guarded laboratory program editor for the physically unused Zone 8.
+- **Диагн.** — integration health, a read-only Zone 8 laboratory program card and the isolated ASCII HEX transport probe.
 
 The primary Bottom Tab Bar is:
 
@@ -70,7 +70,7 @@ The primary Bottom Tab Bar is:
 Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. Diagnostics contains the isolated Zone 8 laboratory: each confirmed action changes one decoded DP38 field, preserves the other 19-byte block content, requires exact controller read-back and keeps a persistent original block for restoration.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. The Zone 8 DP38 laboratory in Diagnostics is on a read-only incident hold after a Base64 payload was sent to the String DP38 `normal_time` field and produced invalid production schedules. Generic write and restore services remain disabled. A separate one-shot probe is available only for the physically unused Zone 8: with the controller physically `OFF`, no watering, local transport, fresh DP101/107/108 and a fresh eight-zone DP38 round, it sends one 20-byte station block as 40 uppercase ASCII HEX characters, verifies a no-change write, toggles one Zone 8 rain-follow bit, compares Zones 1–7 byte-for-byte, and restores the exact original Zone 8 block. Production-zone recovery remains disabled until this probe passes on hardware.
 
 ### Full-field Overview v0.4.3
 

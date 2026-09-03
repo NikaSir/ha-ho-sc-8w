@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Hardware-free contract check for guarded Zone 8 DP38 laboratory writes."""
+"""Hardware-free contract check for the isolated Zone 8 DP38 HEX probe."""
 
 from __future__ import annotations
 
-import base64
 import importlib.util
 import sys
 import types
@@ -60,7 +59,9 @@ class FakeZone8API(HOSC8WAPI):
         nowait: bool = False,
     ) -> None:
         self.writes.append((dp, value, cloud_code, cloud_value))
-        raw = base64.b64decode(value)
+        assert isinstance(value, str) and len(value) == 40
+        assert value == value.upper()
+        raw = bytes.fromhex(value)
         self.device.ingest_schedule_raw(raw, source="controller")
 
 
@@ -82,32 +83,44 @@ api = FakeZone8API()
 for zone in range(1, 9):
     api.device.ingest_schedule_block(block(zone), source="controller")
 
-before_all = dict(api.device.schedule_blocks)
 snapshot = api.snapshot_zone8_schedule_for_lab()
-result = api.set_zone8_schedule_field("duration_minutes", "1", snapshot)
+assert const.ZONE8_DP38_WRITES_ENABLED is False
+for action in (
+    lambda: api.set_zone8_schedule_field("duration_minutes", "1", snapshot),
+    lambda: api.restore_zone8_schedule(snapshot),
+):
+    try:
+        action()
+    except RuntimeError as exc:
+        assert "disabled" in str(exc)
+    else:
+        raise AssertionError("Every DP38 schedule write must be blocked")
+assert api.writes == []
+
+# Exercise the corrected encoder without changing the production safety flag.
+api_module.ZONE8_DP38_WRITES_ENABLED = True
+probe = FakeZone8API()
+for zone in range(1, 9):
+    probe.device.ingest_schedule_block(block(zone), source="controller")
+before_all = dict(probe.device.schedule_blocks)
+current = bytearray(probe.snapshot_zone8_schedule_for_lab())
+current[14] |= 0xA0
+probe.device.ingest_schedule_block(bytes(current), source="controller")
+
+snapshot = probe.snapshot_zone8_schedule_for_lab()
+result = probe.set_zone8_schedule_field("cycle_mode", "interval", snapshot)
 assert result["verified"] is True and result["changed"] is True
-assert len(api.writes) == 1 and api.writes[0][0] == DP_NORMAL_TIME
-assert api.writes[0][2] == "normal_time"
-assert base64.b64decode(api.writes[0][1])[0] == 8
-assert api.device.schedule_blocks[8][1] == 1
-assert all(api.device.schedule_blocks[z] == before_all[z] for z in range(1, 8))
+assert len(probe.writes) == 1 and probe.writes[0][0] == DP_NORMAL_TIME
+assert probe.writes[0][2] == "normal_time"
+written = bytes.fromhex(probe.writes[0][1])
+assert written[0] == 8 and written[14] == 0xA3
+assert probe.device.schedule_blocks[8] == written
+assert all(probe.device.schedule_blocks[z] == before_all[z] for z in range(1, 8))
 
-current = api.snapshot_zone8_schedule_for_lab()
-api.set_zone8_schedule_field("rain_sensor_follow", "false", current)
-assert api.device.schedule_blocks[8][19] == before_all[8][19] & ~0x01
-assert all(api.device.schedule_blocks[z] == before_all[z] for z in range(1, 8))
-
-current = api.snapshot_zone8_schedule_for_lab()
-api.set_zone8_schedule_field("start_time_3", "12:34", current)
-changed = api.device.schedule_blocks[8]
-assert changed[4] == 12 and changed[10] == 34
-assert changed[:4] == current[:4] and changed[5:10] == current[5:10]
-assert changed[11:] == current[11:]
-
-restored = api.restore_zone8_schedule(before_all[8])
+restored = probe.restore_zone8_schedule(snapshot)
 assert restored["verified"] is True
-assert api.device.schedule_blocks == before_all
-assert all(write[0] == DP_NORMAL_TIME for write in api.writes)
+assert probe.device.schedule_blocks[8] == snapshot
+assert all(probe.device.schedule_blocks[z] == before_all[z] for z in range(1, 8))
 
 api.device.active_zone = 1
 try:
@@ -117,4 +130,68 @@ except RuntimeError as exc:
 else:
     raise AssertionError("Active watering must block Zone 8 DP38 writes")
 
-print("Zone 8 DP38 laboratory contract: PASS")
+
+class IsolatedProbeAPI(FakeZone8API):
+    def __init__(self) -> None:
+        super().__init__()
+        for zone in range(1, 9):
+            self.device.ingest_schedule_block(block(zone), source="controller")
+        self.rounds = 0
+
+    def _collect_fresh_dp38_round(
+        self, timeout_seconds: float = 14.0
+    ) -> dict[int, bytes]:
+        del timeout_seconds
+        self.rounds += 1
+        return dict(self.device.schedule_blocks)
+
+
+isolated = IsolatedProbeAPI()
+before_probe = dict(isolated.device.schedule_blocks)
+result = isolated.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
+assert result == {
+    "verified": True,
+    "wire_encoding": "uppercase_ascii_hex",
+    "zones_compared": 8,
+    "zone8_restored": True,
+}
+assert isolated.rounds == 4
+assert len(isolated.writes) == 3
+assert all(write[0] == DP_NORMAL_TIME for write in isolated.writes)
+assert all(isinstance(write[1], str) and len(write[1]) == 40 for write in isolated.writes)
+assert isolated.writes[0][1] == before_probe[8].hex().upper()
+assert bytes.fromhex(isolated.writes[1][1])[19] == (before_probe[8][19] ^ 0x01)
+assert isolated.writes[2][1] == before_probe[8].hex().upper()
+assert isolated.device.schedule_blocks == before_probe
+assert isolated.device.zone8_hex_probe_status == "verified"
+
+blocked = IsolatedProbeAPI()
+blocked.device.operation_mode = "Auto"
+try:
+    blocked.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
+except RuntimeError as exc:
+    assert "physical controller to OFF" in str(exc)
+else:
+    raise AssertionError("The HEX probe must require physical OFF")
+assert blocked.writes == []
+
+try:
+    IsolatedProbeAPI().probe_zone8_dp38_hex("wrong")
+except PermissionError:
+    pass
+else:
+    raise AssertionError("The HEX probe must require its exact confirmation token")
+
+api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
+for marker in (
+    "safety_dps_seen",
+    "required_safety_dps",
+    "after_no_change != before",
+    "changed[zone] != before[zone] for zone in range(1, 8)",
+    "finally:",
+    "rollback != before",
+    "block.hex().upper()",
+):
+    assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
+
+print("Zone 8 DP38 read-only hold and isolated ASCII HEX probe: PASS")

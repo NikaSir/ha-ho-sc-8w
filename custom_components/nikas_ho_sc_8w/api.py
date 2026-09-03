@@ -37,6 +37,8 @@ from .const import (
     SEASONAL_ADJUST_MIN,
     SEASONAL_ADJUST_STEP,
     TUYA_VERSION,
+    ZONE8_DP38_HEX_PROBE_ENABLED,
+    ZONE8_DP38_WRITES_ENABLED,
 )
 from .models import (
     PROFILE,
@@ -77,6 +79,8 @@ class HOSC8WDevice:
         self.zone8_lab_last_field = ""
         self.zone8_lab_requested_value = ""
         self.zone8_lab_last_readback_raw = ""
+        self.zone8_hex_probe_status = "idle"
+        self.zone8_hex_probe_detail = ""
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -704,7 +708,7 @@ class HOSC8WAPI:
             modes = {"weekly": 0, "odd": 1, "even": 2, "interval": 3}
             if value not in modes:
                 raise ValueError("Cycle mode must be weekly, odd, even or interval")
-            requested[14] = modes[value]
+            requested[14] = (requested[14] & 0xFC) | modes[value]
         if field == "cycle_value":
             cycle_value = int(value)
             if not 0 <= cycle_value <= 255:
@@ -748,6 +752,10 @@ class HOSC8WAPI:
         self, field: str, value: str, expected_current: bytes
     ) -> dict[str, Any]:
         """Write one Zone 8 DP38 field and require an exact controller read-back."""
+        if not ZONE8_DP38_WRITES_ENABLED:
+            raise RuntimeError(
+                "DP38 schedule writes are disabled after a Zone 8 write changed production schedules"
+            )
         validate_dp38_block(expected_current, expected_zone=8)
         requested = self._zone8_block_with_field(expected_current, field, value)
         if not self._command_lock.acquire(blocking=False):
@@ -772,7 +780,11 @@ class HOSC8WAPI:
                     self.device.zone8_lab_last_readback_raw = current.hex().upper()
                     return {"verified": True, "changed": False, "raw_hex": current.hex().upper()}
                 self.device.zone8_lab_last_status = "waiting_readback"
-                encoded = base64.b64encode(requested).decode("ascii")
+                # DP38 `normal_time` is a Tuya String DP. The controller data
+                # model requires one 20-byte station block encoded as 40 ASCII
+                # hexadecimal characters. Base64 is correct for RAW DP45, but
+                # corrupts DP38 because the firmware parses it as hexadecimal.
+                encoded = requested.hex().upper()
                 self._write_command_value(
                     DP_NORMAL_TIME,
                     encoded,
@@ -796,6 +808,10 @@ class HOSC8WAPI:
 
     def restore_zone8_schedule(self, backup: bytes) -> dict[str, Any]:
         """Restore the exact saved Zone 8 block and verify controller read-back."""
+        if not ZONE8_DP38_WRITES_ENABLED:
+            raise RuntimeError(
+                "DP38 schedule restoration is disabled because a single-zone write is not isolated"
+            )
         validate_dp38_block(backup, expected_zone=8)
         current = self.snapshot_zone8_schedule_for_lab()
         if current == backup:
@@ -809,7 +825,7 @@ class HOSC8WAPI:
                 self.device.zone8_lab_last_status = "restoring"
                 self._write_command_value(
                     DP_NORMAL_TIME,
-                    base64.b64encode(backup).decode("ascii"),
+                    backup.hex().upper(),
                     cloud_code="normal_time",
                     cloud_value=backup.hex().upper(),
                 )
@@ -825,6 +841,139 @@ class HOSC8WAPI:
                 self.device.zone8_lab_requested_value = ""
                 self.device.zone8_lab_last_readback_raw = backup.hex().upper()
                 return {"verified": True, "changed": True, "raw_hex": backup.hex().upper()}
+        finally:
+            self._command_lock.release()
+
+    def _collect_fresh_dp38_round(
+        self, timeout_seconds: float = 14.0
+    ) -> dict[int, bytes]:
+        """Reconnect and collect one controller report for every DP38 station."""
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("The DP38 HEX probe is local-transport only")
+        self._reset_connection()
+        device = self._ensure_connection()
+        if not device:
+            raise RuntimeError("Local controller connection is unavailable")
+        collected: dict[int, bytes] = {}
+        safety_dps_seen: set[int] = set()
+
+        def ingest(response: Any) -> None:
+            if not isinstance(response, dict) or response.get("Err"):
+                return
+            dps = response.get("dps")
+            if not isinstance(dps, dict):
+                return
+            for dp in (DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE):
+                if str(dp) in dps:
+                    safety_dps_seen.add(dp)
+            self.device.update_from_dps(dps)
+            if str(DP_NORMAL_TIME) not in dps:
+                return
+            raw = self.device._parse_raw_dp(dps[str(DP_NORMAL_TIME)])
+            for offset in range(0, len(raw), 20):
+                block = raw[offset : offset + 20]
+                if len(block) != 20 or not 1 <= block[0] <= NUM_ZONES:
+                    continue
+                collected[block[0]] = bytes(block)
+
+        device.set_socketTimeout(1)
+        try:
+            ingest(device.status())
+            deadline = time.monotonic() + timeout_seconds
+            while len(collected) < NUM_ZONES and time.monotonic() < deadline:
+                try:
+                    ingest(device.receive())
+                except Exception:  # noqa: BLE001
+                    time.sleep(0.05)
+                    continue
+        finally:
+            device.set_socketTimeout(5)
+        if set(collected) != set(range(1, NUM_ZONES + 1)):
+            missing = sorted(set(range(1, NUM_ZONES + 1)) - set(collected))
+            raise RuntimeError(f"Incomplete fresh DP38 round; missing zones: {missing}")
+        required_safety_dps = {DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE}
+        if safety_dps_seen != required_safety_dps:
+            missing = sorted(required_safety_dps - safety_dps_seen)
+            raise RuntimeError(
+                f"Fresh controller safety state is incomplete; missing DPs: {missing}"
+            )
+        for zone, block in collected.items():
+            self.device.ingest_schedule_block(block, source="controller")
+        return collected
+
+    def _write_dp38_hex_block(self, block: bytes) -> None:
+        """Write one station block using DP38's required ASCII HEX transport."""
+        if len(block) != 20 or not 1 <= block[0] <= NUM_ZONES:
+            raise ValueError("DP38 HEX probe requires one 20-byte station block")
+        self._write_command_value(
+            DP_NORMAL_TIME,
+            block.hex().upper(),
+            cloud_code="normal_time",
+            cloud_value=block.hex().upper(),
+        )
+
+    def probe_zone8_dp38_hex(self, confirmation: str) -> dict[str, Any]:
+        """Verify no-op, mutation and rollback HEX writes on the unused Zone 8."""
+        if not ZONE8_DP38_HEX_PROBE_ENABLED:
+            raise RuntimeError("The Zone 8 DP38 HEX probe is disabled")
+        if confirmation != "ZONE8_DP38_HEX_PROBE":
+            raise PermissionError("Explicit Zone 8 HEX probe confirmation is required")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self.device.zone8_hex_probe_status = "reading_before"
+                before = self._collect_fresh_dp38_round()
+                if str(self.device.operation_mode).lower() != "off":
+                    raise RuntimeError(
+                        "Set the physical controller to OFF before the DP38 HEX probe"
+                    )
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before the DP38 HEX probe")
+                original = before[8]
+                validate_dp38_block(original, expected_zone=8)
+
+                self.device.zone8_hex_probe_status = "testing_no_change"
+                self._write_dp38_hex_block(original)
+                time.sleep(0.6)
+                after_no_change = self._collect_fresh_dp38_round()
+                if after_no_change != before:
+                    raise RuntimeError("Exact Zone 8 HEX write changed the DP38 table")
+
+                candidate = bytearray(original)
+                candidate[19] ^= 0x01
+                candidate = bytes(candidate)
+                self.device.zone8_hex_probe_status = "testing_change"
+                rollback: dict[int, bytes] | None = None
+                try:
+                    self._write_dp38_hex_block(candidate)
+                    time.sleep(0.6)
+                    changed = self._collect_fresh_dp38_round()
+                    if changed[8] != candidate:
+                        raise RuntimeError("Zone 8 HEX mutation was not read back exactly")
+                    if any(changed[zone] != before[zone] for zone in range(1, 8)):
+                        raise RuntimeError("Zone 8 HEX mutation changed another zone")
+                finally:
+                    self.device.zone8_hex_probe_status = "restoring_zone8"
+                    self._write_dp38_hex_block(original)
+                    time.sleep(0.6)
+                    rollback = self._collect_fresh_dp38_round()
+                if rollback != before:
+                    raise RuntimeError("Zone 8 HEX rollback did not restore the full table")
+                self.device.zone8_hex_probe_status = "verified"
+                self.device.zone8_hex_probe_detail = (
+                    "ASCII HEX confirmed; Zones 1-7 unchanged; Zone 8 restored"
+                )
+                return {
+                    "verified": True,
+                    "wire_encoding": "uppercase_ascii_hex",
+                    "zones_compared": NUM_ZONES,
+                    "zone8_restored": True,
+                }
+        except Exception as exc:
+            self.device.zone8_hex_probe_status = "failed"
+            self.device.zone8_hex_probe_detail = str(exc)
+            raise
         finally:
             self._command_lock.release()
 
