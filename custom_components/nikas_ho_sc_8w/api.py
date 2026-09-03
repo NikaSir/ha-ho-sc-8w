@@ -18,6 +18,7 @@ from .const import (
     CONNECTION_MODE_LOCAL,
     CONNECTION_MODES,
     DP_ACTIVE_ZONE,
+    DP38_KNOWN_BACKUP_HEX_BY_ZONE,
     DP_CANCEL_ALARM_VOICE,
     DP_IRRIGATION_MODE,
     DP_IRRIGATION_TIME_ALL,
@@ -914,6 +915,13 @@ class HOSC8WAPI:
                         "valid": False,
                     },
                 )
+                station = current[0] if len(current) == 20 else None
+                known_backup_hex = DP38_KNOWN_BACKUP_HEX_BY_ZONE.get(station)
+                entry["known_backup_hex"] = known_backup_hex or ""
+                entry["matches_known_backup"] = bool(
+                    known_backup_hex
+                    and current.hex().upper() == known_backup_hex
+                )
                 entry["count"] += 1
                 if source not in entry["sources"]:
                     entry["sources"].append(source)
@@ -936,13 +944,28 @@ class HOSC8WAPI:
                 for item in observed.values()
             )
 
+        def zones_observed() -> set[int]:
+            return {
+                int(item["station"])
+                for item in observed.values()
+                if item.get("length") == 20
+                and isinstance(item.get("station"), int)
+                and 1 <= int(item["station"]) <= NUM_ZONES
+            }
+
+        def has_complete_round() -> bool:
+            return (
+                zones_observed() == set(range(1, NUM_ZONES + 1))
+                and has_repeated_zone8()
+            )
+
         device.set_socketTimeout(1)
         request_count = 0
         try:
             deadline = time.monotonic() + timeout_seconds
             while (
                 request_count < 24
-                and not has_repeated_zone8()
+                and not has_complete_round()
                 and time.monotonic() < deadline
             ):
                 try:
@@ -950,7 +973,7 @@ class HOSC8WAPI:
                     request_count += 1
                 except Exception:  # noqa: BLE001
                     pass
-                if has_repeated_zone8() or request_count >= 24:
+                if has_complete_round() or request_count >= 24:
                     break
                 try:
                     ingest("updatedps", device.updatedps([DP_NORMAL_TIME]))
@@ -964,6 +987,7 @@ class HOSC8WAPI:
         finally:
             device.set_socketTimeout(5)
         self.device.zone8_hex_probe_samples = list(observed.values())
+        observed_zones = sorted(zones_observed())
         self.device.zone8_hex_probe_trace = {
             "active_requests": request_count,
             "responses": response_count,
@@ -971,6 +995,11 @@ class HOSC8WAPI:
             "safety_dps_seen": sorted(safety_dps_seen),
             "dp38_variants": len(observed),
             "zone8_replies": len(samples),
+            "zones_seen": observed_zones,
+            "complete_round": (
+                observed_zones == list(range(1, NUM_ZONES + 1))
+                and has_repeated_zone8()
+            ),
         }
         return samples
 

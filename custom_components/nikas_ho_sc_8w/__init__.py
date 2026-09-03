@@ -50,6 +50,7 @@ from .const import (
     SERVICE_SKIP_CURRENT_MANUAL,
     SERVICE_START_MANUAL_QUEUE,
     SERVICE_STOP_MANUAL,
+    ZONE8_KNOWN_RESTORE_ENABLED,
 )
 from .coordinator import HOSC8WCoordinator
 from .frontend import async_setup_panel
@@ -266,6 +267,11 @@ async def _async_restore_zone8_known_backup(
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
+    if (
+        not ZONE8_KNOWN_RESTORE_ENABLED
+        and hass.services.has_service(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)
+    ):
+        hass.services.async_remove(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)
     if not hass.services.has_service(DOMAIN, SERVICE_START_MANUAL_QUEUE):
         hass.services.async_register(
             DOMAIN,
@@ -303,12 +309,13 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             partial(_async_probe_zone8_dp38_hex, hass),
             schema=_ZONE8_HEX_PROBE_SCHEMA,
         )
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_RESTORE_ZONE8_KNOWN_BACKUP,
-            partial(_async_restore_zone8_known_backup, hass),
-            schema=_ZONE8_KNOWN_RESTORE_SCHEMA,
-        )
+        if ZONE8_KNOWN_RESTORE_ENABLED:
+            hass.services.async_register(
+                DOMAIN,
+                SERVICE_RESTORE_ZONE8_KNOWN_BACKUP,
+                partial(_async_restore_zone8_known_backup, hass),
+                schema=_ZONE8_KNOWN_RESTORE_SCHEMA,
+            )
     return True
 
 

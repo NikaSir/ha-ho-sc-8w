@@ -129,10 +129,12 @@ class ActiveRefreshAPI(HOSC8WAPI):
 active_refresh = ActiveRefreshAPI()
 fresh = active_refresh._collect_confirmed_zone8_dp38(timeout_seconds=1)
 assert fresh == block(8)
-assert active_refresh.fake_device.status_calls == 1
-assert active_refresh.fake_device.refresh_calls == 1
+assert active_refresh.fake_device.status_calls == 12
+assert active_refresh.fake_device.refresh_calls == 12
 assert active_refresh.fake_device.timeouts == [1, 5]
 assert active_refresh.device.schedule_sources[8] == "controller"
+assert active_refresh.device.zone8_hex_probe_trace["complete_round"] is False
+assert active_refresh.device.zone8_hex_probe_trace["zones_seen"] == [8]
 
 
 class SequentialRefreshDevice(ActiveRefreshDevice):
@@ -141,12 +143,13 @@ class SequentialRefreshDevice(ActiveRefreshDevice):
     def __init__(self) -> None:
         super().__init__()
         self.response_index = 0
-        self.sequence = [2, 3, 4, 5, 6, 7, 8] * 2
+        self.sequence = [2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]
 
     def _response(self, include_safety: bool) -> dict[str, Any]:
         zone = self.sequence[self.response_index]
         self.response_index += 1
-        dps: dict[str, Any] = {str(DP_NORMAL_TIME): block(zone).hex().upper()}
+        raw = const.DP38_KNOWN_BACKUP_HEX_BY_ZONE[zone]
+        dps: dict[str, Any] = {str(DP_NORMAL_TIME): raw}
         if include_safety:
             dps.update({
                 str(const.DP_OPERATION_MODE): "OFF",
@@ -169,10 +172,16 @@ sequential = ActiveRefreshAPI()
 sequential.fake_device = SequentialRefreshDevice()
 sequential._tuya = sequential.fake_device
 sequential_fresh = sequential._collect_confirmed_zone8_dp38(timeout_seconds=2)
-assert sequential_fresh == block(8)
-assert sequential.fake_device.response_index == 14
-assert sequential.device.zone8_hex_probe_trace["active_requests"] == 14
-assert sequential.device.zone8_hex_probe_trace["dp38_variants"] == 7
+assert sequential_fresh == bytes.fromhex(const.ZONE8_KNOWN_BACKUP_HEX)
+assert sequential.fake_device.response_index == 15
+assert sequential.device.zone8_hex_probe_trace["active_requests"] == 15
+assert sequential.device.zone8_hex_probe_trace["dp38_variants"] == 8
+assert sequential.device.zone8_hex_probe_trace["zones_seen"] == list(range(1, 9))
+assert sequential.device.zone8_hex_probe_trace["complete_round"] is True
+assert all(
+    sample["matches_known_backup"] is True
+    for sample in sequential.device.zone8_hex_probe_samples
+)
 
 
 api = FakeZone8API()
@@ -380,6 +389,20 @@ class GuardedRestoreAPI(FakeZone8API):
 
 damaged = bytes.fromhex(const.ZONE8_DAMAGED_BLOCK_HEX)
 backup = bytes.fromhex(const.ZONE8_KNOWN_BACKUP_HEX)
+disabled_restore = GuardedRestoreAPI([damaged])
+try:
+    disabled_restore.restore_zone8_known_backup(
+        const.ZONE8_KNOWN_RESTORE_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "disabled" in str(exc)
+else:
+    raise AssertionError("Zone 8 recovery must be emergency-disabled")
+assert disabled_restore.writes == []
+
+# Preserve coverage of the archived one-write implementation without enabling it
+# in the production integration.
+api_module.ZONE8_KNOWN_RESTORE_ENABLED = True
 restore = GuardedRestoreAPI([damaged, backup])
 production_before = dict(restore.device.schedule_blocks)
 recovered = restore.restore_zone8_known_backup(
@@ -435,12 +458,16 @@ except PermissionError:
     pass
 else:
     raise AssertionError("Recovery must require its exact confirmation token")
+api_module.ZONE8_KNOWN_RESTORE_ENABLED = False
 
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
     "device.updatedps([DP_NORMAL_TIME])",
-    "has_repeated_zone8",
+    "has_complete_round",
+    '"zones_seen"',
+    '"complete_round"',
+    "DP38_KNOWN_BACKUP_HEX_BY_ZONE",
     "request_count < 24",
     "zone8_hex_probe_samples",
     "zone8_hex_probe_trace",

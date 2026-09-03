@@ -52,6 +52,7 @@ const_source = (INTEGRATION / "const.py").read_text(encoding="utf-8")
 setup_source = (INTEGRATION / "__init__.py").read_text(encoding="utf-8")
 manual_source = (INTEGRATION / "manual_api.py").read_text(encoding="utf-8")
 sensor_source = (INTEGRATION / "sensor.py").read_text(encoding="utf-8")
+services_source = (INTEGRATION / "services.yaml").read_text(encoding="utf-8")
 frontend_source = (INTEGRATION / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
 inherited_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0633.mjs").read_text(encoding="utf-8")
 compact_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0634.mjs").read_text(encoding="utf-8")
@@ -69,16 +70,18 @@ sample_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v064
 raw_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0646.mjs").read_text(encoding="utf-8")
 restore_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0647.mjs").read_text(encoding="utf-8")
 sequential_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0648.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source
+emergency_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0649.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.68"
-assert panel["panel"]["dashboard_version"] == "0.6.48"
-assert panel_manifest["panel_version"] == "0.6.48"
+assert manifest["version"] == "1.0.0-b005.69"
+assert panel["panel"]["dashboard_version"] == "0.6.49"
+assert panel_manifest["panel_version"] == "0.6.49"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.48"' in const_source
-assert 'irrigation-panel-v0648.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.49"' in const_source
+assert 'irrigation-panel-v0649.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
+assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
 assert 'irrigation-panel-v0637.mjs' in wrapper_source
 assert 'className = "manualZoneRemaining"' in wrapper_source
@@ -121,17 +124,25 @@ assert 'Восстановить исходную зону 8' in restore_wrapper
 assert 'Зоны 1–6 не записываются' in restore_wrapper_source
 assert 'const UI_VERSION = "0.6.48"' in sequential_wrapper_source
 assert 'irrigation-panel-v0647.mjs' in sequential_wrapper_source
+assert 'const UI_VERSION = "0.6.49"' in emergency_wrapper_source
+assert 'irrigation-panel-v0648.mjs' in emergency_wrapper_source
+assert 'Запись аварийно остановлена' in emergency_wrapper_source
+assert 'резерв: совпадает' in emergency_wrapper_source
+assert 'полный круг:' in emergency_wrapper_source
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["recovery_enabled"] is True
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["maximum_writes_per_action"] == 1
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["recovery_enabled"] is False
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["maximum_writes_per_action"] == 0
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_rollback"] is False
 assert '"hex_probe_allowed"' in sensor_source
 assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
 assert "partial(_async_restore_zone8_schedule, hass)" not in setup_source
 assert "partial(_async_probe_zone8_dp38_hex, hass)" in setup_source
 assert "partial(_async_restore_zone8_known_backup, hass)" in setup_source
+assert "if ZONE8_KNOWN_RESTORE_ENABLED:" in setup_source
+assert "hass.services.async_remove(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)" in setup_source
+assert "restore_zone8_known_backup:" not in services_source
 assert 'replace("<small>ПРОГРАММА</small>", "")' in compact_wrapper_source
 assert "Зоны — просмотр. Сезон — изменение с подтверждением." in fit_wrapper_source
 assert ".programPageIntro{padding-bottom:8px}" in fit_wrapper_source
