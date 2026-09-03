@@ -12,6 +12,8 @@ from .const import (
     CONNECTION_MODE_LOCAL,
     DOMAIN,
     NUM_ZONES,
+    ZONE8_ANCHOR_DATE_TEST_ENABLED,
+    ZONE8_ANCHOR_DATE_TEST_TARGET_HEX,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
     ZONE8_DAMAGED_BLOCK_HEX,
@@ -160,6 +162,29 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                         and str(device.operation_mode).lower() == "off"
                         and not device.active_zone
                         and not device.queued_zone
+                    ),
+                    "anchor_date_test_status": device.zone8_anchor_date_test_status,
+                    "anchor_date_test_detail": device.zone8_anchor_date_test_detail,
+                    "anchor_date_test_from_hex": device.zone8_anchor_date_test_from_hex,
+                    "anchor_date_test_to_hex": device.zone8_anchor_date_test_to_hex,
+                    "anchor_date_test_readback_hex": (
+                        device.zone8_anchor_date_test_readback_hex
+                    ),
+                    "anchor_date_test_expected_from_hex": ZONE8_KNOWN_BACKUP_HEX,
+                    "anchor_date_test_expected_to_hex": (
+                        ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
+                    ),
+                    "anchor_date_test_attempted": (
+                        device.zone8_anchor_date_test_attempted
+                    ),
+                    "anchor_date_test_allowed": (
+                        ZONE8_ANCHOR_DATE_TEST_ENABLED
+                        and self.coordinator.api.active_transport
+                        == CONNECTION_MODE_LOCAL
+                        and str(device.operation_mode).lower() == "off"
+                        and not device.active_zone
+                        and not device.queued_zone
+                        and not device.zone8_anchor_date_test_attempted
                     ),
                 }
             )

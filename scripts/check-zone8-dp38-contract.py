@@ -460,6 +460,103 @@ else:
     raise AssertionError("Recovery must require its exact confirmation token")
 api_module.ZONE8_KNOWN_RESTORE_ENABLED = False
 
+# The only enabled DP38 write is a fixed Zone 8 anchor-date experiment. It
+# accepts one exact baseline and changes byte offset 18 from day 03 to day 02.
+anchor_baseline = bytes.fromhex(const.ZONE8_KNOWN_BACKUP_HEX)
+anchor_target = bytes.fromhex(const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX)
+decoded_anchor_baseline = models.decode_dp38(anchor_baseline)[0]
+assert decoded_anchor_baseline.station == 8
+assert decoded_anchor_baseline.duration_minutes == 0
+assert decoded_anchor_baseline.start_times == []
+assert decoded_anchor_baseline.cycle_mode_name == "interval"
+assert decoded_anchor_baseline.cycle_value == 1
+assert decoded_anchor_baseline.anchor_date == (2026, 9, 3)
+assert decoded_anchor_baseline.rain_sensor_follow_inferred is True
+changed_offsets = [
+    index
+    for index, (before, after) in enumerate(
+        zip(anchor_baseline, anchor_target, strict=True)
+    )
+    if before != after
+]
+assert changed_offsets == [18]
+assert anchor_baseline[18] == 3
+assert anchor_target[18] == 2
+
+anchor_test = GuardedRestoreAPI([anchor_baseline, anchor_target])
+anchor_production_before = dict(anchor_test.device.schedule_blocks)
+anchor_result = anchor_test.test_zone8_anchor_date_write(
+    const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+)
+assert anchor_result["verified"] is True
+assert anchor_result["writes_performed"] == 1
+assert anchor_result["changed_offsets"] == [18]
+assert anchor_result["from_hex"] == const.ZONE8_KNOWN_BACKUP_HEX
+assert anchor_result["to_hex"] == const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
+assert anchor_result["readback_hex"] == const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
+assert len(anchor_test.writes) == 1
+assert anchor_test.writes[0][0] == DP_NORMAL_TIME
+assert anchor_test.writes[0][1] == const.ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
+assert anchor_test.device.zone8_anchor_date_test_status == "confirmed"
+assert anchor_test.device.zone8_anchor_date_test_attempted is True
+assert all(
+    anchor_test.device.schedule_blocks[zone] == anchor_production_before[zone]
+    for zone in range(1, 8)
+)
+
+anchor_mismatch = GuardedRestoreAPI([anchor_baseline, anchor_baseline])
+try:
+    anchor_mismatch.test_zone8_anchor_date_write(
+        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "no retry or rollback" in str(exc)
+else:
+    raise AssertionError("A mismatched date read-back must fail")
+assert len(anchor_mismatch.writes) == 1
+assert anchor_mismatch.device.zone8_anchor_date_test_attempted is True
+assert anchor_mismatch.device.zone8_anchor_date_test_status == "readback_mismatch"
+
+try:
+    anchor_mismatch.test_zone8_anchor_date_write(
+        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "already attempted" in str(exc)
+else:
+    raise AssertionError("A failed date test must not write again in the same runtime")
+assert len(anchor_mismatch.writes) == 1
+
+anchor_wrong_current = GuardedRestoreAPI([anchor_target])
+try:
+    anchor_wrong_current.test_zone8_anchor_date_write(
+        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "does not exactly match" in str(exc)
+else:
+    raise AssertionError("A changed Zone 8 baseline must stop before writing")
+assert anchor_wrong_current.writes == []
+
+anchor_wrong_mode = GuardedRestoreAPI([anchor_baseline])
+anchor_wrong_mode.device.operation_mode = "Auto"
+try:
+    anchor_wrong_mode.test_zone8_anchor_date_write(
+        const.ZONE8_ANCHOR_DATE_TEST_CONFIRMATION
+    )
+except RuntimeError as exc:
+    assert "physical controller to OFF" in str(exc)
+else:
+    raise AssertionError("The date test must require physical OFF")
+assert anchor_wrong_mode.writes == []
+
+try:
+    GuardedRestoreAPI([anchor_baseline]).test_zone8_anchor_date_write("wrong")
+except PermissionError:
+    pass
+else:
+    raise AssertionError("The date test must require its exact confirmation token")
+
 api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
 for marker in (
     "safety_dps_seen",
@@ -480,7 +577,11 @@ for marker in (
     "block.hex().upper()",
     "restore_zone8_known_backup",
     "automatic rollback was not attempted",
+    "test_zone8_anchor_date_write",
+    "changed_offsets != [18]",
+    "zone8_anchor_date_test_attempted = True",
+    "no retry or rollback was sent",
 ):
     assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
 
-print("DP38 raw observer and guarded Zone 8 recovery: PASS")
+print("DP38 observer, guarded recovery, and fixed Zone 8 date test: PASS")

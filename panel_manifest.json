@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.49",
-  "integration_version": "1.0.0-b005.69",
+  "panel_version": "0.6.50",
+  "integration_version": "1.0.0-b005.70",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -36,18 +36,27 @@
     "zone_8_schedule_lab": {
       "zone": 8,
       "write_enabled": false,
-      "mode": "read_only_incident_hold",
+      "mode": "decoded_read_only_with_fixed_anchor_date_test",
+      "decoded_editor_source": "latest_repeated_valid_zone_8_raw_dp38",
       "hex_probe_enabled": true,
       "recovery_enabled": false,
       "recovery_scope": "disabled_after_unconfirmed_station_assignment",
       "expected_damaged_hex": "08EFEFEFEFEFEFFF8A9FDFEFFBFF007F1A090311",
-      "known_backup_hex": "0800FFFFFFFFFFFFFFFFFFFFFFFF007F16010111",
+      "known_backup_hex": "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311",
+      "anchor_date_test_enabled": true,
+      "anchor_date_test_from_hex": "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311",
+      "anchor_date_test_to_hex": "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090211",
+      "anchor_date_test_changed_byte_offset": 18,
       "hex_probe_transport": "uppercase_ascii_hex",
       "hex_probe_scope": "complete_zone_1_8_raw_observer_read_only",
       "persistent_exact_backup": true,
       "requires_idle_controller": true,
+      "requires_physical_mode": "OFF",
+      "requires_exact_repeated_preflight": true,
       "readback_dps": [38],
       "maximum_writes_per_action": 0,
+      "anchor_date_test_maximum_writes_per_action": 1,
+      "automatic_retry": false,
       "automatic_rollback": false,
       "production_zones_untouched": [1, 2, 3, 4, 5, 6]
     }
@@ -65,7 +74,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0649.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0650.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
