@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.56** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.57** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -62,9 +62,9 @@ The user-facing application model is domain-oriented rather than protocol-orient
 - **Зоны** — production zones 1–6 with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
 - **Программа** — direct 1–8 zone switching below the Header and the complete decoded read-only automatic program for the selected zone;
 - **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
-- **Диагн.** — integration health, decoded Zone 8 state, full snapshots of zones 1–8 and one guarded full-frame transport test. Generic and single-block DP38 schedule writes remain disabled after a single-block test affected Zone 4 instead of Zone 8.
+- **Диагн.** — integration health, decoded Zone 8 state, full read-only snapshots of zones 1–8 and one guarded Zone 8 mask-write test. Generic DP38 schedule writes remain disabled.
 
-The only enabled DP38 schedule write is a fixed field experiment: it requires a fresh exact baseline for all eight zones with Zone 8 at `2026-09-04`, sends all eight 20-byte blocks as one 160-byte/320-character uppercase HEX frame, and changes only Zone 8 byte 18 from `04` to `05`. It sends once, never retries or rolls back, and remains unverified until a new full control snapshot confirms Zones 1–7 unchanged and Zone 8 exactly at `2026-09-05`.
+The only enabled DP38 schedule write is a fixed field experiment based on the controller's separate read/write selectors. A read report starts with the plain zone number (`08` for Zone 8), while a write starts with a one-hot bitmask (`80` for Zone 8). The experiment requires a fresh exact baseline for all eight zones with Zone 8 at `2026-09-04`, sends one 20-byte block as 40 uppercase ASCII-HEX characters, and changes only byte 18 from `04` to `05`. It sends once, never retries or rolls back, and remains unverified until a new full control snapshot confirms Zones 1–7 unchanged and Zone 8 exactly at `2026-09-05`.
 
 The primary Bottom Tab Bar is:
 
@@ -72,7 +72,7 @@ The primary Bottom Tab Bar is:
 Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor now decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. One narrowly fixed experiment is available only for the confirmed current Zone 8 block: with local transport, physical `OFF`, no watering and two identical exact preflight reads, it may change only the anchor-date day byte from `03` to `02` (`2026-09-03` to `2026-09-02`). It sends exactly one uppercase ASCII-HEX DP38 write and never retries or automatically rolls back after a mismatch. Production-zone recovery remains disabled.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. The fixed Zone 8 experiment requires local transport, physical Auto/ON, idle state and a fresh complete baseline; it then sends one masked block and requires a separate all-zone control snapshot. Production-zone recovery remains disabled.
 
 ### Full-field Overview v0.4.3
 

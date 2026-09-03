@@ -16,8 +16,8 @@ from .const import (
     ZONE8_ANCHOR_DATE_TEST_TARGET_HEX,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
-    ZONE8_FULL_FRAME_TEST_CURRENT_HEX,
-    ZONE8_FULL_FRAME_TEST_ENABLED,
+    ZONE8_MASK_WRITE_TEST_CURRENT_READ_HEX,
+    ZONE8_MASK_WRITE_TEST_ENABLED,
     ZONE8_DAMAGED_BLOCK_HEX,
     ZONE8_KNOWN_BACKUP_HEX,
     ZONE8_KNOWN_RESTORE_ENABLED,
@@ -176,22 +176,29 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                         and not device.active_zone
                         and not device.queued_zone
                     ),
-                    "full_frame_test_status": device.zone8_full_frame_test_status,
-                    "full_frame_test_detail": device.zone8_full_frame_test_detail,
-                    "full_frame_test_attempted": device.zone8_full_frame_test_attempted,
-                    "full_frame_test_from_hex": device.zone8_full_frame_test_from_hex,
-                    "full_frame_test_to_hex": device.zone8_full_frame_test_to_hex,
-                    "full_frame_test_allowed": (
-                        ZONE8_FULL_FRAME_TEST_ENABLED
+                    "mask_write_test_status": device.zone8_mask_write_test_status,
+                    "mask_write_test_detail": device.zone8_mask_write_test_detail,
+                    "mask_write_test_attempted": device.zone8_mask_write_test_attempted,
+                    "mask_write_test_current_read_hex": (
+                        device.zone8_mask_write_test_current_read_hex
+                    ),
+                    "mask_write_test_payload_hex": (
+                        device.zone8_mask_write_test_payload_hex
+                    ),
+                    "mask_write_test_expected_read_hex": (
+                        device.zone8_mask_write_test_expected_read_hex
+                    ),
+                    "mask_write_test_allowed": (
+                        ZONE8_MASK_WRITE_TEST_ENABLED
                         and self.coordinator.api.active_transport
                         == CONNECTION_MODE_LOCAL
                         and str(device.operation_mode).lower() == "auto"
                         and not device.active_zone
                         and not device.queued_zone
-                        and not device.zone8_full_frame_test_attempted
+                        and not device.zone8_mask_write_test_attempted
                         and device.dp38_snapshot_status == "baseline_saved"
                         and device.dp38_snapshot_baseline.get(8, {}).get("raw_hex")
-                        == ZONE8_FULL_FRAME_TEST_CURRENT_HEX
+                        == ZONE8_MASK_WRITE_TEST_CURRENT_READ_HEX
                     ),
                     "known_restore_status": device.zone8_restore_status,
                     "known_restore_detail": device.zone8_restore_detail,

@@ -78,14 +78,15 @@ snapshot_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0653.mj
 snapshot_mode_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0654.mjs").read_text(encoding="utf-8")
 full_frame_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0655.mjs").read_text(encoding="utf-8")
 program_navigation_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0656.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source
+mask_write_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0657.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.76"
-assert panel["panel"]["dashboard_version"] == "0.6.56"
-assert panel_manifest["panel_version"] == "0.6.56"
+assert manifest["version"] == "1.0.0-b005.77"
+assert panel["panel"]["dashboard_version"] == "0.6.57"
+assert panel_manifest["panel_version"] == "0.6.57"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.56"' in const_source
-assert 'irrigation-panel-v0656.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.57"' in const_source
+assert 'irrigation-panel-v0657.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -203,13 +204,15 @@ assert 'test_zone8_full_frame_write' in full_frame_wrapper_source
 assert 'Будут отправлены все восемь исходных блоков' in full_frame_wrapper_source
 assert 'Повтора и автоматического отката не будет' in full_frame_wrapper_source
 assert 'const UI_VERSION = "0.6.56"' in program_navigation_wrapper_source
-assert 'irrigation-panel-v0655.mjs' in program_navigation_wrapper_source
 assert 'data-program-zone="${number}"' in program_navigation_wrapper_source
 assert 'Array.from({ length: 8 }' in program_navigation_wrapper_source
-assert 'data-program-section' not in program_navigation_wrapper_source
-assert 'programZoneContext' not in program_navigation_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0656.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0656.mjs")
+assert 'const UI_VERSION = "0.6.57"' in mask_write_wrapper_source
+assert 'irrigation-panel-v0656.mjs' in mask_write_wrapper_source
+assert 'test_zone8_mask_write' in mask_write_wrapper_source
+assert 'Первый байт записи: 80' in mask_write_wrapper_source
+assert 'Передаётся ровно 20 байт' in mask_write_wrapper_source
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0657.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0657.mjs")
 expected_program_subtabs = []
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
@@ -248,13 +251,14 @@ snapshot_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_s
 assert snapshot_meta["zones"] == list(range(1, 9))
 assert snapshot_meta["read_only"] is True
 assert snapshot_meta["writes_performed"] == 0
-full_frame_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_frame_test"]
-assert full_frame_meta["enabled"] is True
-assert full_frame_meta["zones"] == list(range(1, 9))
-assert full_frame_meta["frame_bytes"] == 160
-assert full_frame_meta["maximum_writes_per_action"] == 1
-assert full_frame_meta["automatic_retry"] is False
-assert full_frame_meta["automatic_rollback"] is False
+mask_write_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["zone8_mask_write_test"]
+assert mask_write_meta["enabled"] is True
+assert mask_write_meta["read_zone_identifier"] == "0x08"
+assert mask_write_meta["write_zone_mask"] == "0x80"
+assert mask_write_meta["frame_bytes"] == 20
+assert mask_write_meta["maximum_writes_per_action"] == 1
+assert mask_write_meta["automatic_retry"] is False
+assert mask_write_meta["automatic_rollback"] is False
 assert snapshot_meta["requires_physical_mode"] == "AUTO_ON"
 assert snapshot_meta["requires_idle_controller"] is True
 assert '"hex_probe_allowed"' in sensor_source

@@ -165,6 +165,11 @@ def decode_dp38(data: bytes) -> list[ScheduleChannel]:
 
 
 def validate_dp38_block(data: bytes, expected_zone: int | None = None) -> None:
+    """Validate a 20-byte block received from DP38.
+
+    The controller reports the plain zone number in byte 0.  Writes use a
+    different representation: a one-hot zone mask.
+    """
     if len(data) != DP38_BLOCK_SIZE:
         raise ValueError(f"DP38 block must be exactly 20 bytes, got {len(data)}")
     zone = data[0]
@@ -183,7 +188,29 @@ def validate_dp38_block(data: bytes, expected_zone: int | None = None) -> None:
             )
 
 
+def dp38_zone_write_mask(zone: int) -> int:
+    """Return the one-hot DP38 selector used when writing one zone."""
+    if not 1 <= zone <= NUM_ZONES:
+        raise ValueError("DP38 write zone must be 1..8")
+    return 1 << (zone - 1)
+
+
+def validate_dp38_write_block(data: bytes, expected_zone: int | None = None) -> None:
+    """Validate a single-zone DP38 write block with its one-hot mask."""
+    if len(data) != DP38_BLOCK_SIZE:
+        raise ValueError(f"DP38 write block must be exactly 20 bytes, got {len(data)}")
+    mask = data[0]
+    if mask == 0 or mask & (mask - 1) or mask >= (1 << NUM_ZONES):
+        raise ValueError(f"Invalid DP38 one-hot write mask: 0x{mask:02X}")
+    zone = mask.bit_length()
+    if expected_zone is not None and zone != expected_zone:
+        raise ValueError(f"Expected DP38 write mask for zone {expected_zone}, got zone {zone}")
+    read_form = bytes([zone]) + data[1:]
+    validate_dp38_block(read_form, expected_zone=zone)
+
+
 def encode_dp38_channel(channel: ScheduleChannel) -> bytes:
+    """Encode one DP38 write block using the one-hot station selector."""
     if not 1 <= channel.station <= NUM_ZONES:
         raise ValueError("station must be 1..8")
     if not 0 <= channel.duration_minutes <= 255:
@@ -191,7 +218,7 @@ def encode_dp38_channel(channel: ScheduleChannel) -> bytes:
     if len(channel.start_times) > 6:
         raise ValueError("HO-SC-8W supports at most six start times per zone")
     block = bytearray([0xFF] * DP38_BLOCK_SIZE)
-    block[0] = channel.station
+    block[0] = dp38_zone_write_mask(channel.station)
     block[1] = channel.duration_minutes
     block[14] = channel.cycle_mode & 0xFF
     block[15] = channel.cycle_value & 0xFF
@@ -205,5 +232,5 @@ def encode_dp38_channel(channel: ScheduleChannel) -> bytes:
             raise ValueError(f"Invalid start time {hour}:{minute}")
         block[2 + slot] = hour
         block[8 + slot] = minute
-    validate_dp38_block(bytes(block), expected_zone=channel.station)
+    validate_dp38_write_block(bytes(block), expected_zone=channel.station)
     return bytes(block)
