@@ -77,14 +77,15 @@ program_form_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v065
 snapshot_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0653.mjs").read_text(encoding="utf-8")
 snapshot_mode_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0654.mjs").read_text(encoding="utf-8")
 full_frame_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0655.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source
+program_navigation_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0656.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.75"
-assert panel["panel"]["dashboard_version"] == "0.6.55"
-assert panel_manifest["panel_version"] == "0.6.55"
+assert manifest["version"] == "1.0.0-b005.76"
+assert panel["panel"]["dashboard_version"] == "0.6.56"
+assert panel_manifest["panel_version"] == "0.6.56"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.55"' in const_source
-assert 'irrigation-panel-v0655.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.56"' in const_source
+assert 'irrigation-panel-v0656.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
@@ -201,17 +202,23 @@ assert 'irrigation-panel-v0654.mjs' in full_frame_wrapper_source
 assert 'test_zone8_full_frame_write' in full_frame_wrapper_source
 assert 'Будут отправлены все восемь исходных блоков' in full_frame_wrapper_source
 assert 'Повтора и автоматического отката не будет' in full_frame_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0655.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0655.mjs")
-expected_program_subtabs = ["general_parameters", "zone_parameters"]
+assert 'const UI_VERSION = "0.6.56"' in program_navigation_wrapper_source
+assert 'irrigation-panel-v0655.mjs' in program_navigation_wrapper_source
+assert 'data-program-zone="${number}"' in program_navigation_wrapper_source
+assert 'Array.from({ length: 8 }' in program_navigation_wrapper_source
+assert 'data-program-section' not in program_navigation_wrapper_source
+assert 'programZoneContext' not in program_navigation_wrapper_source
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0656.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0656.mjs")
+expected_program_subtabs = []
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
 assert program_meta["subtabs"] == expected_program_subtabs
 assert manifest_program_meta["subtabs"] == expected_program_subtabs
-assert program_meta["default_subtab"] == "general_parameters"
-assert program_meta["zone_selector"] == "header_center"
-assert program_meta["selected_zone_status"] == "header_right"
-assert program_meta["zone_scope"] == list(range(1, 7))
+assert program_meta["default_subtab"] == "zone_parameters"
+assert program_meta["zone_selector"] == "button_row_below_header"
+assert program_meta["selected_zone_status"] == "inside_zone_form"
+assert program_meta["zone_scope"] == list(range(1, 9))
 assert program_meta["zone_form"] == "complete_decoded_zone_detail_read_only"
 assert program_meta["vertical_scroll"] == "central_work_area_only"
 expected_zone_detail_fields = [
