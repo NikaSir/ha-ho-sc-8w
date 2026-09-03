@@ -111,6 +111,14 @@
       "fields": {
         "config_entry_id": { "name": "Config entry" }
       }
+    },
+    "test_zone8_anchor_date_write": {
+      "name": "Test Zone 8 anchor-date write",
+      "description": "Writes exactly one DP38 command that changes only the Zone 8 anchor date from 2026-09-03 to 2026-09-02.",
+      "fields": {
+        "config_entry_id": { "name": "Config entry" },
+        "confirmation": { "name": "One-write confirmation" }
+      }
     }
   }
 }

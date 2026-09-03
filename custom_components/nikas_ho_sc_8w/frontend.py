@@ -122,18 +122,34 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "zone_8_schedule_lab": {
                     "zone": 8,
                     "write_enabled": False,
-                    "mode": "read_only_incident_hold",
+                    "mode": "decoded_read_only_with_fixed_anchor_date_test",
+                    "decoded_editor_source": (
+                        "latest_repeated_valid_zone_8_raw_dp38"
+                    ),
                     "hex_probe_enabled": True,
                     "recovery_enabled": False,
+                    "anchor_date_test_enabled": True,
+                    "anchor_date_test_from_hex": (
+                        "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311"
+                    ),
+                    "anchor_date_test_to_hex": (
+                        "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090211"
+                    ),
+                    "anchor_date_test_changed_byte_offset": 18,
                     "hex_probe_transport": "uppercase_ascii_hex",
                     "hex_probe_scope": "complete_zone_1_8_raw_observer_read_only",
                     "requires_complete_cache": False,
                     "requires_controller_source": True,
                     "requires_idle_controller": True,
+                    "requires_physical_mode": "OFF",
+                    "requires_exact_repeated_preflight": True,
                     "persistent_exact_backup": True,
                     "explicit_restore": False,
                     "readback_dps": [38],
-                    "writes_performed": 0,
+                    "maximum_generic_writes_per_action": 0,
+                    "anchor_date_test_maximum_writes_per_action": 1,
+                    "automatic_retry": False,
+                    "automatic_rollback": False,
                     "production_zones_untouched": [1, 2, 3, 4, 5, 6],
                 },
             },

@@ -38,6 +38,9 @@ from .const import (
     SEASONAL_ADJUST_MIN,
     SEASONAL_ADJUST_STEP,
     TUYA_VERSION,
+    ZONE8_ANCHOR_DATE_TEST_CONFIRMATION,
+    ZONE8_ANCHOR_DATE_TEST_ENABLED,
+    ZONE8_ANCHOR_DATE_TEST_TARGET_HEX,
     ZONE8_DP38_HEX_PROBE_ENABLED,
     ZONE8_DP38_WRITES_ENABLED,
     ZONE8_DAMAGED_BLOCK_HEX,
@@ -93,6 +96,12 @@ class HOSC8WDevice:
         self.zone8_restore_from_hex = ""
         self.zone8_restore_to_hex = ZONE8_KNOWN_BACKUP_HEX
         self.zone8_restore_readback_hex = ""
+        self.zone8_anchor_date_test_status = "idle"
+        self.zone8_anchor_date_test_detail = ""
+        self.zone8_anchor_date_test_from_hex = ZONE8_KNOWN_BACKUP_HEX
+        self.zone8_anchor_date_test_to_hex = ZONE8_ANCHOR_DATE_TEST_TARGET_HEX
+        self.zone8_anchor_date_test_readback_hex = ""
+        self.zone8_anchor_date_test_attempted = False
         self.merge_history_raw = b""
         self.reset_device = False
         self.timeerror_alarm = False
@@ -1129,6 +1138,107 @@ class HOSC8WAPI:
             if self.device.zone8_restore_status != "readback_mismatch":
                 self.device.zone8_restore_status = "blocked"
                 self.device.zone8_restore_detail = str(exc)
+            raise
+        finally:
+            self._command_lock.release()
+
+    def test_zone8_anchor_date_write(self, confirmation: str) -> dict[str, Any]:
+        """Change only Zone 8's anchor day once and verify repeated read-back."""
+        if not ZONE8_ANCHOR_DATE_TEST_ENABLED:
+            raise RuntimeError("The Zone 8 anchor-date write test is disabled")
+        if confirmation != ZONE8_ANCHOR_DATE_TEST_CONFIRMATION:
+            raise PermissionError("Explicit Zone 8 anchor-date test confirmation is required")
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("The Zone 8 anchor-date write test is local-transport only")
+        if self.device.zone8_anchor_date_test_attempted:
+            raise RuntimeError(
+                "The Zone 8 anchor-date write was already attempted; restart only after reviewing the result"
+            )
+
+        expected = bytes.fromhex(ZONE8_KNOWN_BACKUP_HEX)
+        target = bytes.fromhex(ZONE8_ANCHOR_DATE_TEST_TARGET_HEX)
+        validate_dp38_block(expected, expected_zone=8)
+        validate_dp38_block(target, expected_zone=8)
+        changed_offsets = [
+            index
+            for index, (before, after) in enumerate(zip(expected, target, strict=True))
+            if before != after
+        ]
+        if changed_offsets != [18] or expected[18] != 3 or target[18] != 2:
+            raise RuntimeError(
+                "Zone 8 anchor-date test constants must differ only at the day byte 03 -> 02"
+            )
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+
+        try:
+            with self._io_lock:
+                self.device.zone8_anchor_date_test_status = "reading_before"
+                self.device.zone8_anchor_date_test_detail = ""
+                self.device.zone8_anchor_date_test_readback_hex = ""
+                self._collect_zone8_dp38_samples(timeout_seconds=8.0)
+                required_safety = {
+                    DP_OPERATION_MODE,
+                    DP_ACTIVE_ZONE,
+                    DP_QUEUED_ZONE,
+                }
+                seen_safety = set(
+                    self.device.zone8_hex_probe_trace.get("safety_dps_seen", [])
+                )
+                if not required_safety.issubset(seen_safety):
+                    raise RuntimeError("Fresh DP101/107/108 safety state was not received")
+                if str(self.device.operation_mode).lower() != "off":
+                    raise RuntimeError(
+                        "Set the physical controller to OFF before the Zone 8 date test"
+                    )
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before the Zone 8 date test")
+
+                current = self._stable_raw_zone8_observation()
+                self.device.zone8_anchor_date_test_from_hex = current.hex().upper()
+                if current != expected:
+                    raise RuntimeError(
+                        "Zone 8 current DP38 does not exactly match the approved 2026-09-03 baseline"
+                    )
+
+                # This is the only write in the action. Mark it before transport
+                # dispatch so a timeout or mismatched answer cannot trigger a retry.
+                self.device.zone8_anchor_date_test_attempted = True
+                self.device.zone8_anchor_date_test_status = "writing_once"
+                self._write_dp38_hex_block(target)
+                time.sleep(1.0)
+
+                self.device.zone8_anchor_date_test_status = "reading_after"
+                self._collect_zone8_dp38_samples(timeout_seconds=8.0)
+                readback = self._stable_raw_zone8_observation()
+                self.device.zone8_anchor_date_test_readback_hex = readback.hex().upper()
+                if readback != target:
+                    self.device.zone8_anchor_date_test_status = "readback_mismatch"
+                    self.device.zone8_anchor_date_test_detail = (
+                        "Sent one ASCII-HEX write only; no retry or rollback was sent"
+                    )
+                    raise RuntimeError(
+                        "Zone 8 anchor-date read-back did not match 2026-09-02; no retry or rollback was sent"
+                    )
+
+                self.device.ingest_schedule_block(target, source="controller")
+                self.device.zone8_anchor_date_test_status = "confirmed"
+                self.device.zone8_anchor_date_test_detail = (
+                    "Only Zone 8 anchor day changed from 2026-09-03 to 2026-09-02"
+                )
+                return {
+                    "verified": True,
+                    "writes_performed": 1,
+                    "zone": 8,
+                    "changed_offsets": changed_offsets,
+                    "from_hex": expected.hex().upper(),
+                    "to_hex": target.hex().upper(),
+                    "readback_hex": readback.hex().upper(),
+                }
+        except Exception as exc:
+            if self.device.zone8_anchor_date_test_status != "readback_mismatch":
+                self.device.zone8_anchor_date_test_status = "blocked"
+                self.device.zone8_anchor_date_test_detail = str(exc)
             raise
         finally:
             self._command_lock.release()

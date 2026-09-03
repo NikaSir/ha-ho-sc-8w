@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.49** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.50** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -62,7 +62,7 @@ The user-facing application model is domain-oriented rather than protocol-orient
 - **Зоны** — production zones 1–6 with factual drill-down;
 - **Программа** — read-only decoded automatic zone program plus the confirmed seasonal-correction editor on the `Сезон` tile;
 - **Ручной** — confirmed manual queue for zones 1–6 with an independent 1–120 minute duration per zone;
-- **Диагн.** — integration health, a read-only Zone 8 laboratory program card and the isolated ASCII HEX transport probe.
+- **Диагн.** — integration health, a decoded read-only Zone 8 program card, the isolated ASCII HEX observer and one fixed anchor-date write test.
 
 The primary Bottom Tab Bar is:
 
@@ -70,7 +70,7 @@ The primary Bottom Tab Bar is:
 Состояние · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. The Zone 8 DP38 laboratory in Diagnostics is on an incident hold after a Base64 payload was sent to the String DP38 `normal_time` field and produced invalid production schedules. Generic field editing, restoration and every production-zone write remain disabled. The current probe is a strictly read-only raw observer: it keeps the persistent local socket, requests DP38 without filtering by station, and exposes every returned valid or invalid block together with request/response counts and the observed DP set. If no fresh DP38 arrives, the last cached Zone 8 block is shown with an explicit stale label. It sends no DP38 write and does not toggle or restore anything. Production-zone recovery remains disabled.
+The `Программа` tab shows the complete decoded DP38 schedule for zones 1–6 and owns only the confirmed seasonal-correction editor. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor now decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. One narrowly fixed experiment is available only for the confirmed current Zone 8 block: with local transport, physical `OFF`, no watering and two identical exact preflight reads, it may change only the anchor-date day byte from `03` to `02` (`2026-09-03` to `2026-09-02`). It sends exactly one uppercase ASCII-HEX DP38 write and never retries or automatically rolls back after a mismatch. Production-zone recovery remains disabled.
 
 ### Full-field Overview v0.4.3
 

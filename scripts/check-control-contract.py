@@ -71,17 +71,21 @@ raw_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0646.m
 restore_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0647.mjs").read_text(encoding="utf-8")
 sequential_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0648.mjs").read_text(encoding="utf-8")
 emergency_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0649.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source
+anchor_date_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0650.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.69"
-assert panel["panel"]["dashboard_version"] == "0.6.49"
-assert panel_manifest["panel_version"] == "0.6.49"
+assert manifest["version"] == "1.0.0-b005.70"
+assert panel["panel"]["dashboard_version"] == "0.6.50"
+assert panel_manifest["panel_version"] == "0.6.50"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.49"' in const_source
-assert 'irrigation-panel-v0649.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.50"' in const_source
+assert 'irrigation-panel-v0650.mjs' in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
 assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
+assert "ZONE8_ANCHOR_DATE_TEST_ENABLED = True" in const_source
+assert 'ZONE8_KNOWN_BACKUP_HEX = "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311"' in const_source
+assert 'ZONE8_ANCHOR_DATE_TEST_TARGET_HEX = "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090211"' in const_source
 assert 'const UI_VERSION = "0.6.38"' in wrapper_source
 assert 'irrigation-panel-v0637.mjs' in wrapper_source
 assert 'className = "manualZoneRemaining"' in wrapper_source
@@ -129,20 +133,34 @@ assert 'irrigation-panel-v0648.mjs' in emergency_wrapper_source
 assert 'Запись аварийно остановлена' in emergency_wrapper_source
 assert 'резерв: совпадает' in emergency_wrapper_source
 assert 'полный круг:' in emergency_wrapper_source
+assert 'const UI_VERSION = "0.6.50"' in anchor_date_wrapper_source
+assert 'irrigation-panel-v0649.mjs' in anchor_date_wrapper_source
+assert 'Расшифрованное состояние зоны 8' in anchor_date_wrapper_source
+assert '_zone8LatestDecoded' in anchor_date_wrapper_source
+assert 'Записать дату 02.09.2026 один раз' in anchor_date_wrapper_source
+assert 'test_zone8_anchor_date_write' in anchor_date_wrapper_source
+assert 'WRITE_ZONE8_ANCHOR_DATE_2026_09_02_ONCE' in anchor_date_wrapper_source
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
 assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["recovery_enabled"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["maximum_writes_per_action"] == 0
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["anchor_date_test_enabled"] is True
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["anchor_date_test_maximum_writes_per_action"] == 1
+assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_retry"] is False
 assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_rollback"] is False
 assert '"hex_probe_allowed"' in sensor_source
+assert '"anchor_date_test_allowed"' in sensor_source
 assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
 assert "partial(_async_restore_zone8_schedule, hass)" not in setup_source
 assert "partial(_async_probe_zone8_dp38_hex, hass)" in setup_source
 assert "partial(_async_restore_zone8_known_backup, hass)" in setup_source
 assert "if ZONE8_KNOWN_RESTORE_ENABLED:" in setup_source
+assert "if ZONE8_ANCHOR_DATE_TEST_ENABLED:" in setup_source
+assert "partial(_async_test_zone8_anchor_date_write, hass)" in setup_source
 assert "hass.services.async_remove(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)" in setup_source
 assert "restore_zone8_known_backup:" not in services_source
+assert "test_zone8_anchor_date_write:" in services_source
 assert 'replace("<small>ПРОГРАММА</small>", "")' in compact_wrapper_source
 assert "Зоны — просмотр. Сезон — изменение с подтверждением." in fit_wrapper_source
 assert ".programPageIntro{padding-bottom:8px}" in fit_wrapper_source

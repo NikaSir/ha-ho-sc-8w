@@ -50,6 +50,9 @@ from .const import (
     SERVICE_SKIP_CURRENT_MANUAL,
     SERVICE_START_MANUAL_QUEUE,
     SERVICE_STOP_MANUAL,
+    SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE,
+    ZONE8_ANCHOR_DATE_TEST_CONFIRMATION,
+    ZONE8_ANCHOR_DATE_TEST_ENABLED,
     ZONE8_KNOWN_RESTORE_ENABLED,
 )
 from .coordinator import HOSC8WCoordinator
@@ -142,6 +145,16 @@ _ZONE8_KNOWN_RESTORE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
         vol.Required(ATTR_CONFIRMATION): vol.In({"RESTORE_ZONE8_KNOWN_BACKUP"}),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+_ZONE8_ANCHOR_DATE_TEST_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_CONFIRMATION): vol.In(
+            {ZONE8_ANCHOR_DATE_TEST_CONFIRMATION}
+        ),
     },
     extra=vol.PREVENT_EXTRA,
 )
@@ -264,6 +277,18 @@ async def _async_restore_zone8_known_backup(
         raise HomeAssistantError(str(exc)) from exc
 
 
+async def _async_test_zone8_anchor_date_write(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_test_zone8_anchor_date_write(
+            str(call.data[ATTR_CONFIRMATION])
+        )
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
@@ -309,6 +334,13 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             partial(_async_probe_zone8_dp38_hex, hass),
             schema=_ZONE8_HEX_PROBE_SCHEMA,
         )
+        if ZONE8_ANCHOR_DATE_TEST_ENABLED:
+            hass.services.async_register(
+                DOMAIN,
+                SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE,
+                partial(_async_test_zone8_anchor_date_write, hass),
+                schema=_ZONE8_ANCHOR_DATE_TEST_SCHEMA,
+            )
         if ZONE8_KNOWN_RESTORE_ENABLED:
             hass.services.async_register(
                 DOMAIN,
