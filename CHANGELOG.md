@@ -6,6 +6,7 @@ All notable project changes are recorded here.
 
 ### Changed
 
+- `1.0.0-b005.62` / panel `0.6.42`: add an explicit control probe for the physically unused Zone 8 using DP38's documented 40-character uppercase ASCII HEX transport. The probe requires a fresh local report of DP101/107/108 and all eight DP38 blocks, physical `OFF`, and no active or queued watering; it tests an exact no-change write, toggles only Zone 8 rain-follow bit 0, compares Zones 1–7 byte-for-byte after each step, and restores the exact original Zone 8 block in `finally`. Generic schedule editing and production-zone recovery remain disabled.
 - `1.0.0-b005.61` / panel `0.6.41`: emergency-disable every DP38 write and the Zone 8 restore action after hardware testing exposed invalid production schedules. Root cause: DP38 `normal_time` is a String DP requiring a 40-character ASCII HEX station block, while the laboratory sent the Base64 encoding used by RAW DP45. The corrected HEX encoder remains hardware-write-disabled pending a Zone 8 round-trip test and eight-zone comparison.
 - `1.0.0-b005.59`: prefixes the integration/HACS name with `NikaS` and
   republishes the approved local brand icon.

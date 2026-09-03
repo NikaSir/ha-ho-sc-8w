@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hardware-free contract check that every Zone 8 DP38 write is disabled."""
+"""Hardware-free contract check for the isolated Zone 8 DP38 HEX probe."""
 
 from __future__ import annotations
 
@@ -130,4 +130,68 @@ except RuntimeError as exc:
 else:
     raise AssertionError("Active watering must block Zone 8 DP38 writes")
 
-print("Zone 8 DP38 read-only incident hold: PASS")
+
+class IsolatedProbeAPI(FakeZone8API):
+    def __init__(self) -> None:
+        super().__init__()
+        for zone in range(1, 9):
+            self.device.ingest_schedule_block(block(zone), source="controller")
+        self.rounds = 0
+
+    def _collect_fresh_dp38_round(
+        self, timeout_seconds: float = 14.0
+    ) -> dict[int, bytes]:
+        del timeout_seconds
+        self.rounds += 1
+        return dict(self.device.schedule_blocks)
+
+
+isolated = IsolatedProbeAPI()
+before_probe = dict(isolated.device.schedule_blocks)
+result = isolated.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
+assert result == {
+    "verified": True,
+    "wire_encoding": "uppercase_ascii_hex",
+    "zones_compared": 8,
+    "zone8_restored": True,
+}
+assert isolated.rounds == 4
+assert len(isolated.writes) == 3
+assert all(write[0] == DP_NORMAL_TIME for write in isolated.writes)
+assert all(isinstance(write[1], str) and len(write[1]) == 40 for write in isolated.writes)
+assert isolated.writes[0][1] == before_probe[8].hex().upper()
+assert bytes.fromhex(isolated.writes[1][1])[19] == (before_probe[8][19] ^ 0x01)
+assert isolated.writes[2][1] == before_probe[8].hex().upper()
+assert isolated.device.schedule_blocks == before_probe
+assert isolated.device.zone8_hex_probe_status == "verified"
+
+blocked = IsolatedProbeAPI()
+blocked.device.operation_mode = "Auto"
+try:
+    blocked.probe_zone8_dp38_hex("ZONE8_DP38_HEX_PROBE")
+except RuntimeError as exc:
+    assert "physical controller to OFF" in str(exc)
+else:
+    raise AssertionError("The HEX probe must require physical OFF")
+assert blocked.writes == []
+
+try:
+    IsolatedProbeAPI().probe_zone8_dp38_hex("wrong")
+except PermissionError:
+    pass
+else:
+    raise AssertionError("The HEX probe must require its exact confirmation token")
+
+api_source = (INTEGRATION / "api.py").read_text(encoding="utf-8")
+for marker in (
+    "safety_dps_seen",
+    "required_safety_dps",
+    "after_no_change != before",
+    "changed[zone] != before[zone] for zone in range(1, 8)",
+    "finally:",
+    "rollback != before",
+    "block.hex().upper()",
+):
+    assert marker in api_source, f"Missing Zone 8 probe safety marker: {marker}"
+
+print("Zone 8 DP38 read-only hold and isolated ASCII HEX probe: PASS")

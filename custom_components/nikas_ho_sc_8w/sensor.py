@@ -8,7 +8,13 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, NUM_ZONES, ZONE8_DP38_WRITES_ENABLED
+from .const import (
+    CONNECTION_MODE_LOCAL,
+    DOMAIN,
+    NUM_ZONES,
+    ZONE8_DP38_HEX_PROBE_ENABLED,
+    ZONE8_DP38_WRITES_ENABLED,
+)
 from .coordinator import HOSC8WCoordinator
 from .entity import HOSC8WEntity
 
@@ -122,6 +128,16 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
                         ZONE8_DP38_WRITES_ENABLED
                         and len(device.schedule_blocks) == NUM_ZONES
                         and device.schedule_sources.get(8) == "controller"
+                        and not device.active_zone
+                        and not device.queued_zone
+                    ),
+                    "hex_probe_status": device.zone8_hex_probe_status,
+                    "hex_probe_detail": device.zone8_hex_probe_detail,
+                    "hex_probe_allowed": (
+                        ZONE8_DP38_HEX_PROBE_ENABLED
+                        and self.coordinator.api.active_transport
+                        == CONNECTION_MODE_LOCAL
+                        and str(device.operation_mode).lower() == "off"
                         and not device.active_zone
                         and not device.queued_zone
                     ),
