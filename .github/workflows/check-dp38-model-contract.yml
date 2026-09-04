@@ -1,0 +1,26 @@
+name: Check DP38 model contract
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - custom_components/nikas_ho_sc_8w/models.py
+      - scripts/check-models-dp38-contract.py
+      - .github/workflows/check-dp38-model-contract.yml
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check DP38 model semantics
+        run: python scripts/check-models-dp38-contract.py
+      - name: Compile model
+        run: python -m py_compile custom_components/nikas_ho_sc_8w/models.py
