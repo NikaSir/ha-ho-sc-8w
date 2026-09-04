@@ -1,0 +1,27 @@
+name: Check conservative DP38 patch contract
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - custom_components/nikas_ho_sc_8w/models.py
+      - custom_components/nikas_ho_sc_8w/dp38_patch.py
+      - scripts/check-dp38-safe-patch.py
+      - .github/workflows/check-dp38-safe-patch.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check-dp38-safe-patch.py
