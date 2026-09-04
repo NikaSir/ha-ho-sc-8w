@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Release wrapper for the existing safety contract.
 
-UI 0.6.69 changes Program freshness presentation and adds bounded read-only
-refresh retries. Controller/write safety remains enforced by the preserved
-legacy checker; this wrapper maps only release/runtime metadata.
+UI 0.6.70 delays the automatic Program refresh until the view has settled,
+while preserving bounded read-only retries and all controller write guards.
 """
 from pathlib import Path
 
@@ -23,23 +22,23 @@ source = source.replace(
 )
 source = source.replace(
     'assert manifest["version"] == EXPECTED_INTEGRATION_VERSION',
-    'assert manifest["version"] == "1.0.0-b005.92"',
+    'assert manifest["version"] == "1.0.0-b005.93"',
 )
 source = source.replace(
     'assert panel_manifest["integration_version"] == manifest["version"]',
-    'assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b005.92"',
+    'assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b005.93"',
 )
 source = source.replace(
     'f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'',
-    '\'PANEL_VERSION = "0.6.69"\'',
+    '\'PANEL_VERSION = "0.6.70"\'',
 )
 source = source.replace(
     '    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",',
-    '    "irrigation-panel-v0669.mjs",\n    "NUM_PRODUCTION_ZONES = 8",',
+    '    "irrigation-panel-v0670.mjs",\n    "NUM_PRODUCTION_ZONES = 8",',
 )
 source = source.replace(
     '    "irrigation-panel-v0666.mjs",\n]',
-    '    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n]',
+    '    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n]',
 )
 source = source.replace(
     'assert "DP_OPERATION_MODE" not in manual_source',
@@ -61,10 +60,9 @@ assert 'trigger_hex = "00" * 20' in manual_api
 assert 'device.receive()' in manual_api
 assert 'active_requests_after_trigger": 0' in manual_api
 
-ui = (root / "custom_components" / "nikas_ho_sc_8w" / "frontend" / "irrigation-panel-v0669.mjs").read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.69"' in ui
-assert 'import "./irrigation-panel-v0668.mjs"' in ui
-assert 'attempts < 3' in ui
-assert 'fullWidth' in ui
-assert 'grid-column:1/-1' in ui
-assert 'flex:1 1 240px' in ui
+ui = (root / "custom_components" / "nikas_ho_sc_8w" / "frontend" / "irrigation-panel-v0670.mjs").read_text(encoding="utf-8")
+assert 'const UI_VERSION = "0.6.70"' in ui
+assert 'import "./irrigation-panel-v0669.mjs"' in ui
+assert '_programSuppressImmediateRefresh' in ui
+assert '900' in ui
+assert 'previousRefreshProgramDp38.call(this)' in ui
