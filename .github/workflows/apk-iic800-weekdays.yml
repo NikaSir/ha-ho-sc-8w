@@ -1,0 +1,105 @@
+name: Extract exact IIC-800 weekday order
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-iic800-weekdays.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          python - <<'PY'
+          import hashlib,re,urllib.parse,zipfile
+          from pathlib import Path
+          import requests
+          root=Path('/tmp/wd'); root.mkdir(parents=True,exist_ok=True)
+          bundle=root/'bundle.bin'
+          api='https://cloud-api.yandex.net/v1/disk/public/resources/download?'+urllib.parse.urlencode({'public_key':'https://disk.yandex.ru/d/3T2zvV8ETXEwjA'})
+          m=requests.get(api,timeout=60); m.raise_for_status()
+          with requests.get(m.json()['href'],stream=True,timeout=(60,900)) as r:
+              r.raise_for_status()
+              with bundle.open('wb') as f:
+                  for c in r.iter_content(1024*1024):
+                      if c: f.write(c)
+          q=[(bundle,0)]; seen=set(); n=0
+          while q:
+              src,d=q.pop(0)
+              if d>5 or src.suffix.lower()=='.apk' or not zipfile.is_zipfile(src): continue
+              h=hashlib.sha256(src.read_bytes()).hexdigest()
+              if h in seen: continue
+              seen.add(h); out=root/f'l{n}'; n+=1; out.mkdir()
+              with zipfile.ZipFile(src) as z: z.extractall(out)
+              for ch in out.rglob('*'):
+                  if ch.is_file() and ch.suffix.lower() in {'.zip','.xapk','.apkm','.apks'} and zipfile.is_zipfile(ch): q.append((ch,d+1))
+          cand=[]
+          for apk in root.rglob('*.apk'):
+              with zipfile.ZipFile(apk) as z:
+                  dex=[x for x in z.namelist() if re.fullmatch(r'(?:.*/)?classes(?:\d+)?\.dex',x,re.I)]
+              if dex:
+                  name=apk.name.lower(); score=(int(name=='base.apk'),int(not name.startswith('config.') and not name.startswith('split_')),len(dex),apk.stat().st_size)
+                  cand.append((score,apk))
+          base=max(cand,key=lambda x:x[0])[1]
+          Path('/tmp/basepath').write_text(str(base))
+          PY
+      - name: Dump constant and resource table
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$(cat /tmp/basepath)"
+          APKANALYZER="$(command -v apkanalyzer || true)"
+          [[ -n "$APKANALYZER" ]] || APKANALYZER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/apkanalyzer"
+          "$APKANALYZER" dex code --class com.inkbird.inkbirdapp.device.iic800.utils.Iic800Constant "$BASE" > /tmp/Iic800Constant.smali
+          AAPT2="$(find "${ANDROID_SDK_ROOT}" -type f -name aapt2 -perm -u+x 2>/dev/null | sort -V | tail -n1)"
+          "$AAPT2" dump resources "$BASE" > /tmp/resources.txt
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          sm=Path('/tmp/Iic800Constant.smali').read_text(errors='replace')
+          res=Path('/tmp/resources.txt').read_text(errors='replace')
+          # Capture the static initializer and every 0x7f...... constant in its vicinity.
+          a=sm.find('.method static constructor <clinit>()V')
+          b=sm.find('.end method',a)
+          block=sm[a:b+11]
+          ids=[]
+          for x in re.findall(r'0x7f[0-9a-fA-F]{6}',block):
+              if x.lower() not in [i.lower() for i in ids]: ids.append(x)
+          out=['# IIC-800 weekday order evidence','', '## Iic800Constant.<clinit>','', '```smali',block,'```','', '## Resource IDs referenced by the initializer','']
+          for rid in ids:
+              lines=res.splitlines()
+              hits=[]
+              for i,line in enumerate(lines):
+                  if rid.lower() in line.lower():
+                      hits.extend(lines[max(0,i-2):min(len(lines),i+8)])
+              out += [f'### `{rid}`','```text','\n'.join(hits[:40]),'```','']
+          Path('docs/research/inkbird-apk-2.1.11/DP38_WEEKDAY_ORDER.md').write_text('\n'.join(out),encoding='utf-8')
+          PY
+      - name: Commit evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/research/inkbird-apk-2.1.11/DP38_WEEKDAY_ORDER.md
+          git commit -m 'Record exact IIC-800 weekday order' || exit 0
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
