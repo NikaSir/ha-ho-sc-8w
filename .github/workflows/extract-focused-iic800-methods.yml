@@ -1,0 +1,75 @@
+name: Extract focused IIC-800 protocol methods
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/extract-focused-iic800-methods.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - name: Extract compact evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          src = Path('docs/research/inkbird-apk-2.1.11/APK_PROTOCOL_METHODS_RU.md')
+          text = src.read_text(encoding='utf-8')
+          wanted = [
+              'Iic800Model.parseZoneInfo',
+              'Iic800Model.parseIICZoneBean',
+              'Iic800ManualPresenter.stopManual',
+              'Iic800ManualPresenter.stopAllManual',
+              'Iic800ManualPresenter.startManuals',
+              'Iic800ManualPresenter.changeManuals',
+              'Iic800ManualPresenter.startAllManual',
+              'Iic800ManualPresenter.changeAllManual',
+              'Iic800SchedulePresenter.startManuals',
+              'Iic800SchedulePresenter.stopManual',
+              'Iic800SchedulePresenter.setPlan',
+              'Iic800SchedulePresenter.setScheduleTime',
+              'Iic800AddPlanPresenter.reset',
+              'Iic800AddPlanPresenter.setPlan',
+              'Iic800SettingsPresenter.changeRainSensor',
+              'Iic800SettingsPresenter.changeSeaAdjValue',
+              'Iic800SettingsPresenter.setPowerStatus',
+          ]
+          sections = re.split(r'(?=^### `)', text, flags=re.M)
+          out = ['# Focused IIC-800 protocol methods', '', 'Extracted verbatim from APK_PROTOCOL_METHODS_RU.md.', '']
+          for name in wanted:
+              matches = [s for s in sections if s.startswith('### `') and name in s.splitlines()[0]]
+              out.append(f'## {name}')
+              out.append('')
+              if matches:
+                  out.append(matches[0].rstrip())
+              else:
+                  out.append('_Not found in extracted method report._')
+              out.append('')
+          dest = Path('docs/research/inkbird-apk-2.1.11/FOCUSED_METHODS_RU.md')
+          dest.write_text('\n'.join(out), encoding='utf-8')
+
+      - name: Commit compact evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11/FOCUSED_METHODS_RU.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Record focused IIC-800 protocol methods"
+          git push origin HEAD:analysis/apk-irrigation-commands
