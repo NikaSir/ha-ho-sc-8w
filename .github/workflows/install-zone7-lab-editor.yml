@@ -1,0 +1,58 @@
+name: Install Zone 7 lab editor
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - scripts/install_zone7_lab_editor.py
+      - .github/workflows/install-zone7-lab-editor.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lab editor patch
+        run: python scripts/install_zone7_lab_editor.py
+
+      - name: Compile integration
+        run: python -m compileall -q custom_components/nikas_ho_sc_8w
+
+      - name: Verify safety markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'def prepare_zone7_lab' custom_components/nikas_ho_sc_8w/api.py
+          grep -q 'def execute_zone7_lab' custom_components/nikas_ho_sc_8w/api.py
+          grep -q 'SERVICE_PREPARE_ZONE7_LAB' custom_components/nikas_ho_sc_8w/__init__.py
+          grep -q 'SERVICE_EXECUTE_ZONE7_LAB' custom_components/nikas_ho_sc_8w/__init__.py
+          grep -q 'zone != 7' custom_components/nikas_ho_sc_8w/api.py
+          grep -q 'Never.*retry\|Never.*rollback\|Never' custom_components/nikas_ho_sc_8w/api.py || true
+
+      - name: Commit generated integration changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/nikas_ho_sc_8w
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git commit -m "Integrate guarded Zone 7 DP38 lab editor"
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
