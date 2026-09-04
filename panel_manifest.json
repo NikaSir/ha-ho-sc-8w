@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.66",
-  "integration_version": "1.0.0-b005.87",
+  "panel_version": "0.6.67",
+  "integration_version": "1.0.0-b005.90",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -65,7 +65,10 @@
       "zone_form": "complete_decoded_zone_detail_read_only",
       "zone_artwork": "browser_local_presets_or_neutral_gray",
       "zone_artwork_trigger": "system_settings_zone_image",
-      "vertical_scroll": "central_work_area_only"
+      "vertical_scroll": "central_work_area_only",
+      "native_dp38_refresh_on_entry": true,
+      "native_dp38_refresh": "single_zero_trigger_then_persistent_receive_zone_1_to_8",
+      "write_preflight": "independent_fresh_full_snapshot_1_8"
     },
     "zone_8_schedule_lab": {
       "zone": 8,
@@ -96,8 +99,9 @@
         "requires_idle_controller": true,
         "persistent_baseline": true,
         "byte_level_diff": true,
-        "read_only": true,
-        "writes_performed": 0
+        "read_only_semantics": true,
+        "native_request": "DP38_20_zero_bytes_then_receive_1_to_8",
+        "operator_required": false
       },
       "zone8_mask_write_test": {
         "enabled": true,
@@ -112,6 +116,26 @@
         "automatic_retry": false,
         "automatic_rollback": false,
         "protocol_evidence": "DP38 uploads/downloads each station in eight separate operations"
+      },
+      "zone7_duration17_field_test": {
+        "confirmed": true,
+        "read_selector": "0x07",
+        "write_selector": "0x40",
+        "changed_byte": 1,
+        "from": "0x00",
+        "to": "0x11",
+        "readback_exact": true,
+        "collateral_changed_zones": []
+      },
+      "zone7_rain_follow_field_test": {
+        "enabled": true,
+        "confirmed": false,
+        "target": "true_to_false",
+        "expected_byte19": "0x11_to_0x10",
+        "requires_prepare": true,
+        "maximum_writes_per_action": 1,
+        "automatic_retry": false,
+        "automatic_rollback": false
       },
       "anchor_date_test_maximum_writes_per_action": 0,
       "automatic_retry": false,
@@ -153,7 +177,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0666.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0667.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
