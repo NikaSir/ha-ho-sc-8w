@@ -1,0 +1,88 @@
+name: Extract IIC-800 WeekAdapter semantics
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-iic800-weekadapter.yml
+      - scripts/iic800_week_adapter_class.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-weekadapter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Acquire APK and dump WeekAdapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          python - <<'PY'
+          import hashlib, re, urllib.parse, zipfile
+          from pathlib import Path
+          import requests
+          public_url='https://disk.yandex.ru/d/3T2zvV8ETXEwjA'
+          root=Path('/tmp/weekadapter'); root.mkdir(parents=True, exist_ok=True)
+          bundle=root/'bundle.bin'
+          api='https://cloud-api.yandex.net/v1/disk/public/resources/download?'+urllib.parse.urlencode({'public_key':public_url})
+          meta=requests.get(api,timeout=60); meta.raise_for_status()
+          with requests.get(meta.json()['href'],stream=True,timeout=(60,900)) as r:
+              r.raise_for_status()
+              with bundle.open('wb') as f:
+                  for c in r.iter_content(1024*1024):
+                      if c: f.write(c)
+          def ext(src,dst):
+              dst.mkdir(parents=True,exist_ok=True)
+              with zipfile.ZipFile(src) as z: z.extractall(dst)
+          q=[(bundle,0)]; seen=set(); n=0
+          while q:
+              src,d=q.pop(0)
+              if d>5 or src.suffix.lower()=='.apk' or not zipfile.is_zipfile(src): continue
+              h=hashlib.sha256(src.read_bytes()).hexdigest()
+              if h in seen: continue
+              seen.add(h); dst=root/f'l{n}'; n+=1; ext(src,dst)
+              for ch in dst.rglob('*'):
+                  if ch.is_file() and ch.suffix.lower() in {'.zip','.xapk','.apkm','.apks'} and zipfile.is_zipfile(ch): q.append((ch,d+1))
+          cand=[]
+          for apk in root.rglob('*.apk'):
+              with zipfile.ZipFile(apk) as z:
+                  dex=[x for x in z.namelist() if re.fullmatch(r'(?:.*/)?classes(?:\d+)?\.dex',x,re.I)]
+              if dex:
+                  name=apk.name.lower(); score=(int(name=='base.apk'),int(not name.startswith('config.') and not name.startswith('split_')),len(dex),apk.stat().st_size)
+                  cand.append((score,apk))
+          base=max(cand,key=lambda x:x[0])[1]
+          Path('/tmp/basepath').write_text(str(base))
+          PY
+          APKANALYZER="$(command -v apkanalyzer || true)"
+          if [[ -z "$APKANALYZER" ]]; then APKANALYZER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/apkanalyzer"; fi
+          BASE="$(cat /tmp/basepath)"
+          "$APKANALYZER" dex code --class com.inkbird.inkbirdapp.device.iic800.adapter.WeekAdapter "$BASE" > /tmp/WeekAdapter.smali
+          mkdir -p docs/research/inkbird-apk-2.1.11
+          cp /tmp/WeekAdapter.smali docs/research/inkbird-apk-2.1.11/WeekAdapter.smali
+      - name: Commit WeekAdapter evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11/WeekAdapter.smali
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record IIC-800 WeekAdapter bytecode"
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
