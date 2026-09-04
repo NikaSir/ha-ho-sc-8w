@@ -1,0 +1,105 @@
+name: Targeted INKBIRD irrigation command scan
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-protocol-fast.yml
+      - scripts/analyze_inkbird_apk_fast.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inkbird-apk-protocol-fast
+  cancel-in-progress: false
+
+jobs:
+  targeted-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out analysis branch
+        uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install scanner prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq binutils unzip
+
+      - name: Download baksmali
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 \
+            https://github.com/JesusFreke/smali/releases/download/v2.5.2/baksmali-2.5.2.jar \
+            -o "${RUNNER_TEMP}/baksmali.jar"
+          java -jar "${RUNNER_TEMP}/baksmali.jar" --version
+
+      - name: Scan only relevant DEX and panel assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/analyze_inkbird_apk_fast.py \
+            --public-url "https://disk.yandex.ru/d/3T2zvV8ETXEwjA" \
+            --work-dir "${RUNNER_TEMP}/inkbird-fast-work" \
+            --output-dir "${RUNNER_TEMP}/inkbird-fast-output" \
+            --baksmali "${RUNNER_TEMP}/baksmali.jar"
+
+      - name: Publish targeted evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkbird-2.1.11-targeted-irrigation-command-evidence
+          path: ${{ runner.temp }}/inkbird-fast-output/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 9
+
+      - name: Commit targeted report to analysis branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin analysis/apk-irrigation-commands
+          git reset --hard origin/analysis/apk-irrigation-commands
+
+          target="docs/research/inkbird-apk-2.1.11-targeted"
+          mkdir -p "${target}"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/report.md" "${target}/protocol-report.md"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/smali-contexts.txt" "${target}/smali-contexts.txt"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/asset-contexts.txt" "${target}/asset-contexts.txt"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/raw-string-hits.json" "${target}/raw-string-hits.json"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/smali-hits.json" "${target}/smali-hits.json"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/dex-inventory.json" "${target}/dex-inventory.json"
+          cp "${RUNNER_TEMP}/inkbird-fast-output/baksmali.log" "${target}/baksmali.log"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${target}"
+          if git diff --cached --quiet; then
+            echo "No targeted report changes to commit"
+            exit 0
+          fi
+          git commit -m "Record targeted INKBIRD irrigation command evidence"
+          git push origin HEAD:analysis/apk-irrigation-commands
