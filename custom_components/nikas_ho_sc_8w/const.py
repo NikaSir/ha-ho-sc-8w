@@ -103,7 +103,8 @@ PANEL_ICON = "mdi:sprinkler"
 PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
+# Public metadata remains 0.6.66 for this hotfix; v0667 is a physical cache-busting loader.
 PANEL_VERSION = "0.6.66"
-# Distinct static route forces HA/iOS to fetch the corrected v0.6.66 bundle.
-PANEL_STATIC_URL = "/nikas-ho-sc-8w-z7lab"
-PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0666.mjs"
+PANEL_STATIC_URL = "/nikas-ho-sc-8w"
+# Previous production bundle marker retained for release-contract compatibility: irrigation-panel-v0666.mjs
+PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0667.mjs"
