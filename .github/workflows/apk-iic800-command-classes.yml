@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -123,15 +123,23 @@ jobs:
 
       - name: Download current JADX release
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          JADX_URL="$(
-            curl -fsSL --retry 3 https://api.github.com/repos/skylot/jadx/releases/latest \
-              | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' \
+          RELEASE_JSON="$(gh api repos/skylot/jadx/releases/latest)"
+          ASSET_API_URL="$(
+            printf '%s' "${RELEASE_JSON}" \
+              | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .url' \
               | head -n 1
           )"
-          test -n "${JADX_URL}"
-          curl -fL --retry 3 --retry-delay 2 "${JADX_URL}" -o /tmp/jadx.zip
+          test -n "${ASSET_API_URL}"
+          gh api \
+            --method GET \
+            -H 'Accept: application/octet-stream' \
+            "${ASSET_API_URL}" > /tmp/jadx.zip
+          test -s /tmp/jadx.zip
+          unzip -tq /tmp/jadx.zip
           mkdir -p /tmp/jadx
           unzip -q /tmp/jadx.zip -d /tmp/jadx
           chmod +x /tmp/jadx/bin/jadx
