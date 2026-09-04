@@ -73,16 +73,37 @@ jobs:
           if [[ -z "$APKANALYZER" ]]; then APKANALYZER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/apkanalyzer"; fi
           BASE="$(cat /tmp/basepath)"
           "$APKANALYZER" dex code --class com.inkbird.inkbirdapp.device.iic800.adapter.WeekAdapter "$BASE" > /tmp/WeekAdapter.smali
+          "$APKANALYZER" dex code --class com.inkbird.inkbirdapp.device.iic800.utils.Iic800Constant "$BASE" > /tmp/Iic800Constant.smali
+          AAPT2="$(find "${ANDROID_SDK_ROOT}" -type f -name aapt2 -perm -u+x 2>/dev/null | sort -V | tail -n1)"
+          "$AAPT2" dump resources "$BASE" > /tmp/resources.txt
           mkdir -p docs/research/inkbird-apk-2.1.11
           cp /tmp/WeekAdapter.smali docs/research/inkbird-apk-2.1.11/WeekAdapter.smali
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          sm=Path('/tmp/Iic800Constant.smali').read_text(errors='replace')
+          res=Path('/tmp/resources.txt').read_text(errors='replace')
+          a=sm.find('.method static constructor <clinit>()V'); b=sm.find('.end method',a)
+          block=sm[a:b+11]
+          ids=[]
+          for x in re.findall(r'0x7f[0-9a-fA-F]{6}',block):
+              if x.lower() not in {i.lower() for i in ids}: ids.append(x)
+          rlines=res.splitlines(); out=['# IIC-800 weekday order evidence','','## Constant initializer','```smali',block,'```','']
+          for rid in ids:
+              hits=[]
+              for i,line in enumerate(rlines):
+                  if rid.lower() in line.lower(): hits.extend(rlines[max(0,i-2):min(len(rlines),i+8)])
+              out += [f'## {rid}','```text','\n'.join(hits[:50]),'```','']
+          Path('docs/research/inkbird-apk-2.1.11/DP38_WEEKDAY_ORDER.md').write_text('\n'.join(out),encoding='utf-8')
+          PY
       - name: Commit WeekAdapter evidence
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/research/inkbird-apk-2.1.11/WeekAdapter.smali
+          git add docs/research/inkbird-apk-2.1.11/WeekAdapter.smali docs/research/inkbird-apk-2.1.11/DP38_WEEKDAY_ORDER.md
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Record IIC-800 WeekAdapter bytecode"
+          git commit -m "Record exact IIC-800 weekday order"
           git pull --rebase origin analysis/apk-irrigation-commands
           git push origin HEAD:analysis/apk-irrigation-commands
