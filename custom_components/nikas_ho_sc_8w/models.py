@@ -5,12 +5,22 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import Any, Iterable
 
 from .const import NUM_ZONES
 
 DP45_LENGTH = 34
 DP38_BLOCK_SIZE = 20
+
+DP38_WEEKDAY_BITS: dict[str, int] = {
+    "sun": 0x01,
+    "mon": 0x02,
+    "tue": 0x04,
+    "wed": 0x08,
+    "thu": 0x10,
+    "fri": 0x20,
+    "sat": 0x40,
+}
 
 
 @dataclass(frozen=True)
@@ -38,6 +48,53 @@ class DeviceProfile:
 PROFILE = DeviceProfile()
 
 
+def decode_dp38_weekdays(mask: int) -> list[str]:
+    """Decode the proven IIC-800 weekly mask order: Sun..Sat."""
+    if mask & ~0x7F:
+        raise ValueError(f"Invalid DP38 weekly mask: 0x{mask:02X}")
+    return [name for name, bit in DP38_WEEKDAY_BITS.items() if mask & bit]
+
+
+def encode_dp38_weekdays(days: Iterable[str]) -> int:
+    """Encode weekday names into the proven DP38 weekly bit mask."""
+    value = 0
+    for day in days:
+        try:
+            value |= DP38_WEEKDAY_BITS[str(day).lower()]
+        except KeyError as err:
+            raise ValueError(f"Invalid DP38 weekday: {day}") from err
+    return value
+
+
+def dp38_program_enabled(flags_raw: int) -> bool:
+    """Return the program enable flag stored in the high nibble of byte 19."""
+    return ((flags_raw >> 4) & 0x0F) == 1
+
+
+def dp38_rain_sensor_follow(flags_raw: int) -> bool:
+    """Return the per-program Obey/Ignore Rain Sensor flag (low nibble)."""
+    return (flags_raw & 0x0F) == 1
+
+
+def dp38_set_flags(
+    flags_raw: int,
+    *,
+    program_enabled: bool | None = None,
+    rain_sensor_follow: bool | None = None,
+) -> int:
+    """Read-modify-write the two proven DP38 byte-19 nibbles.
+
+    Unknown nibble values are preserved unless the corresponding proven flag
+    is explicitly changed.  This keeps research writes conservative.
+    """
+    flags = flags_raw & 0xFF
+    if program_enabled is not None:
+        flags = (flags & 0x0F) | ((1 if program_enabled else 0) << 4)
+    if rain_sensor_follow is not None:
+        flags = (flags & 0xF0) | (1 if rain_sensor_follow else 0)
+    return flags
+
+
 @dataclass
 class ScheduleChannel:
     """Parsed 20-byte DP38 schedule block for one HO-SC-8W zone."""
@@ -52,7 +109,7 @@ class ScheduleChannel:
 
     @property
     def enabled(self) -> bool:
-        return self.duration_minutes > 0
+        return dp38_program_enabled(self.flags_raw)
 
     @property
     def cycle_mode_name(self) -> str:
@@ -61,8 +118,19 @@ class ScheduleChannel:
         )
 
     @property
+    def rain_sensor_follow(self) -> bool:
+        return dp38_rain_sensor_follow(self.flags_raw)
+
+    @property
     def rain_sensor_follow_inferred(self) -> bool:
-        return bool(self.flags_raw & 0x01)
+        """Compatibility alias; semantics are now proven from APK bytecode."""
+        return self.rain_sensor_follow
+
+    @property
+    def weekdays(self) -> list[str]:
+        if self.cycle_mode != 0:
+            return []
+        return decode_dp38_weekdays(self.cycle_value)
 
     def as_dict(self) -> dict[str, Any]:
         year, month, day = self.anchor_date
@@ -74,6 +142,7 @@ class ScheduleChannel:
         return {
             "station": self.station,
             "enabled": self.enabled,
+            "program_enabled": self.enabled,
             "duration_minutes": self.duration_minutes,
             "duration_min": self.duration_minutes,
             "start_times": [f"{h:02d}:{m:02d}" for h, m in self.start_times],
@@ -81,12 +150,14 @@ class ScheduleChannel:
             "calendar_mode": self.cycle_mode_name,
             "cycle_mode_raw": self.cycle_mode,
             "cycle_value": self.cycle_value,
+            "weekdays": self.weekdays,
+            "weekday_mask": self.cycle_value if self.cycle_mode == 0 else None,
             "interval_days": interval_days,
             "anchor_date": anchor,
             "interval_start": anchor,
             "flags_raw": self.flags_raw,
-            "rain_sensor_follow_inferred": self.rain_sensor_follow_inferred,
-            "rain_sensor_follow": self.rain_sensor_follow_inferred,
+            "rain_sensor_follow_inferred": self.rain_sensor_follow,
+            "rain_sensor_follow": self.rain_sensor_follow,
             "rain_flag_write_verified": False,
         }
 
