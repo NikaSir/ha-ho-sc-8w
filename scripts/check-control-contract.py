@@ -84,14 +84,15 @@ settings_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0659.mj
 layout_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0660.mjs").read_text(encoding="utf-8")
 scroll_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0661.mjs").read_text(encoding="utf-8")
 summary_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0662.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source + scroll_wrapper_source + summary_wrapper_source
+connection_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0663.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source + scroll_wrapper_source + summary_wrapper_source + connection_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.82"
-assert panel["panel"]["dashboard_version"] == "0.6.62"
-assert panel_manifest["panel_version"] == "0.6.62"
+assert manifest["version"] == "1.0.0-b005.83"
+assert panel["panel"]["dashboard_version"] == "0.6.63"
+assert panel_manifest["panel_version"] == "0.6.63"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.62"' in const_source
-assert 'irrigation-panel-v0662.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.63"' in const_source
+assert 'irrigation-panel-v0663.mjs' in const_source
 assert "NUM_PRODUCTION_ZONES = 8" in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
@@ -256,9 +257,53 @@ assert '_systemWideZoneCard' in summary_wrapper_source
 assert 'systemZoneStatus' in summary_wrapper_source
 assert 'viewFootnote' in summary_wrapper_source
 assert '.systemSettingsButton{position:static' in summary_wrapper_source
+assert 'const UI_VERSION = "0.6.63"' in connection_wrapper_source
+assert 'irrigation-panel-v0662.mjs' in connection_wrapper_source
+assert 'systemConnectionLamp' in connection_wrapper_source
+assert 'systemConnectionCopy' in connection_wrapper_source
+assert 'grid-template-columns:10px minmax(0,1fr)' in connection_wrapper_source
+assert 'column-gap:11px' in connection_wrapper_source
+assert 'width:168px' in connection_wrapper_source
+assert 'min-height:58px' in connection_wrapper_source
+assert 'padding:12px 14px' in connection_wrapper_source
+assert 'border-radius:18px' in connection_wrapper_source
+assert 'font-size:16px' in connection_wrapper_source
+assert 'font-weight:700' in connection_wrapper_source
+assert 'font-size:13px!important' in connection_wrapper_source
+assert 'font-weight:600' in connection_wrapper_source
+assert '0 4px 14px rgba(0,0,0,.055)' in connection_wrapper_source
+assert 'var(--success-color,#43a047) 11%' in connection_wrapper_source
+assert 'var(--warning-color,#f6a623) 10%' in connection_wrapper_source
+assert 'var(--error-color,#db4437) 10%' in connection_wrapper_source
+assert 'var(--secondary-text-color,#6f6f72) 8%' in connection_wrapper_source
 assert 'role="switch"' in manual_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0662.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0662.mjs")
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0663.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0663.mjs")
+connection_meta = panel["panel"]["system_visualization"]["connection_indicator"]
+manifest_connection_meta = panel_manifest["connection_indicator"]
+assert connection_meta["reference"] == "NikaS Specialized Panel UI Standard v2.2 / S8 OMNI"
+assert manifest_connection_meta["reference"] == connection_meta["reference"]
+assert connection_meta["state_invariant_width_px"] == 168
+assert manifest_connection_meta["state_invariant_width_px"] == 168
+assert connection_meta["min_height_px"] == 58
+assert connection_meta["padding_px"] == [12, 14]
+assert connection_meta["radius_px"] == 18
+assert connection_meta["lamp_px"] == 10
+assert connection_meta["column_gap_px"] == 11
+assert connection_meta["main_font"] == "16px/700"
+assert connection_meta["freshness_font"] == "13px/600"
+assert connection_meta["success_background_mix_percent"] == 11
+assert connection_meta["status_background_mix_percent"] == 10
+assert connection_meta["neutral_background_mix_percent"] == 8
+assert connection_meta["status_border_mix_percent"] == 30
+assert connection_meta["neutral_border_mix_percent"] == 28
+assert manifest_connection_meta["min_height_px"] == connection_meta["min_height_px"]
+assert manifest_connection_meta["padding_px"] == connection_meta["padding_px"]
+assert manifest_connection_meta["radius_px"] == connection_meta["radius_px"]
+assert manifest_connection_meta["lamp_px"] == connection_meta["lamp_px"]
+assert manifest_connection_meta["column_gap_px"] == connection_meta["column_gap_px"]
+assert manifest_connection_meta["main_font"] == connection_meta["main_font"]
+assert manifest_connection_meta["freshness_font"] == connection_meta["freshness_font"]
 expected_program_subtabs = []
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]

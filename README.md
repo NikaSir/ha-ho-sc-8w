@@ -36,7 +36,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.62** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.6.63** (the approved visual design remains based on 0.6.30).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -53,6 +53,7 @@ It also conforms to **NikaS Integration Panel Template v1.9**.
 - Home Assistant telemetry patches existing nodes; Header, viewport, scroll position and Bottom Tab Bar are not reconstructed and do not flicker.
 - previously opened work views are retained in a lazy DOM cache and reattached on return instead of being rebuilt.
 - meaningful interface copy stays in the 12–25 px range; only a redundant schematic wiring caption uses 10 px.
+- the two-level connection/freshness plaque follows the S8 OMNI geometry and state surfaces defined by **NikaS Specialized Panel UI Standard v2.2**.
 
 ### Information architecture v0.4
 
