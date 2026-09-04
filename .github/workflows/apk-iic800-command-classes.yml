@@ -1,0 +1,230 @@
+name: Extract IIC-800 command classes
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-iic800-command-classes.yml
+      - scripts/extract_iic800_jadx_evidence.py
+      - scripts/iic800_command_classes.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inkbird-apk-iic800-command-classes
+  cancel-in-progress: true
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq unzip
+
+      - name: Download and identify the base APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import hashlib
+          import re
+          import urllib.parse
+          import zipfile
+          from pathlib import Path
+          import requests
+
+          public_url = "https://disk.yandex.ru/d/3T2zvV8ETXEwjA"
+          root = Path("/tmp/iic800-targeted")
+          root.mkdir(parents=True, exist_ok=True)
+          bundle = root / "bundle.bin"
+          api = "https://cloud-api.yandex.net/v1/disk/public/resources/download?" + urllib.parse.urlencode({"public_key": public_url})
+          meta = requests.get(api, timeout=60)
+          meta.raise_for_status()
+          with requests.get(meta.json()["href"], stream=True, timeout=(60, 900)) as response:
+              response.raise_for_status()
+              with bundle.open("wb") as handle:
+                  for chunk in response.iter_content(1024 * 1024):
+                      if chunk:
+                          handle.write(chunk)
+
+          def extract(source: Path, dest: Path) -> None:
+              dest.mkdir(parents=True, exist_ok=True)
+              resolved = dest.resolve()
+              with zipfile.ZipFile(source) as zf:
+                  for info in zf.infolist():
+                      target = (dest / info.filename).resolve()
+                      if target != resolved and resolved not in target.parents:
+                          raise RuntimeError(f"unsafe path: {info.filename}")
+                  zf.extractall(dest)
+
+          queue = [(bundle, 0)]
+          seen = set()
+          layer = 0
+          while queue:
+              source, depth = queue.pop(0)
+              if depth > 5 or source.suffix.lower() == ".apk" or not zipfile.is_zipfile(source):
+                  continue
+              signature = hashlib.sha256(source.read_bytes()).hexdigest()
+              if signature in seen:
+                  continue
+              seen.add(signature)
+              dest = root / f"layer-{layer:02d}-{source.stem[:40]}"
+              layer += 1
+              extract(source, dest)
+              for child in dest.rglob("*"):
+                  if child.is_file() and child.suffix.lower() in {".zip", ".xapk", ".apkm", ".apks"} and zipfile.is_zipfile(child):
+                      queue.append((child, depth + 1))
+
+          candidates = []
+          for apk in root.rglob("*.apk"):
+              with zipfile.ZipFile(apk) as zf:
+                  dex = [name for name in zf.namelist() if re.fullmatch(r"(?:.*/)?classes(?:\d+)?\.dex", name, re.I)]
+              if not dex:
+                  continue
+              name = apk.name.lower()
+              score = (
+                  int(name == "base.apk"),
+                  int(not name.startswith("config.") and "split_config" not in name and not name.startswith("split_")),
+                  len(dex),
+                  apk.stat().st_size,
+              )
+              candidates.append((score, apk, len(dex)))
+          if not candidates:
+              raise RuntimeError("base APK not found")
+          score, base, dex_count = max(candidates, key=lambda item: item[0])
+          Path("/tmp/iic800-base-path").write_text(str(base.resolve()), encoding="utf-8")
+          print(f"base={base}; bytes={base.stat().st_size}; dex={dex_count}; score={score}")
+          PY
+
+      - name: Download current JADX release
+        shell: bash
+        run: |
+          set -euo pipefail
+          JADX_URL="$(
+            curl -fsSL --retry 3 https://api.github.com/repos/skylot/jadx/releases/latest \
+              | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' \
+              | head -n 1
+          )"
+          test -n "${JADX_URL}"
+          curl -fL --retry 3 --retry-delay 2 "${JADX_URL}" -o /tmp/jadx.zip
+          mkdir -p /tmp/jadx
+          unzip -q /tmp/jadx.zip -d /tmp/jadx
+          chmod +x /tmp/jadx/bin/jadx
+          /tmp/jadx/bin/jadx --version
+
+      - name: Decompile selected IIC-800 classes only
+        shell: bash
+        env:
+          JAVA_OPTS: -Xmx5g
+        run: |
+          set -euo pipefail
+          BASE_APK="$(cat /tmp/iic800-base-path)"
+          ROOT=/tmp/iic800-selected-classes
+          LOG_ROOT=/tmp/iic800-selected-logs
+          mkdir -p "${ROOT}" "${LOG_ROOT}"
+          failures=0
+          while IFS= read -r class_name; do
+            [[ -z "${class_name}" || "${class_name}" == \#* ]] && continue
+            simple="${class_name##*.}"
+            out_dir="${ROOT}/${simple}"
+            log_file="${LOG_ROOT}/${simple}.log"
+            mkdir -p "${out_dir}"
+            echo "=== ${class_name} ==="
+            set +e
+            /tmp/jadx/bin/jadx \
+              -r \
+              -j 2 \
+              --comments-level WARN \
+              --single-class "${class_name}" \
+              --single-class-output "${out_dir}" \
+              "${BASE_APK}" >"${log_file}" 2>&1
+            status=$?
+            set -e
+            if [[ ${status} -ne 0 ]] || ! find "${out_dir}" -type f -name '*.java' -print -quit | grep -q .; then
+              echo "normal mode failed (${status}); retrying simple mode" | tee -a "${log_file}"
+              rm -rf "${out_dir}"
+              mkdir -p "${out_dir}"
+              set +e
+              /tmp/jadx/bin/jadx \
+                -r \
+                -j 2 \
+                --comments-level WARN \
+                --decompilation-mode simple \
+                --single-class "${class_name}" \
+                --single-class-output "${out_dir}" \
+                "${BASE_APK}" >>"${log_file}" 2>&1
+              status=$?
+              set -e
+            fi
+            if [[ ${status} -ne 0 ]] || ! find "${out_dir}" -type f -name '*.java' -print -quit | grep -q .; then
+              echo "FAILED ${class_name}" | tee -a "${log_file}"
+              failures=$((failures + 1))
+            else
+              find "${out_dir}" -type f -name '*.java' -maxdepth 8 -print
+            fi
+          done < scripts/iic800_command_classes.txt
+          echo "selected-class failures=${failures}"
+          tar -C /tmp -czf /tmp/iic800-selected-jadx.tar.gz \
+            iic800-selected-classes iic800-selected-logs
+
+      - name: Build concise protocol evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/inkbird-apk-2.1.11
+          python scripts/extract_iic800_jadx_evidence.py \
+            --decompiled-root /tmp/iic800-selected-classes \
+            --classes-file scripts/iic800_command_classes.txt \
+            --output-dir docs/research/inkbird-apk-2.1.11
+
+      - name: Upload selected-class evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkbird-2.1.11-iic800-command-classes
+          path: |
+            docs/research/inkbird-apk-2.1.11/command-class-evidence.*
+            /tmp/iic800-selected-jadx.tar.gz
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 9
+
+      - name: Commit concise evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11/command-class-evidence.*
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Record IIC-800 APK command-class evidence"
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
