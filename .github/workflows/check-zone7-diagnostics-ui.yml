@@ -5,6 +5,7 @@ on:
     branches:
       - analysis/apk-irrigation-commands
     paths:
+      - .github/workflows/check-zone7-diagnostics-ui.yml
       - custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0667.mjs
       - custom_components/nikas_ho_sc_8w/const.py
       - custom_components/nikas_ho_sc_8w/dp38_transaction.py
