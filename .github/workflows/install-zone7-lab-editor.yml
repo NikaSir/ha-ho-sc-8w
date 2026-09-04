@@ -6,6 +6,7 @@ on:
       - analysis/apk-irrigation-commands
     paths:
       - scripts/install_zone7_lab_editor.py
+      - scripts/harden_zone7_lab_editor.py
       - .github/workflows/install-zone7-lab-editor.yml
   workflow_dispatch:
 
@@ -28,6 +29,9 @@ jobs:
       - name: Install lab editor patch
         run: python scripts/install_zone7_lab_editor.py
 
+      - name: Harden lab writer transport
+        run: python scripts/harden_zone7_lab_editor.py
+
       - name: Compile integration
         run: python -m compileall -q custom_components/nikas_ho_sc_8w
 
@@ -39,6 +43,8 @@ jobs:
           grep -q 'def execute_zone7_lab' custom_components/nikas_ho_sc_8w/api.py
           grep -q 'SERVICE_PREPARE_ZONE7_LAB' custom_components/nikas_ho_sc_8w/__init__.py
           grep -q 'SERVICE_EXECUTE_ZONE7_LAB' custom_components/nikas_ho_sc_8w/__init__.py
+          grep -q '_write_dp38_mask_block(write_block, zone=7)' custom_components/nikas_ho_sc_8w/api.py
+          grep -q 'write_block\[0\] != 0x40' custom_components/nikas_ho_sc_8w/api.py
           grep -q 'zone != 7' custom_components/nikas_ho_sc_8w/api.py
 
       - name: Commit generated integration changes
@@ -52,6 +58,6 @@ jobs:
             echo "No generated changes"
             exit 0
           fi
-          git commit -m "Integrate guarded Zone 7 DP38 lab editor"
+          git commit -m "Harden guarded Zone 7 DP38 lab editor"
           git pull --rebase origin analysis/apk-irrigation-commands
           git push origin HEAD:analysis/apk-irrigation-commands
