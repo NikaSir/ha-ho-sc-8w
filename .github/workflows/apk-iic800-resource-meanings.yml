@@ -1,0 +1,272 @@
+name: Verify IIC-800 flag meanings from APK resources
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-iic800-resource-meanings.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inkbird-apk-iic800-resource-meanings
+  cancel-in-progress: true
+
+jobs:
+  resources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq unzip
+
+      - name: Download and identify base APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+          import hashlib
+          import re
+          import urllib.parse
+          import zipfile
+          from pathlib import Path
+          import requests
+
+          root = Path('/tmp/iic800-resource-work')
+          root.mkdir(parents=True, exist_ok=True)
+          bundle = root / 'bundle.bin'
+          public_url = 'https://disk.yandex.ru/d/3T2zvV8ETXEwjA'
+          api = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?' + urllib.parse.urlencode({'public_key': public_url})
+          meta = requests.get(api, timeout=60)
+          meta.raise_for_status()
+          with requests.get(meta.json()['href'], stream=True, timeout=(60, 900)) as response:
+              response.raise_for_status()
+              with bundle.open('wb') as handle:
+                  for chunk in response.iter_content(1024 * 1024):
+                      if chunk:
+                          handle.write(chunk)
+
+          def extract(source: Path, destination: Path) -> None:
+              destination.mkdir(parents=True, exist_ok=True)
+              resolved = destination.resolve()
+              with zipfile.ZipFile(source) as archive:
+                  for info in archive.infolist():
+                      target = (destination / info.filename).resolve()
+                      if target != resolved and resolved not in target.parents:
+                          raise RuntimeError(f'unsafe archive member: {info.filename}')
+                  archive.extractall(destination)
+
+          queue = [(bundle, 0)]
+          seen = set()
+          layer = 0
+          while queue:
+              source, depth = queue.pop(0)
+              if depth > 5 or source.suffix.lower() == '.apk' or not zipfile.is_zipfile(source):
+                  continue
+              digest = hashlib.sha256(source.read_bytes()).hexdigest()
+              if digest in seen:
+                  continue
+              seen.add(digest)
+              destination = root / f'layer-{layer:02d}-{source.stem[:40]}'
+              layer += 1
+              extract(source, destination)
+              for child in destination.rglob('*'):
+                  if child.is_file() and child.suffix.lower() in {'.zip', '.xapk', '.apkm', '.apks'} and zipfile.is_zipfile(child):
+                      queue.append((child, depth + 1))
+
+          candidates = []
+          for apk in root.rglob('*.apk'):
+              with zipfile.ZipFile(apk) as archive:
+                  dex = [name for name in archive.namelist() if re.fullmatch(r'(?:.*/)?classes(?:\d+)?\.dex', name, re.I)]
+              if not dex:
+                  continue
+              lower = apk.name.lower()
+              score = (
+                  int(lower == 'base.apk'),
+                  int(not lower.startswith('config.') and 'split_config' not in lower and not lower.startswith('split_')),
+                  len(dex),
+                  apk.stat().st_size,
+              )
+              candidates.append((score, apk))
+          if not candidates:
+              raise RuntimeError('base APK not found')
+          score, base = max(candidates, key=lambda item: item[0])
+          Path('/tmp/iic800-resource-base-path').write_text(str(base.resolve()), encoding='utf-8')
+          print(f'base={base}; bytes={base.stat().st_size}; score={score}')
+          PY
+
+      - name: Download JADX
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RELEASE_JSON="$(gh api repos/skylot/jadx/releases/latest)"
+          ASSET_API_URL="$(printf '%s' "${RELEASE_JSON}" | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .url' | head -n 1)"
+          test -n "${ASSET_API_URL}"
+          gh api --method GET -H 'Accept: application/octet-stream' "${ASSET_API_URL}" > /tmp/jadx.zip
+          unzip -tq /tmp/jadx.zip
+          mkdir -p /tmp/jadx
+          unzip -q /tmp/jadx.zip -d /tmp/jadx
+          chmod +x /tmp/jadx/bin/jadx
+
+      - name: Decode resources only
+        shell: bash
+        env:
+          JAVA_OPTS: -Xmx5g
+        run: |
+          set -euo pipefail
+          BASE_APK="$(cat /tmp/iic800-resource-base-path)"
+          /tmp/jadx/bin/jadx \
+            --no-src \
+            --log-level error \
+            -d /tmp/iic800-resources \
+            "${BASE_APK}"
+
+      - name: Extract focused string and layout evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/inkbird-apk-2.1.11
+          python - <<'PY'
+          from __future__ import annotations
+          import html
+          import json
+          import re
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = Path('/tmp/iic800-resources/resources')
+          if not root.exists():
+              root = Path('/tmp/iic800-resources')
+
+          exact_names = {
+              'iic800_rain_sensor_switch_tips',
+              'iic800_rain_sensor',
+              'iic800_seasonal_adjustment',
+              'iic800_season_adjustment',
+              'iic800_sea_adjustment',
+          }
+          name_patterns = re.compile(r'(?:iic800.*(?:rain|sensor|sea|season|adjust)|(?:rain|season).*iic800)', re.I)
+          value_patterns = re.compile(r'(?:rain sensor|seasonal|season adjustment|rain delay|датчик дожд|сезон)', re.I)
+          entries = []
+          for path in sorted(root.rglob('strings.xml')):
+              locale_dir = path.parent.name
+              try:
+                  tree = ET.parse(path)
+              except ET.ParseError:
+                  continue
+              for node in tree.getroot():
+                  name = node.attrib.get('name', '')
+                  value = ''.join(node.itertext()).strip()
+                  if name in exact_names or name_patterns.search(name) or value_patterns.search(value):
+                      entries.append({
+                          'locale_dir': locale_dir,
+                          'name': name,
+                          'value': value,
+                          'source': str(path.relative_to(root)),
+                      })
+
+          layout_hits = []
+          for path in sorted(root.rglob('*.xml')):
+              if 'layout' not in path.parent.name:
+                  continue
+              text = path.read_text(encoding='utf-8', errors='replace')
+              if not re.search(r'(?:rg_rain_sensor|rb_sensor_yes|rb_sensor_no|tv_rain_title|SeaAdjSwitch|season)', text, re.I):
+                  continue
+              lines = text.splitlines()
+              indexes = [
+                  index for index, line in enumerate(lines)
+                  if re.search(r'(?:rg_rain_sensor|rb_sensor_yes|rb_sensor_no|tv_rain_title|rain|season)', line, re.I)
+              ]
+              ranges = []
+              for index in indexes:
+                  start, end = max(0, index - 8), min(len(lines), index + 9)
+                  if ranges and start <= ranges[-1][1] + 2:
+                      ranges[-1] = (ranges[-1][0], max(ranges[-1][1], end))
+                  else:
+                      ranges.append((start, end))
+              snippets = [
+                  '\n'.join(f'{line_no + 1:05d}: {lines[line_no]}' for line_no in range(start, end))
+                  for start, end in ranges
+              ]
+              layout_hits.append({
+                  'source': str(path.relative_to(root)),
+                  'snippets': snippets,
+              })
+
+          output = {'strings': entries, 'layouts': layout_hits}
+          out = Path('docs/research/inkbird-apk-2.1.11')
+          (out / 'resource-meaning-evidence.json').write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding='utf-8')
+
+          lines = [
+              '# INKBIRD 2.1.11 — IIC-800 resource meaning evidence',
+              '',
+              '> Focused decoded resources used to distinguish the zone rain-sensor flag from seasonal adjustment.',
+              '',
+              '## Matching strings',
+              '',
+              '| locale | resource | value | source |',
+              '|---|---|---|---|',
+          ]
+          for item in entries:
+              value = item['value'].replace('|', '\\|').replace('\n', ' ')
+              lines.append(f"| `{item['locale_dir']}` | `{item['name']}` | {value} | `{item['source']}` |")
+          if not entries:
+              lines.append('| — | — | No matching decoded strings | — |')
+          lines += ['', '## Matching layouts', '']
+          for item in layout_hits:
+              lines += [f"### `{item['source']}`", '']
+              for snippet in item['snippets']:
+                  lines += ['```xml', snippet, '```', '']
+          if not layout_hits:
+              lines.append('No matching decoded layout was found.')
+          (out / 'resource-meaning-evidence.md').write_text('\n'.join(lines).rstrip() + '\n', encoding='utf-8')
+          print('\n'.join(lines)[:150000])
+          PY
+
+      - name: Upload resource evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkbird-2.1.11-iic800-resource-meanings
+          path: docs/research/inkbird-apk-2.1.11/resource-meaning-evidence.*
+          retention-days: 14
+          compression-level: 9
+
+      - name: Commit resource evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/research/inkbird-apk-2.1.11/resource-meaning-evidence.*
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Record IIC-800 resource flag meanings'
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
