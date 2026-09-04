@@ -242,6 +242,48 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
                 self.async_set_updated_data(self.api.device)
             return result
 
+
+    async def async_prepare_zone7_duration17(self) -> dict[str, object]:
+        """Prepare fixed first Zone-7 duration probe without writing."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(
+                self.api.prepare_zone7_duration17
+            )
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_execute_zone7_duration17(self, confirmation: str) -> dict[str, object]:
+        """Execute the fixed Zone-7 duration probe once."""
+        async with self._transport_lock:
+            try:
+                return await self.hass.async_add_executor_job(
+                    self.api.execute_zone7_duration17, confirmation
+                )
+            finally:
+                self.async_set_updated_data(self.api.device)
+
+    async def async_prepare_zone7_lab(self, field: str, value: str) -> dict[str, object]:
+        """Prepare a Zone 7 DP38 transaction without writing."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(
+                self.api.prepare_zone7_lab, field, value
+            )
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_execute_zone7_lab(
+        self, plan_id: str, confirmation: str
+    ) -> dict[str, object]:
+        """Execute one prepared Zone 7 transaction and publish full verification."""
+        async with self._transport_lock:
+            try:
+                result = await self.hass.async_add_executor_job(
+                    self.api.execute_zone7_lab, plan_id, confirmation
+                )
+            finally:
+                self.async_set_updated_data(self.api.device)
+            return result
+
     async def async_start_listener(self) -> None:
         if self._transport_task is None:
             self._transport_task = self.hass.async_create_background_task(
