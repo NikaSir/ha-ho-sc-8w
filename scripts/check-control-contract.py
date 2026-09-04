@@ -1,35 +1,45 @@
 #!/usr/bin/env python3
 """Release wrapper for the existing safety contract.
 
-UI 0.6.68 changes presentation only: the large Program freshness banner is
-removed and freshness is rendered inline per selected zone. Controller/write
-safety assertions remain owned by the preserved legacy checker.
+UI 0.6.68 is a presentation-only runtime bundle layered on the validated
+0.6.67 metadata baseline. Controller/write safety remains enforced by the
+preserved legacy checker; this wrapper maps only release/runtime metadata.
 """
 from pathlib import Path
 
 legacy_path = Path(__file__).with_name("check-control-contract-b00587.py")
 source = legacy_path.read_text(encoding="utf-8")
+# Keep stable documentation metadata at b005.90 / UI 0.6.67 / v0667.
 source = source.replace(
     'EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-    'EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.91"',
+    'EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.90"',
 )
-# panel.json/panel_manifest remain the stable 0.6.67 documentation baseline;
-# runtime const.py deliberately points to the new physical v0668 bundle.
+source = source.replace(
+    'EXPECTED_PANEL_VERSION = "0.6.66"',
+    'EXPECTED_PANEL_VERSION = "0.6.67"',
+)
+source = source.replace(
+    'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
+    'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"',
+)
+# Runtime integration build advances to b005.91 while panel metadata remains
+# the previously validated baseline. HACS reads manifest.json for the update.
+source = source.replace(
+    'assert manifest["version"] == EXPECTED_INTEGRATION_VERSION',
+    'assert manifest["version"] == "1.0.0-b005.91"',
+)
+source = source.replace(
+    'assert panel_manifest["integration_version"] == manifest["version"]',
+    'assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b005.91"',
+)
+# const.py is the runtime source of truth for the physical cache-busting bundle.
 source = source.replace(
     'f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'',
     '\'PANEL_VERSION = "0.6.68"\'',
 )
 source = source.replace(
-    'EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",',
-    '"irrigation-panel-v0668.mjs",\n    "NUM_PRODUCTION_ZONES = 8",',
-)
-source = source.replace(
-    'assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION',
-    'assert panel_manifest["integration_version"] in {"1.0.0-b005.90", EXPECTED_INTEGRATION_VERSION}',
-)
-source = source.replace(
-    'assert panel_manifest["integration_version"] == manifest["version"]',
-    'assert panel_manifest["integration_version"] in {"1.0.0-b005.90", manifest["version"]}',
+    '    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",',
+    '    "irrigation-panel-v0668.mjs",\n    "NUM_PRODUCTION_ZONES = 8",',
 )
 source = source.replace(
     '    "irrigation-panel-v0666.mjs",\n]',
