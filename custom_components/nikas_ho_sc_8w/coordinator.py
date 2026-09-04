@@ -243,6 +243,25 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
             return result
 
 
+    async def async_prepare_zone7_duration17(self) -> dict[str, object]:
+        """Prepare fixed first Zone-7 duration probe without writing."""
+        async with self._transport_lock:
+            result = await self.hass.async_add_executor_job(
+                self.api.prepare_zone7_duration17
+            )
+            self.async_set_updated_data(self.api.device)
+            return result
+
+    async def async_execute_zone7_duration17(self, confirmation: str) -> dict[str, object]:
+        """Execute the fixed Zone-7 duration probe once."""
+        async with self._transport_lock:
+            try:
+                return await self.hass.async_add_executor_job(
+                    self.api.execute_zone7_duration17, confirmation
+                )
+            finally:
+                self.async_set_updated_data(self.api.device)
+
     async def async_prepare_zone7_lab(self, field: str, value: str) -> dict[str, object]:
         """Prepare a Zone 7 DP38 transaction without writing."""
         async with self._transport_lock:

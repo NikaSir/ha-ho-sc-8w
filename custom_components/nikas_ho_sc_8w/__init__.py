@@ -48,6 +48,9 @@ from .const import (
     SERVICE_PROBE_ZONE8_DP38_HEX,
     SERVICE_PREPARE_ZONE7_LAB,
     SERVICE_EXECUTE_ZONE7_LAB,
+    SERVICE_PREPARE_ZONE7_DURATION17,
+    SERVICE_EXECUTE_ZONE7_DURATION17,
+    ZONE7_DURATION17_CONFIRMATION,
     SERVICE_RESUME_AUTOMATIC,
     SERVICE_RESTORE_ZONE8_SCHEDULE,
     SERVICE_RESTORE_ZONE8_KNOWN_BACKUP,
@@ -372,6 +375,22 @@ async def _async_test_zone8_mask_write(
 
 
 
+async def _async_prepare_zone7_duration17(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_prepare_zone7_duration17()
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
+async def _async_execute_zone7_duration17(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_execute_zone7_duration17(str(call.data[ATTR_CONFIRMATION]))
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def _async_prepare_zone7_lab(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _coordinator_for_call(hass, call)
     try:
@@ -472,6 +491,26 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             SERVICE_TEST_ZONE8_MASK_WRITE,
             partial(_async_test_zone8_mask_write, hass),
             schema=_ZONE8_MASK_WRITE_TEST_SCHEMA,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_PREPARE_ZONE7_DURATION17):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_PREPARE_ZONE7_DURATION17,
+            partial(_async_prepare_zone7_duration17, hass),
+            schema=_ENTRY_COMMAND_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_EXECUTE_ZONE7_DURATION17,
+            partial(_async_execute_zone7_duration17, hass),
+            schema=vol.Schema(
+                {
+                    vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+                    vol.Required(ATTR_CONFIRMATION): vol.In({ZONE7_DURATION17_CONFIRMATION}),
+                },
+                extra=vol.PREVENT_EXTRA,
+            ),
         )
 
     if not hass.services.has_service(DOMAIN, SERVICE_PREPARE_ZONE7_LAB):

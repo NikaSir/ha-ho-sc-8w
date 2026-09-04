@@ -1874,6 +1874,27 @@ class HOSC8WAPI:
             return {"rain_sensor_follow": value == "true"}
         raise ValueError(f"Unsupported Zone 7 lab field: {field}")
 
+    def prepare_zone7_duration17(self) -> dict[str, Any]:
+        """Prepare the first fixed Zone-7 probe: duration 17 minutes."""
+        result = self.prepare_zone7_lab("duration_minutes", "17")
+        result["fixed_probe"] = "zone7_duration17"
+        return result
+
+    def execute_zone7_duration17(self, confirmation: str) -> dict[str, Any]:
+        """Execute only the prepared fixed Zone-7 duration=17 plan once."""
+        from .const import ZONE7_DURATION17_CONFIRMATION
+
+        if confirmation != ZONE7_DURATION17_CONFIRMATION:
+            raise PermissionError("Explicit Zone 7 duration-17 confirmation is required")
+        plan = getattr(self.device, "zone7_lab_plan", None)
+        if not isinstance(plan, dict):
+            raise RuntimeError("Prepare the Zone 7 duration-17 probe first")
+        if plan.get("field") != "duration_minutes" or str(plan.get("value")) != "17":
+            raise RuntimeError("Prepared Zone 7 plan is not the fixed duration-17 probe")
+        return self.execute_zone7_lab(
+            str(plan.get("plan_id", "")), str(plan.get("confirmation", ""))
+        )
+
     def prepare_zone7_lab(self, field: str, value: str) -> dict[str, Any]:
         """Prepare a write plan for Zone 7 without sending any controller write."""
         if self.active_transport != CONNECTION_MODE_LOCAL:

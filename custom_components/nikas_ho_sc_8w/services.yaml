@@ -148,3 +148,28 @@ execute_zone7_lab:
       required: true
       selector:
         text:
+
+prepare_zone7_duration17:
+  name: Prepare Zone 7 duration=17 probe
+  description: Read-only preflight. Captures all eight DP38 blocks and prepares a one-byte duration change for Zone 7. No write is sent.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+
+execute_zone7_duration17:
+  name: Execute Zone 7 duration=17 probe
+  description: Executes exactly the previously prepared Zone 7 duration=17 DP38 transaction once, then re-reads and compares all eight zones. No retry or automatic rollback.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    confirmation:
+      required: true
+      example: WRITE_ZONE7_DURATION_17_ONCE
+      selector:
+        select:
+          options:
+            - WRITE_ZONE7_DURATION_17_ONCE
