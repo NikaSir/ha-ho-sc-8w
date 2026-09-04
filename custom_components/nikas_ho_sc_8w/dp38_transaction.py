@@ -1,7 +1,7 @@
 """Transactional DP38 planning for HO-SC-8W research builds.
 
-No controller writes happen in this module.  A transaction is built from one
-fresh controller READ block, a conservative patch, and an exact byte diff.  It
+No controller writes happen in this module. A transaction is built from one
+fresh controller READ block, a conservative patch, and an exact byte diff. It
 can later be used by a separately guarded writer after user confirmation.
 """
 
@@ -78,6 +78,9 @@ class DP38TransactionPlan:
     def as_dict(self) -> dict[str, Any]:
         before = decode_dp38(self.source_read)[0].as_dict()
         after = decode_dp38(self.expected_read)[0].as_dict()
+        changes = [change.as_dict() for change in self.changes]
+        # Keep both canonical names and compatibility aliases consumed by the
+        # guarded Zone-7 lab API/frontend. This avoids silent schema drift.
         return {
             "dry_run": True,
             "zone": self.zone,
@@ -85,7 +88,9 @@ class DP38TransactionPlan:
             "source_read_hex": self.source_hex,
             "write_hex": self.write_hex,
             "expected_readback_hex": self.expected_read_hex,
-            "byte_changes": [change.as_dict() for change in self.changes],
+            "expected_read_hex": self.expected_read_hex,
+            "byte_changes": changes,
+            "diff": changes,
             "before": before,
             "after": after,
         }
@@ -101,7 +106,7 @@ def build_dp38_transaction(read_block: bytes, **patch: Any) -> DP38TransactionPl
 
     changes: list[DP38ByteChange] = []
     # Compare WRITE representation for byte 0, and controller READ semantics for
-    # bytes 1..19.  This makes the selector conversion visible without treating
+    # bytes 1..19. This makes the selector conversion visible without treating
     # it as a user-level schedule modification.
     write_view = bytes([write_block[0]]) + expected[1:]
     source_view = bytes([read_block[0]]) + read_block[1:]
@@ -124,6 +129,11 @@ def build_dp38_transaction(read_block: bytes, **patch: Any) -> DP38TransactionPl
         expected_read=expected,
         changes=tuple(changes),
     )
+
+
+def prepare_dp38_transaction(read_block: bytes, **patch: Any) -> DP38TransactionPlan:
+    """Compatibility/public name used by the guarded writer API."""
+    return build_dp38_transaction(read_block, **patch)
 
 
 def verify_dp38_transaction_readback(
@@ -150,6 +160,17 @@ def verify_dp38_transaction_readback(
         "verified": not mismatches,
         "zone": plan.zone,
         "expected_readback_hex": plan.expected_read_hex,
+        "expected_read_hex": plan.expected_read_hex,
         "actual_readback_hex": actual_read.hex().upper(),
+        "actual_read_hex": actual_read.hex().upper(),
         "mismatches": mismatches,
+        "readback_diff": mismatches,
     }
+
+
+def verify_dp38_readback(
+    plan: DP38TransactionPlan,
+    actual_read: bytes,
+) -> dict[str, Any]:
+    """Compatibility/public verifier used by the guarded writer API."""
+    return verify_dp38_transaction_readback(plan, actual_read)
