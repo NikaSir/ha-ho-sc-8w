@@ -104,6 +104,6 @@ PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
 PANEL_VERSION = "0.6.66"
-PANEL_STATIC_URL = "/nikas-ho-sc-8w"
-# Cache-bust the corrected v0.6.66 bundle containing the Zone 7 diagnostics lab.
-PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0666.mjs?v=0.6.67"
+# Distinct static route forces HA/iOS to fetch the corrected v0.6.66 bundle.
+PANEL_STATIC_URL = "/nikas-ho-sc-8w-z7lab"
+PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0666.mjs"
