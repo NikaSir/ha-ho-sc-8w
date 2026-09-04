@@ -40,7 +40,6 @@ jobs:
           grep -q 'SERVICE_PREPARE_ZONE7_LAB' custom_components/nikas_ho_sc_8w/__init__.py
           grep -q 'SERVICE_EXECUTE_ZONE7_LAB' custom_components/nikas_ho_sc_8w/__init__.py
           grep -q 'zone != 7' custom_components/nikas_ho_sc_8w/api.py
-          grep -q 'Never.*retry\|Never.*rollback\|Never' custom_components/nikas_ho_sc_8w/api.py || true
 
       - name: Commit generated integration changes
         shell: bash
