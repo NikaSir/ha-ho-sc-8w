@@ -106,10 +106,9 @@ test_zone8_mask_write:
           options:
             - WRITE_DP38_ZONE8_MASK_80_DATE_2026_09_05_ONCE
 
-
 prepare_zone7_lab:
   name: Prepare Zone 7 DP38 lab transaction
-  description: Read-only prepare step. Captures all eight DP38 blocks, builds a minimal Zone 7 patch and returns plan_id, confirmation token and byte diff. Sends no write.
+  description: Read-only prepare step. Captures all eight DP38 blocks, builds a minimal Zone 7 patch and returns plan_id, confirmation token and byte diff. Sends no write. start_time_1 is currently restricted to the guarded 06:30 empty-bank probe.
   fields:
     config_entry_id:
       selector:
@@ -121,6 +120,7 @@ prepare_zone7_lab:
         select:
           options:
             - duration_minutes
+            - start_time_1
             - cycle_mode
             - cycle_value
             - weekdays

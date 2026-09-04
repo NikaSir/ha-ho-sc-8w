@@ -15,7 +15,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
-from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI
+from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI
 from .const import (
     ATTR_CONFIG_ENTRY_ID,
     ATTR_CONFIRMATION,
@@ -198,6 +198,7 @@ _ZONE7_LAB_PREPARE_SCHEMA = vol.Schema(
         vol.Required(ATTR_FIELD): vol.In(
             {
                 "duration_minutes",
+                "start_time_1",
                 "cycle_mode",
                 "cycle_value",
                 "weekdays",
