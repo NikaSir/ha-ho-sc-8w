@@ -25,8 +25,10 @@ class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
                 return {"start_times": [(6, 30)]}
             if value == "06:30,12:45":
                 return {"start_times": [(6, 30), (12, 45)]}
+            if value == "06:30,12:45,23:59":
+                return {"start_times": [(6, 30), (12, 45), (23, 59)]}
             raise ValueError(
-                "The guarded Zone 7 start-time probe only allows 06:30 or 06:30,12:45"
+                "The guarded Zone 7 start-time probe only allows 06:30, 06:30,12:45 or 06:30,12:45,23:59"
             )
         return NativeManualHOSC8WAPI._zone7_lab_patch_kwargs(field_name, value)
 
@@ -59,6 +61,13 @@ class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
             )
             expected_offsets = {0, 3, 9}
             reason = "Zone 7 must contain only Start 1 = 06:30 before the Start 2 probe"
+        elif target == "06:30,12:45,23:59":
+            source_ok = (
+                hours == bytes((0x06, 0x0C, 0xFF, 0xFF, 0xFF, 0xFF))
+                and minutes == bytes((0x1E, 0x2D, 0xFF, 0xFF, 0xFF, 0xFF))
+            )
+            expected_offsets = {0, 4, 10}
+            reason = "Zone 7 must contain Start 1 = 06:30, Start 2 = 12:45 and empty slots 3-6 before the Start 3 probe"
         else:
             self.device.zone7_lab_plan = None
             raise RuntimeError("Unsupported guarded Zone 7 start-time target")
