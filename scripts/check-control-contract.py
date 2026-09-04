@@ -85,14 +85,15 @@ layout_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0660.mjs"
 scroll_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0661.mjs").read_text(encoding="utf-8")
 summary_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0662.mjs").read_text(encoding="utf-8")
 connection_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0663.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source + scroll_wrapper_source + summary_wrapper_source + connection_wrapper_source
+seasonal_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0664.mjs").read_text(encoding="utf-8")
+combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source + scroll_wrapper_source + summary_wrapper_source + connection_wrapper_source + seasonal_wrapper_source
 
-assert manifest["version"] == "1.0.0-b005.83"
-assert panel["panel"]["dashboard_version"] == "0.6.63"
-assert panel_manifest["panel_version"] == "0.6.63"
+assert manifest["version"] == "1.0.0-b005.84"
+assert panel["panel"]["dashboard_version"] == "0.6.64"
+assert panel_manifest["panel_version"] == "0.6.64"
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.63"' in const_source
-assert 'irrigation-panel-v0663.mjs' in const_source
+assert 'PANEL_VERSION = "0.6.64"' in const_source
+assert 'irrigation-panel-v0664.mjs' in const_source
 assert "NUM_PRODUCTION_ZONES = 8" in const_source
 assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
 assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
@@ -276,9 +277,17 @@ assert 'var(--success-color,#43a047) 11%' in connection_wrapper_source
 assert 'var(--warning-color,#f6a623) 10%' in connection_wrapper_source
 assert 'var(--error-color,#db4437) 10%' in connection_wrapper_source
 assert 'var(--secondary-text-color,#6f6f72) 8%' in connection_wrapper_source
+assert 'const UI_VERSION = "0.6.64"' in seasonal_wrapper_source
+assert 'irrigation-panel-v0663.mjs' in seasonal_wrapper_source
+assert 'Array.from({ length: 20 }' in seasonal_wrapper_source
+assert 'data-seasonal-select' in seasonal_wrapper_source
+assert '<select data-season-value' in seasonal_wrapper_source
+assert 'seasonalSelectControl' in seasonal_wrapper_source
+assert 'native_select' == panel["panel"]["control_actions"]["seasonal_adjustment"]["input_control"]
+assert 'native_select' == panel_manifest["control_actions"]["seasonal_adjustment"]["input_control"]
 assert 'role="switch"' in manual_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0663.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0663.mjs")
+assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0664.mjs")
+assert panel_manifest["bundle"].endswith("irrigation-panel-v0664.mjs")
 connection_meta = panel["panel"]["system_visualization"]["connection_indicator"]
 manifest_connection_meta = panel_manifest["connection_indicator"]
 assert connection_meta["reference"] == "NikaS Specialized Panel UI Standard v2.2 / S8 OMNI"
@@ -304,6 +313,17 @@ assert manifest_connection_meta["lamp_px"] == connection_meta["lamp_px"]
 assert manifest_connection_meta["column_gap_px"] == connection_meta["column_gap_px"]
 assert manifest_connection_meta["main_font"] == connection_meta["main_font"]
 assert manifest_connection_meta["freshness_font"] == connection_meta["freshness_font"]
+seasonal_meta = panel["panel"]["control_actions"]["seasonal_adjustment"]
+manifest_seasonal_meta = panel_manifest["control_actions"]["seasonal_adjustment"]
+expected_seasonal_values = list(range(-90, 101, 10))
+assert seasonal_meta["range_percent"] == [-90, 100]
+assert seasonal_meta["step_percent"] == 10
+assert seasonal_meta["allowed_values_percent"] == expected_seasonal_values
+assert seasonal_meta["input_control"] == "native_select"
+assert seasonal_meta["native_keyboard"] is False
+assert manifest_seasonal_meta["allowed_values_percent"] == expected_seasonal_values
+assert manifest_seasonal_meta["input_control"] == "native_select"
+assert manifest_seasonal_meta["native_keyboard"] is False
 expected_program_subtabs = []
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
