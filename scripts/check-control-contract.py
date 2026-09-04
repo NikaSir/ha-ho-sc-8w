@@ -21,6 +21,14 @@ source = source.replace(
     'assert panel_manifest["integration_version"] == manifest["version"]',
     'assert panel_manifest["integration_version"] in {"1.0.0-b005.87", manifest["version"]}',
 )
+# The legacy contract forbade even mentioning DP_OPERATION_MODE in manual_api
+# to guarantee DP101 was never written. Native DP38 refresh must read DP101 as
+# fresh safety telemetry, so enforce the actual invariant instead: no manual
+# transport write may target DP101.
+source = source.replace(
+    'assert "DP_OPERATION_MODE" not in manual_source',
+    'assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source',
+)
 exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "__name__": "__main__"})
 
 manual_api = (
