@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from datetime import date, datetime, timezone
+import hashlib
 import logging
 import struct
 import threading
@@ -54,6 +55,7 @@ from .const import (
     ZONE8_KNOWN_RESTORE_CONFIRMATION,
     ZONE8_KNOWN_RESTORE_ENABLED,
 )
+from .dp38_transaction import prepare_dp38_transaction
 from .models import (
     PROFILE,
     ScheduleChannel,
@@ -1832,3 +1834,222 @@ class HOSC8WAPI:
             _LOGGER.warning("HO-SC-8W cloud update raised %s", type(exc).__name__)
             _LOGGER.debug("HO-SC-8W cloud update failed: %s", exc)
             return False
+
+
+    @staticmethod
+    def _zone7_lab_patch_kwargs(field: str, raw_value: str) -> dict[str, Any]:
+        """Translate one laboratory editor field into a conservative DP38 patch."""
+        field = str(field).strip()
+        value = str(raw_value).strip()
+        if field == "duration_minutes":
+            return {"duration_minutes": int(value)}
+        if field.startswith("start_time_"):
+            slot = int(field.removeprefix("start_time_"))
+            if not 1 <= slot <= 6:
+                raise ValueError("start_time slot must be 1..6")
+            # The transaction planner replaces the whole start-time bank, so a
+            # single-slot edit is intentionally not accepted here.  The lab UI
+            # will use start_times_json once multi-slot editing is needed.
+            raise ValueError("Use a non-time field for the first Zone 7 lab test")
+        if field == "cycle_mode":
+            modes = {"weekly": 0, "odd": 1, "even": 2, "interval": 3}
+            if value not in modes:
+                raise ValueError("cycle_mode must be weekly, odd, even or interval")
+            return {"cycle_mode": modes[value]}
+        if field == "cycle_value":
+            return {"interval_days": int(value)}
+        if field == "weekdays":
+            days = [item.strip().lower() for item in value.split(",") if item.strip()]
+            return {"cycle_mode": 0, "weekdays": days}
+        if field == "anchor_date":
+            parsed = date.fromisoformat(value)
+            return {"anchor_date": (parsed.year, parsed.month, parsed.day)}
+        if field == "program_enabled":
+            if value not in {"true", "false"}:
+                raise ValueError("program_enabled must be true or false")
+            return {"program_enabled": value == "true"}
+        if field == "rain_sensor_follow":
+            if value not in {"true", "false"}:
+                raise ValueError("rain_sensor_follow must be true or false")
+            return {"rain_sensor_follow": value == "true"}
+        raise ValueError(f"Unsupported Zone 7 lab field: {field}")
+
+    def prepare_zone7_duration17(self) -> dict[str, Any]:
+        """Prepare the first fixed Zone-7 probe: duration 17 minutes."""
+        result = self.prepare_zone7_lab("duration_minutes", "17")
+        result["fixed_probe"] = "zone7_duration17"
+        return result
+
+    def execute_zone7_duration17(self, confirmation: str) -> dict[str, Any]:
+        """Execute only the prepared fixed Zone-7 duration=17 plan once."""
+        from .const import ZONE7_DURATION17_CONFIRMATION
+
+        if confirmation != ZONE7_DURATION17_CONFIRMATION:
+            raise PermissionError("Explicit Zone 7 duration-17 confirmation is required")
+        plan = getattr(self.device, "zone7_lab_plan", None)
+        if not isinstance(plan, dict):
+            raise RuntimeError("Prepare the Zone 7 duration-17 probe first")
+        if plan.get("field") != "duration_minutes" or str(plan.get("value")) != "17":
+            raise RuntimeError("Prepared Zone 7 plan is not the fixed duration-17 probe")
+        return self.execute_zone7_lab(
+            str(plan.get("plan_id", "")), str(plan.get("confirmation", ""))
+        )
+
+    def prepare_zone7_lab(self, field: str, value: str) -> dict[str, Any]:
+        """Prepare a write plan for Zone 7 without sending any controller write."""
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("Zone 7 laboratory editor is local-transport only")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before preparing a Zone 7 lab transaction")
+                self._collect_zone8_dp38_samples(
+                    timeout_seconds=12.0,
+                    required_zones=set(range(1, NUM_ZONES + 1)),
+                    max_requests=24,
+                )
+                baseline = self._build_full_dp38_snapshot()
+                source = bytes.fromhex(str(baseline[7]["raw_hex"]))
+                validate_dp38_block(source, expected_zone=7)
+                kwargs = self._zone7_lab_patch_kwargs(field, value)
+                # cycle_value is overloaded in DP38.  For the lab we only allow
+                # direct cycle_value edits when the source is already interval.
+                if field == "cycle_value" and source[14] != 3:
+                    raise ValueError("cycle_value direct edit is allowed only when Zone 7 is already interval")
+                plan = prepare_dp38_transaction(source, **kwargs)
+                plan_dict = plan.as_dict()
+                digest = hashlib.sha256(
+                    (plan_dict["source_read_hex"] + plan_dict["write_hex"]).encode("ascii")
+                ).hexdigest()[:12].upper()
+                confirmation = f"WRITE_ZONE7_LAB_{digest}"
+                self.device.zone7_lab_plan = {
+                    **plan_dict,
+                    "plan_id": digest,
+                    "confirmation": confirmation,
+                    "field": field,
+                    "value": value,
+                    "baseline": baseline,
+                }
+                self.device.zone7_lab_result = {
+                    "status": "prepared",
+                    "plan_id": digest,
+                    "confirmation": confirmation,
+                    "field": field,
+                    "value": value,
+                    "diff": plan_dict["diff"],
+                    "source_read_hex": plan_dict["source_read_hex"],
+                    "write_hex": plan_dict["write_hex"],
+                    "expected_read_hex": plan_dict["expected_read_hex"],
+                }
+                return dict(self.device.zone7_lab_result)
+        finally:
+            self._command_lock.release()
+
+    def execute_zone7_lab(self, plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Execute one prepared Zone 7 write, then compare all eight DP38 blocks."""
+        plan = getattr(self.device, "zone7_lab_plan", None)
+        if not isinstance(plan, dict):
+            raise RuntimeError("No prepared Zone 7 laboratory transaction exists")
+        if str(plan_id).strip().upper() != str(plan.get("plan_id", "")).upper():
+            raise PermissionError("Zone 7 lab plan_id does not match the prepared transaction")
+        if str(confirmation).strip() != str(plan.get("confirmation", "")):
+            raise PermissionError("Zone 7 lab confirmation token does not match the prepared transaction")
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("Zone 7 laboratory editor is local-transport only")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller write is still in progress")
+        try:
+            with self._io_lock:
+                self._require_fresh_command_state()
+                if self.device.active_zone or self.device.queued_zone:
+                    raise RuntimeError("Stop all watering before executing a Zone 7 lab transaction")
+
+                self._collect_zone8_dp38_samples(
+                    timeout_seconds=12.0,
+                    required_zones=set(range(1, NUM_ZONES + 1)),
+                    max_requests=24,
+                )
+                before = self._build_full_dp38_snapshot()
+                baseline = plan["baseline"]
+                changed_before = [
+                    zone for zone in range(1, NUM_ZONES + 1)
+                    if str(before[zone]["raw_hex"]) != str(baseline[zone]["raw_hex"])
+                ]
+                if changed_before:
+                    raise RuntimeError(
+                        "DP38 changed after prepare; transaction cancelled. Changed zones: "
+                        + ", ".join(map(str, changed_before))
+                    )
+
+                write_block = bytes.fromhex(str(plan["write_hex"]))
+                validate_dp38_write_block(write_block, expected_zone=7)
+                if write_block[0] != 0x40:
+                    raise RuntimeError("Zone 7 write selector must be exactly 0x40")
+                required_safety = {
+                    DP_OPERATION_MODE,
+                    DP_ACTIVE_ZONE,
+                    DP_QUEUED_ZONE,
+                }
+                seen_safety = set(
+                    self.device.zone8_hex_probe_trace.get("safety_dps_seen", [])
+                )
+                if not required_safety.issubset(seen_safety):
+                    raise RuntimeError("Fresh DP101/107/108 safety state was not received")
+                if str(self.device.operation_mode).lower() != "auto":
+                    raise RuntimeError("Set the physical controller to ON/Auto before the Zone 7 lab write")
+                # Use only the already field-validated one-hot-mask transport.
+                # The legacy read-side DP38 writer remains blocked.
+                self._write_dp38_mask_block(write_block, zone=7)
+                time.sleep(1.0)
+
+                self._collect_zone8_dp38_samples(
+                    timeout_seconds=12.0,
+                    required_zones=set(range(1, NUM_ZONES + 1)),
+                    max_requests=24,
+                )
+                after = self._build_full_dp38_snapshot()
+                actual_zone7 = bytes.fromhex(str(after[7]["raw_hex"]))
+                expected_zone7 = bytes.fromhex(str(plan["expected_read_hex"]))
+                exact_zone7 = actual_zone7 == expected_zone7
+                readback_diff = []
+                if not exact_zone7:
+                    for offset, (expected, actual) in enumerate(zip(expected_zone7, actual_zone7, strict=True)):
+                        if expected != actual:
+                            readback_diff.append({
+                                "offset": offset,
+                                "field": self._dp38_snapshot_field(offset),
+                                "expected": f"{expected:02X}",
+                                "actual": f"{actual:02X}",
+                            })
+                collateral = [
+                    zone for zone in range(1, NUM_ZONES + 1)
+                    if zone != 7
+                    and str(after[zone]["raw_hex"]) != str(baseline[zone]["raw_hex"])
+                ]
+                result = {
+                    "status": "verified" if exact_zone7 and not collateral else "mismatch",
+                    "verified": exact_zone7 and not collateral,
+                    "plan_id": plan["plan_id"],
+                    "field": plan["field"],
+                    "value": plan["value"],
+                    "expected_read_hex": expected_zone7.hex().upper(),
+                    "actual_read_hex": actual_zone7.hex().upper(),
+                    "readback_diff": readback_diff,
+                    "collateral_changed_zones": collateral,
+                    "before": before,
+                    "after": after,
+                }
+                self.device.zone7_lab_result = result
+                # One prepared plan is single-use regardless of success.  Never
+                # retry or auto-rollback a DP38 write.
+                self.device.zone7_lab_plan = None
+                if not result["verified"]:
+                    raise RuntimeError(
+                        "Zone 7 DP38 write was not isolated/confirmed; inspect zone7_lab_result before any further write"
+                    )
+                return result
+        finally:
+            self._command_lock.release()

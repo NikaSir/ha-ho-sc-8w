@@ -105,3 +105,71 @@ test_zone8_mask_write:
         select:
           options:
             - WRITE_DP38_ZONE8_MASK_80_DATE_2026_09_05_ONCE
+
+
+prepare_zone7_lab:
+  name: Prepare Zone 7 DP38 lab transaction
+  description: Read-only prepare step. Captures all eight DP38 blocks, builds a minimal Zone 7 patch and returns plan_id, confirmation token and byte diff. Sends no write.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    field:
+      required: true
+      selector:
+        select:
+          options:
+            - duration_minutes
+            - cycle_mode
+            - cycle_value
+            - weekdays
+            - anchor_date
+            - program_enabled
+            - rain_sensor_follow
+    value:
+      required: true
+      selector:
+        text:
+
+execute_zone7_lab:
+  name: Execute prepared Zone 7 DP38 lab transaction
+  description: Single-use guarded write. Re-reads all eight zones, refuses stale plans, writes Zone 7 once, then verifies Zone 7 and confirms that zones 1-6 and 8 stayed byte-for-byte unchanged. No retry and no automatic rollback.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    plan_id:
+      required: true
+      selector:
+        text:
+    confirmation:
+      required: true
+      selector:
+        text:
+
+prepare_zone7_duration17:
+  name: Prepare Zone 7 duration=17 probe
+  description: Read-only preflight. Captures all eight DP38 blocks and prepares a one-byte duration change for Zone 7. No write is sent.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+
+execute_zone7_duration17:
+  name: Execute Zone 7 duration=17 probe
+  description: Executes exactly the previously prepared Zone 7 duration=17 DP38 transaction once, then re-reads and compares all eight zones. No retry or automatic rollback.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    confirmation:
+      required: true
+      example: WRITE_ZONE7_DURATION_17_ONCE
+      selector:
+        select:
+          options:
+            - WRITE_ZONE7_DURATION_17_ONCE

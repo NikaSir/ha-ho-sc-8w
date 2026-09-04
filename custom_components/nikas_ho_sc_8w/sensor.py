@@ -123,6 +123,9 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
             "cache_source": device.schedule_sources.get(self._zone, "missing"),
             "complete_zone_cache": len(device.schedule_blocks) == NUM_ZONES,
         }
+        if self._zone == 7:
+            attrs["zone7_lab_plan"] = getattr(device, "zone7_lab_plan", None)
+            attrs["zone7_lab_result"] = getattr(device, "zone7_lab_result", None)
         if self._zone == 8:
             attrs.update(
                 {
