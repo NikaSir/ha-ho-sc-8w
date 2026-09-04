@@ -123,25 +123,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ROOTS=()
-          [[ -n "${ANDROID_SDK_ROOT:-}" ]] && ROOTS+=("${ANDROID_SDK_ROOT}")
-          [[ -n "${ANDROID_HOME:-}" ]] && ROOTS+=("${ANDROID_HOME}")
-          ROOTS+=("/usr/local/lib/android/sdk" "/opt/android-sdk")
-          APKANALYZER=""
-          for root in "${ROOTS[@]}"; do
-            [[ -d "${root}" ]] || continue
-            candidate="$(find "${root}" -type f -name apkanalyzer -perm -u+x 2>/dev/null | sort -V | tail -n 1 || true)"
-            if [[ -n "${candidate}" ]]; then
-              APKANALYZER="${candidate}"
-              break
-            fi
-          done
+          APKANALYZER="$(command -v apkanalyzer || true)"
+          CANDIDATES=(
+            "${ANDROID_SDK_ROOT:-}/cmdline-tools/latest/bin/apkanalyzer"
+            "${ANDROID_HOME:-}/cmdline-tools/latest/bin/apkanalyzer"
+            "/usr/local/lib/android/sdk/cmdline-tools/latest/bin/apkanalyzer"
+            "/opt/android-sdk/cmdline-tools/latest/bin/apkanalyzer"
+          )
+          if [[ -z "${APKANALYZER}" ]]; then
+            for candidate in "${CANDIDATES[@]}"; do
+              if [[ -x "${candidate}" ]]; then
+                APKANALYZER="${candidate}"
+                break
+              fi
+            done
+          fi
+          if [[ -z "${APKANALYZER}" ]]; then
+            for root in "${ANDROID_SDK_ROOT:-}" "${ANDROID_HOME:-}" "/usr/local/lib/android/sdk" "/opt/android-sdk"; do
+              [[ -d "${root}/cmdline-tools" ]] || continue
+              candidate="$(find "${root}/cmdline-tools" -maxdepth 4 -type f -name apkanalyzer -perm -u+x 2>/dev/null | sort -V | tail -n 1 || true)"
+              if [[ -n "${candidate}" ]]; then
+                APKANALYZER="${candidate}"
+                break
+              fi
+            done
+          fi
           if [[ -z "${APKANALYZER}" ]]; then
             echo "apkanalyzer was not found in the hosted Android SDK" >&2
             exit 1
           fi
           echo "${APKANALYZER}" > /tmp/apkanalyzer-path
-          "${APKANALYZER}" --help | head -n 40
+          "${APKANALYZER}" --help > /tmp/apkanalyzer-help.txt 2>&1 || true
+          head -n 40 /tmp/apkanalyzer-help.txt
 
       - name: Dump selected IIC-800 classes as smali
         shell: bash
