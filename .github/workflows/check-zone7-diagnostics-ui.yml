@@ -1,0 +1,54 @@
+name: Check Zone 7 diagnostics laboratory UI
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0667.mjs
+      - custom_components/nikas_ho_sc_8w/const.py
+      - custom_components/nikas_ho_sc_8w/dp38_transaction.py
+      - custom_components/nikas_ho_sc_8w/__init__.py
+      - custom_components/nikas_ho_sc_8w/api.py
+      - custom_components/nikas_ho_sc_8w/coordinator.py
+      - custom_components/nikas_ho_sc_8w/services.yaml
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check JavaScript syntax
+        run: node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0667.mjs
+
+      - name: Compile Python modules
+        run: python -m compileall -q custom_components/nikas_ho_sc_8w
+
+      - name: Verify backend/frontend contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'PANEL_VERSION = "0.6.67"' custom_components/nikas_ho_sc_8w/const.py
+          grep -q 'irrigation-panel-v0667.mjs' custom_components/nikas_ho_sc_8w/const.py
+          grep -q 'SERVICE_PREPARE_ZONE7_DURATION17' custom_components/nikas_ho_sc_8w/__init__.py
+          grep -q 'SERVICE_EXECUTE_ZONE7_DURATION17' custom_components/nikas_ho_sc_8w/__init__.py
+          grep -q 'prepare_zone7_duration17' custom_components/nikas_ho_sc_8w/services.yaml
+          grep -q 'execute_zone7_duration17' custom_components/nikas_ho_sc_8w/services.yaml
+          grep -q 'def prepare_dp38_transaction' custom_components/nikas_ho_sc_8w/dp38_transaction.py
+          grep -q 'def verify_dp38_readback' custom_components/nikas_ho_sc_8w/dp38_transaction.py
+          grep -q '"diff": changes' custom_components/nikas_ho_sc_8w/dp38_transaction.py
+          grep -q '"expected_read_hex"' custom_components/nikas_ho_sc_8w/dp38_transaction.py
+          grep -q 'data-zone7-duration17-prepare' custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0667.mjs
+          grep -q 'data-zone7-duration17-execute' custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0667.mjs
