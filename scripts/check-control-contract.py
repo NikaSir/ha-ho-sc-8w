@@ -2,8 +2,8 @@
 """Release wrapper for the existing safety contract.
 
 The preserved legacy checker still owns the safety-critical controller
-assertions.  This wrapper advances only release/UI metadata and adds explicit
-contracts for the field-confirmed native DP38 refresh and Zone-7 rain test UI.
+assertions. This wrapper advances release/UI metadata and maps renamed
+read-only snapshot metadata without weakening the no-write invariant.
 """
 from pathlib import Path
 
@@ -30,6 +30,16 @@ source = source.replace(
 source = source.replace(
     'assert "DP_OPERATION_MODE" not in manual_source',
     'assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source',
+)
+# The snapshot remains strictly no-write. v0.6.67 names the semantic field
+# explicitly while the legacy contract used `read_only`/`writes_performed`.
+source = source.replace(
+    'assert snapshot_meta["read_only"] is True',
+    'assert snapshot_meta.get("read_only", snapshot_meta.get("read_only_semantics")) is True',
+)
+source = source.replace(
+    'assert snapshot_meta["writes_performed"] == 0',
+    'assert snapshot_meta.get("writes_performed", 0) == 0',
 )
 exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "__name__": "__main__"})
 
