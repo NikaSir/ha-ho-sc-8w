@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.65",
-  "integration_version": "1.0.0-b005.85",
+  "panel_version": "0.6.66",
+  "integration_version": "1.0.0-b005.86",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -23,6 +23,9 @@
     "manual_queue": {
       "zones": [1, 2, 3, 4, 5, 6, 7, 8],
       "per_zone_duration_minutes": [1, 120],
+      "duration_unit": "minutes",
+      "duration_unit_presentation": "single_shared_hint",
+      "repeated_stepper_unit": false,
       "execution_order": "top_to_bottom_controller_order",
       "write_dp": 45,
       "readback_dps": [107],
@@ -150,7 +153,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0665.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0666.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",

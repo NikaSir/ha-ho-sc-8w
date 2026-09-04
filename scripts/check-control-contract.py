@@ -13,9 +13,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION = ROOT / "custom_components" / "nikas_ho_sc_8w"
 FRONTEND = INTEGRATION / "frontend"
-EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.85"
-EXPECTED_PANEL_VERSION = "0.6.65"
-EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0665.mjs"
+EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.86"
+EXPECTED_PANEL_VERSION = "0.6.66"
+EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"
 
 
 def load_models():
@@ -98,6 +98,7 @@ wrapper_files = [
     "irrigation-panel-v0663.mjs",
     "irrigation-panel-v0664.mjs",
     "irrigation-panel-v0665.mjs",
+    "irrigation-panel-v0666.mjs",
 ]
 wrappers = {
     name: (FRONTEND / name).read_text(encoding="utf-8") for name in wrapper_files
@@ -404,6 +405,20 @@ require(
 )
 assert "Сезонная коррекция ${value}% подтверждена контроллером" not in feedback_source
 assert 'this.notify("Это значение уже установлено")' not in feedback_source
+
+manual_copy_source = wrappers["irrigation-panel-v0666.mjs"]
+require(
+    manual_copy_source,
+    'const UI_VERSION = "0.6.66"',
+    "irrigation-panel-v0665.mjs",
+    "manualViewV0666",
+    "manualDurationHint",
+    "Выберите зоны и задайте длительность полива в минутах.",
+    "/<strong>(\\d+)<small>мин<\\/small><\\/strong>/g",
+    "Контроллер выполнит выбранные зоны по порядку сверху вниз.",
+    ".manualDuration strong",
+    "font-variant-numeric:tabular-nums",
+)
 assert 'role="switch"' in wrappers["irrigation-panel-v0637.mjs"]
 
 connection_meta = panel["panel"]["system_visualization"]["connection_indicator"]
@@ -553,15 +568,19 @@ assert '"OFF"' not in manual_source
 require(setup_source, "SERVICE_SKIP_CURRENT_MANUAL", "async_skip_current_manual")
 
 manual_meta = panel["panel"]["control_actions"]["manual_queue"]
+manifest_manual_meta = panel_manifest["control_actions"]["manual_queue"]
 assert manual_meta["write_dp"] == 45
 assert manual_meta["readback"] == [107]
 assert manual_meta["operation_mode_dp101_write"] is False
 assert manual_meta["ui"] == "browser_selected_physical_zone_cards_with_per_zone_duration_and_switches"
 assert manual_meta["production_zones"] == list(range(1, 9))
-manifest_manual_meta = panel_manifest["control_actions"]["manual_queue"]
 assert manifest_manual_meta["write_dp"] == 45
 assert manifest_manual_meta["readback_dps"] == [107]
 assert manifest_manual_meta["operation_mode_dp101_write"] is False
+for meta in (manual_meta, manifest_manual_meta):
+    assert meta["duration_unit"] == "minutes"
+    assert meta["duration_unit_presentation"] == "single_shared_hint"
+    assert meta["repeated_stepper_unit"] is False
 
 require(
     combined_frontend_source,
