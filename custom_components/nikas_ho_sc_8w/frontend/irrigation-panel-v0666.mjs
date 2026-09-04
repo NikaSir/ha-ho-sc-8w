@@ -7,6 +7,7 @@ if (!Panel) throw new Error("HO-SC-8W base panel is not registered");
 const p = Panel.prototype;
 const previousCommandBusy = p.commandBusy;
 const previousDiagnosticsView = p.diagnosticsView;
+const previousManualView = p.manualView;
 const previousRender = p._render;
 const previousStyles = p.styles;
 
@@ -38,6 +39,22 @@ function formatDiff(diff) {
     return `byte ${Number.isInteger(offset) ? offset : "?"} · ${field}: ${before} → ${after}`;
   }).join("\n");
 }
+
+p.manualView = function manualViewV0666(entities) {
+  return previousManualView.call(this, entities)
+    .replace(
+      "<h1>Управление зонами</h1>",
+      '<h1>Управление зонами</h1><p class="manualDurationHint">Выберите зоны и задайте длительность полива в минутах.</p>',
+    )
+    .replace(
+      /<strong>(\d+)<small>мин<\/small><\/strong>/g,
+      "<strong>$1</strong>",
+    )
+    .replace(
+      '<p class="viewFootnote"><b>Примечание.</b> Выберите зоны и задайте длительность. Контроллер выполнит очередь сверху вниз.</p>',
+      '<p class="viewFootnote"><b>Примечание.</b> Контроллер выполнит выбранные зоны по порядку сверху вниз.</p>',
+    );
+};
 
 p.commandBusy = function commandBusyV0666() {
   return previousCommandBusy.call(this)
@@ -199,12 +216,14 @@ p._render = function renderV0666() {
 
 p.styles = function stylesV0666() {
   return `${previousStyles.call(this)}
-    /* UI v0.6.66 — guarded Zone 7 DP38 field laboratory in Diagnostics. */
+    /* UI v0.6.66 — one shared minutes explanation and guarded Zone 7 DP38 lab. */
+    .manualApprovedIntro .manualDurationHint{margin:5px 0 0;color:var(--muted);font-size:12px!important;line-height:1.3}
+    .manualDuration strong{display:grid;place-items:center;min-width:0;font-variant-numeric:tabular-nums}
     .zone7Dp38Lab{display:grid;gap:11px;border-color:color-mix(in srgb,var(--a) 28%,var(--line));background:color-mix(in srgb,var(--a) 2.5%,var(--card))}
     .zone7Dp38Lab>p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}.zone7Dp38Lab>p b{color:var(--text)}
     .zone7LabSteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.zone7LabSteps span{display:grid;grid-template-columns:26px minmax(0,1fr);align-items:center;gap:6px;min-height:42px;padding:6px 8px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--muted)}.zone7LabSteps b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--card);font-size:11px}.zone7LabSteps em{font-size:10px;font-style:normal;font-weight:750;line-height:1.15}.zone7LabSteps span.active{border-color:color-mix(in srgb,var(--a) 38%,var(--line));color:var(--a)}.zone7LabSteps span.done{border-color:color-mix(in srgb,var(--green) 35%,var(--line));color:var(--green)}.zone7LabSteps span.error{border-color:color-mix(in srgb,var(--error-color,#db4437) 35%,var(--line));color:var(--error-color,#db4437)}
     .zone7LabHex code{font-size:10px;line-height:1.35}.zone7LabDiff{display:grid;gap:4px;padding:9px 10px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}.zone7LabDiff small{color:var(--muted);font-size:10px;font-weight:850}.zone7LabDiff pre{margin:0;overflow:auto;color:var(--text);font:700 10.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.zone7LabDiff.error{border-color:color-mix(in srgb,var(--error-color,#db4437) 35%,var(--line));background:color-mix(in srgb,var(--error-color,#db4437) 5%,var(--card))}
     .zone7LabActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.zone7LabActions .zone8ProbeButton{min-height:58px}.zone7LabActions .secondary{background:var(--soft);color:var(--a)}.zone7LabActions .danger:not(:disabled){border-color:color-mix(in srgb,var(--error-color,#db4437) 40%,var(--line));background:color-mix(in srgb,var(--error-color,#db4437) 7%,var(--card));color:var(--error-color,#db4437)}
-    @media(max-width:520px){.zone7LabSteps{grid-template-columns:1fr}.zone7LabActions{grid-template-columns:1fr}.zone7LabActions .zone8ProbeButton{min-height:52px}}
+    @media(max-width:520px){.manualApprovedIntro .manualDurationHint{margin-top:4px}.zone7LabSteps{grid-template-columns:1fr}.zone7LabActions{grid-template-columns:1fr}.zone7LabActions .zone8ProbeButton{min-height:52px}}
   `;
 };
