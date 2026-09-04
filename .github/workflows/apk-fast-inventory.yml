@@ -1,0 +1,263 @@
+name: Fast inventory INKBIRD 2.1.11 APK
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-fast-inventory.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inkbird-apk-fast-inventory
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install prerequisites
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq binutils unzip jq
+
+      - name: Download bundle and inspect DEX strings
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/inkbird-fast docs/research/inkbird-apk-2.1.11
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          import re
+          import shutil
+          import subprocess
+          import urllib.parse
+          import zipfile
+          from pathlib import Path
+
+          import requests
+
+          public_url = "https://disk.yandex.ru/d/3T2zvV8ETXEwjA"
+          root = Path("/tmp/inkbird-fast")
+          bundle = root / "bundle.bin"
+          expanded = root / "expanded"
+          expanded.mkdir(parents=True, exist_ok=True)
+
+          api = "https://cloud-api.yandex.net/v1/disk/public/resources/download?" + urllib.parse.urlencode({"public_key": public_url})
+          meta = requests.get(api, timeout=60)
+          meta.raise_for_status()
+          href = meta.json()["href"]
+          digest = hashlib.sha256()
+          size = 0
+          with requests.get(href, stream=True, timeout=(60, 900)) as response:
+              response.raise_for_status()
+              with bundle.open("wb") as handle:
+                  for chunk in response.iter_content(1024 * 1024):
+                      if chunk:
+                          handle.write(chunk)
+                          digest.update(chunk)
+                          size += len(chunk)
+
+          def safe_extract(source: Path, destination: Path) -> None:
+              destination.mkdir(parents=True, exist_ok=True)
+              resolved = destination.resolve()
+              with zipfile.ZipFile(source) as zf:
+                  for info in zf.infolist():
+                      target = (destination / info.filename).resolve()
+                      if target != resolved and resolved not in target.parents:
+                          raise RuntimeError(info.filename)
+                  zf.extractall(destination)
+
+          queue = [(bundle, 0)]
+          seen = set()
+          layer = 0
+          while queue:
+              source, depth = queue.pop(0)
+              if depth > 5 or source.suffix.lower() == ".apk" or not zipfile.is_zipfile(source):
+                  continue
+              key = (source.stat().st_size, hashlib.sha256(source.read_bytes()).hexdigest())
+              if key in seen:
+                  continue
+              seen.add(key)
+              dest = expanded / f"layer-{layer:02d}-{source.stem[:50]}"
+              layer += 1
+              safe_extract(source, dest)
+              for child in dest.rglob("*"):
+                  if child.is_file() and child.suffix.lower() in {".zip", ".xapk", ".apkm", ".apks"} and zipfile.is_zipfile(child):
+                      queue.append((child, depth + 1))
+
+          apks = sorted({p.resolve() for p in expanded.rglob("*.apk")})
+          if not apks:
+              for p in expanded.rglob("*"):
+                  if not p.is_file() or not zipfile.is_zipfile(p):
+                      continue
+                  with zipfile.ZipFile(p) as zf:
+                      if any(re.fullmatch(r"(?:.*/)?classes(?:\d+)?\.dex", n, re.I) for n in zf.namelist()):
+                          apks.append(p.resolve())
+          if not apks:
+              raise RuntimeError("No APK found")
+
+          inventory = []
+          for apk in apks:
+              with zipfile.ZipFile(apk) as zf:
+                  names = zf.namelist()
+              dex = sorted(n for n in names if re.fullmatch(r"(?:.*/)?classes(?:\d+)?\.dex", n, re.I))
+              lower = apk.name.lower()
+              score = (
+                  int(lower == "base.apk"),
+                  int(not lower.startswith("config.") and "split_config" not in lower and not lower.startswith("split_")),
+                  len(dex),
+                  apk.stat().st_size,
+              )
+              inventory.append({
+                  "path": str(apk.relative_to(root)),
+                  "name": apk.name,
+                  "size": apk.stat().st_size,
+                  "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(),
+                  "dex": dex,
+                  "score": score,
+                  "libs": sum(1 for n in names if n.startswith("lib/") and n.endswith(".so")),
+                  "assets": sum(1 for n in names if n.startswith("assets/")),
+              })
+          selected = max(inventory, key=lambda item: tuple(item["score"]))
+          base = root / selected["path"]
+
+          extract = root / "base"
+          safe_extract(base, extract)
+          dex_files = sorted(extract.glob("classes*.dex"))
+
+          exact_terms = [
+              "normal_time", "irrigation_time_all", "irrigation_mode", "operation_mode",
+              "RainSen_TotalONOFF", "SeaAdjValue", "Merge_History", "ResetDevice",
+              "timeerror_alarm", "zonerun_state", "pendingzone_state",
+              "cancel_timealarm_voice", "h71ip90tp4mfd6mx", "IIC-800", "IIC_800", "IIC800",
+              "HO-SC-8W", "HO_SC_8W",
+          ]
+          generic_terms = [
+              "publishDps", "publishCommands", "IThingDevice", "ITuyaDevice", "ThingDevice",
+              "TuyaDevice", "panel", "miniapp", "microapp", "irrigation", "watering", "sprinkler",
+          ]
+          terms = exact_terms + generic_terms
+          hits = {term: [] for term in terms}
+          classes = set()
+          device_classes = set()
+
+          for dex in dex_files:
+              result = subprocess.run(
+                  ["strings", "-a", "-n", "4", str(dex)],
+                  stdout=subprocess.PIPE,
+                  stderr=subprocess.PIPE,
+                  text=True,
+                  encoding="utf-8",
+                  errors="replace",
+                  check=True,
+              )
+              lines = result.stdout.splitlines()
+              for line in lines:
+                  low = line.lower()
+                  for term in terms:
+                      if term.lower() in low and len(hits[term]) < 40:
+                          hits[term].append(line[:500])
+                  for match in re.finditer(r"Lcom/inkbird/inkbirdapp/[^;\s]{1,300};", line):
+                      descriptor = match.group(0)
+                      classes.add(descriptor)
+                      if "/device/" in descriptor.lower():
+                          device_classes.add(descriptor)
+
+          archive_names = []
+          with zipfile.ZipFile(base) as zf:
+              for name in zf.namelist():
+                  low = name.lower()
+                  if any(term in low for term in ("iic", "irrig", "water", "sprinkl", "panel", "miniapp", "microapp", "tuya", "thing")):
+                      archive_names.append(name)
+
+          output = {
+              "source": {
+                  "api": api,
+                  "size": size,
+                  "sha256": digest.hexdigest(),
+              },
+              "inventory": inventory,
+              "selected_base": selected,
+              "hits": {term: values for term, values in hits.items() if values},
+              "device_classes": sorted(device_classes),
+              "all_app_class_count": len(classes),
+              "interesting_archive_names": sorted(archive_names),
+          }
+          Path("docs/research/inkbird-apk-2.1.11/fast-inventory.json").write_text(
+              json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8"
+          )
+
+          lines = [
+              "# INKBIRD 2.1.11 — fast APK inventory",
+              "",
+              f"- Bundle bytes: `{size}`",
+              f"- Bundle SHA-256: `{digest.hexdigest()}`",
+              f"- APK count: **{len(inventory)}**",
+              f"- Selected base: **`{selected['path']}`**; size `{selected['size']}`; DEX `{len(selected['dex'])}`",
+              f"- `com/inkbird/inkbirdapp` class descriptors: **{len(classes)}**",
+              f"- `com/inkbird/inkbirdapp/device/*` descriptors: **{len(device_classes)}**",
+              "",
+              "## Exact/generic string hits",
+              "",
+          ]
+          if any(hits.values()):
+              for term in terms:
+                  values = hits[term]
+                  if not values:
+                      continue
+                  lines.append(f"### `{term}`")
+                  lines.extend(f"- `{value.replace('`', '')}`" for value in values)
+                  lines.append("")
+          else:
+              lines.append("No configured term was present in printable DEX strings.")
+
+          lines += ["", "## Device class descriptors", ""]
+          lines.extend(f"- `{item}`" for item in sorted(device_classes))
+          lines += ["", "## Interesting base-APK members", ""]
+          lines.extend(f"- `{item}`" for item in sorted(archive_names))
+          Path("docs/research/inkbird-apk-2.1.11/fast-inventory.md").write_text(
+              "\n".join(lines) + "\n", encoding="utf-8"
+          )
+          print("\n".join(lines[:300]))
+          PY
+
+      - name: Upload fast evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkbird-2.1.11-fast-inventory
+          path: docs/research/inkbird-apk-2.1.11/fast-inventory.*
+          retention-days: 14
+
+      - name: Commit fast inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11/fast-inventory.*
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Record fast INKBIRD 2.1.11 APK inventory"
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
