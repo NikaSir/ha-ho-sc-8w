@@ -12,6 +12,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION = ROOT / "custom_components" / "nikas_ho_sc_8w"
+FRONTEND = INTEGRATION / "frontend"
+EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.85"
+EXPECTED_PANEL_VERSION = "0.6.65"
+EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0665.mjs"
 
 
 def load_models():
@@ -28,6 +32,11 @@ def load_models():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def require(source: str, *markers: str) -> None:
+    for marker in markers:
+        assert marker in source, f"Missing contract marker: {marker}"
 
 
 models = load_models()
@@ -53,292 +62,404 @@ setup_source = (INTEGRATION / "__init__.py").read_text(encoding="utf-8")
 manual_source = (INTEGRATION / "manual_api.py").read_text(encoding="utf-8")
 sensor_source = (INTEGRATION / "sensor.py").read_text(encoding="utf-8")
 services_source = (INTEGRATION / "services.yaml").read_text(encoding="utf-8")
-frontend_source = (INTEGRATION / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
-inherited_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0633.mjs").read_text(encoding="utf-8")
-compact_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0634.mjs").read_text(encoding="utf-8")
-fit_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0635.mjs").read_text(encoding="utf-8")
-active_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0636.mjs").read_text(encoding="utf-8")
-manual_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0637.mjs").read_text(encoding="utf-8")
-wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0638.mjs").read_text(encoding="utf-8")
-zone8_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0639.mjs").read_text(encoding="utf-8")
-draft_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0640.mjs").read_text(encoding="utf-8")
-incident_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0641.mjs").read_text(encoding="utf-8")
-probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0642.mjs").read_text(encoding="utf-8")
-refresh_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0643.mjs").read_text(encoding="utf-8")
-read_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0644.mjs").read_text(encoding="utf-8")
-sample_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0645.mjs").read_text(encoding="utf-8")
-raw_probe_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0646.mjs").read_text(encoding="utf-8")
-restore_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0647.mjs").read_text(encoding="utf-8")
-sequential_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0648.mjs").read_text(encoding="utf-8")
-emergency_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0649.mjs").read_text(encoding="utf-8")
-anchor_date_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0650.mjs").read_text(encoding="utf-8")
-safety_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0651.mjs").read_text(encoding="utf-8")
-program_form_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0652.mjs").read_text(encoding="utf-8")
-snapshot_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0653.mjs").read_text(encoding="utf-8")
-snapshot_mode_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0654.mjs").read_text(encoding="utf-8")
-full_frame_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0655.mjs").read_text(encoding="utf-8")
-program_navigation_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0656.mjs").read_text(encoding="utf-8")
-mask_write_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0657.mjs").read_text(encoding="utf-8")
-system_artwork_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0658.mjs").read_text(encoding="utf-8")
-settings_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0659.mjs").read_text(encoding="utf-8")
-layout_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0660.mjs").read_text(encoding="utf-8")
-scroll_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0661.mjs").read_text(encoding="utf-8")
-summary_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0662.mjs").read_text(encoding="utf-8")
-connection_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0663.mjs").read_text(encoding="utf-8")
-seasonal_wrapper_source = (INTEGRATION / "frontend" / "irrigation-panel-v0664.mjs").read_text(encoding="utf-8")
-combined_frontend_source = frontend_source + inherited_wrapper_source + compact_wrapper_source + fit_wrapper_source + active_wrapper_source + manual_wrapper_source + wrapper_source + zone8_wrapper_source + draft_wrapper_source + incident_wrapper_source + probe_wrapper_source + refresh_probe_wrapper_source + read_probe_wrapper_source + sample_probe_wrapper_source + raw_probe_wrapper_source + restore_wrapper_source + sequential_wrapper_source + emergency_wrapper_source + anchor_date_wrapper_source + safety_wrapper_source + program_form_wrapper_source + snapshot_wrapper_source + snapshot_mode_wrapper_source + full_frame_wrapper_source + program_navigation_wrapper_source + mask_write_wrapper_source + system_artwork_wrapper_source + settings_wrapper_source + layout_wrapper_source + scroll_wrapper_source + summary_wrapper_source + connection_wrapper_source + seasonal_wrapper_source
+frontend_source = (FRONTEND / "irrigation-panel.js").read_text(encoding="utf-8")
 
-assert manifest["version"] == "1.0.0-b005.84"
-assert panel["panel"]["dashboard_version"] == "0.6.64"
-assert panel_manifest["panel_version"] == "0.6.64"
+wrapper_files = [
+    "irrigation-panel-v0633.mjs",
+    "irrigation-panel-v0634.mjs",
+    "irrigation-panel-v0635.mjs",
+    "irrigation-panel-v0636.mjs",
+    "irrigation-panel-v0637.mjs",
+    "irrigation-panel-v0638.mjs",
+    "irrigation-panel-v0639.mjs",
+    "irrigation-panel-v0640.mjs",
+    "irrigation-panel-v0641.mjs",
+    "irrigation-panel-v0642.mjs",
+    "irrigation-panel-v0643.mjs",
+    "irrigation-panel-v0644.mjs",
+    "irrigation-panel-v0645.mjs",
+    "irrigation-panel-v0646.mjs",
+    "irrigation-panel-v0647.mjs",
+    "irrigation-panel-v0648.mjs",
+    "irrigation-panel-v0649.mjs",
+    "irrigation-panel-v0650.mjs",
+    "irrigation-panel-v0651.mjs",
+    "irrigation-panel-v0652.mjs",
+    "irrigation-panel-v0653.mjs",
+    "irrigation-panel-v0654.mjs",
+    "irrigation-panel-v0655.mjs",
+    "irrigation-panel-v0656.mjs",
+    "irrigation-panel-v0657.mjs",
+    "irrigation-panel-v0658.mjs",
+    "irrigation-panel-v0659.mjs",
+    "irrigation-panel-v0660.mjs",
+    "irrigation-panel-v0661.mjs",
+    "irrigation-panel-v0662.mjs",
+    "irrigation-panel-v0663.mjs",
+    "irrigation-panel-v0664.mjs",
+    "irrigation-panel-v0665.mjs",
+]
+wrappers = {
+    name: (FRONTEND / name).read_text(encoding="utf-8") for name in wrapper_files
+}
+combined_frontend_source = frontend_source + "".join(wrappers.values())
+
+assert manifest["version"] == EXPECTED_INTEGRATION_VERSION
+assert panel["panel"]["dashboard_version"] == EXPECTED_PANEL_VERSION
+assert panel_manifest["panel_version"] == EXPECTED_PANEL_VERSION
+assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION
 assert panel_manifest["integration_version"] == manifest["version"]
-assert 'PANEL_VERSION = "0.6.64"' in const_source
-assert 'irrigation-panel-v0664.mjs' in const_source
-assert "NUM_PRODUCTION_ZONES = 8" in const_source
-assert "ZONE8_DP38_WRITES_ENABLED = False" in const_source
-assert "ZONE8_DP38_HEX_PROBE_ENABLED = True" in const_source
-assert "ZONE8_KNOWN_RESTORE_ENABLED = False" in const_source
-assert "ZONE8_ANCHOR_DATE_TEST_ENABLED = False" in const_source
-assert 'ZONE8_KNOWN_BACKUP_HEX = "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311"' in const_source
-assert 'ZONE8_ANCHOR_DATE_TEST_TARGET_HEX = "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090211"' in const_source
-assert 'const UI_VERSION = "0.6.38"' in wrapper_source
-assert 'irrigation-panel-v0637.mjs' in wrapper_source
-assert 'className = "manualZoneRemaining"' in wrapper_source
-assert '`Осталось ${runtime.remaining} мин`' in wrapper_source
-assert '.manualZoneRemaining{' in wrapper_source
-assert 'const UI_VERSION = "0.6.39"' in zone8_wrapper_source
-assert 'set_zone8_schedule_field' in zone8_wrapper_source
-assert 'restore_zone8_schedule' in zone8_wrapper_source
-assert 'data-zone8-apply' in zone8_wrapper_source
-assert 'Каждая кнопка меняет только одно поле' in zone8_wrapper_source
-assert 'const UI_VERSION = "0.6.40"' in draft_wrapper_source
-assert 'this._ensureZone8LabEvents()' in draft_wrapper_source
-assert 'if (this._zone8LabEventsBound) return' in draft_wrapper_source
-assert '"[data-zone8-field]"' in draft_wrapper_source
-assert 'const UI_VERSION = "0.6.41"' in incident_wrapper_source
-assert "Запись DP38 аварийно отключена" in incident_wrapper_source
-assert 'const UI_VERSION = "0.6.42"' in probe_wrapper_source
-assert 'confirmation: CONFIRMATION' in probe_wrapper_source
-assert 'data-zone8-hex-probe' in probe_wrapper_source
-assert 'probe_zone8_dp38_hex' in probe_wrapper_source
-assert 'Тест не восстанавливает зоны 1, 2 и 4' in probe_wrapper_source
-assert 'const UI_VERSION = "0.6.43"' in refresh_probe_wrapper_source
-assert 'Активный сбор свежих DP38' in refresh_probe_wrapper_source
-assert 'Тест остановлен защитой до записи' in refresh_probe_wrapper_source
-assert 'const UI_VERSION = "0.6.44"' in read_probe_wrapper_source
-assert 'Прочитать зону 8' in read_probe_wrapper_source
-assert 'Команды записи не отправляются' in read_probe_wrapper_source
-assert 'Текущий блок зоны 8 прочитан без записи' in read_probe_wrapper_source
-assert 'const UI_VERSION = "0.6.45"' in sample_probe_wrapper_source
-assert 'Контроллер вернул разные ответы' in sample_probe_wrapper_source
-assert 'hex_probe_samples' in sample_probe_wrapper_source
-assert 'const UI_VERSION = "0.6.46"' in raw_probe_wrapper_source
-assert 'Собираются все ответы DP38 без фильтра по зоне' in raw_probe_wrapper_source
-assert 'hex_probe_trace' in raw_probe_wrapper_source
-assert 'Контроллер не вернул DP38' in raw_probe_wrapper_source
-assert 'const UI_VERSION = "0.6.47"' in restore_wrapper_source
-assert 'Получен повреждённый блок зоны 8' in restore_wrapper_source
-assert 'restore_zone8_known_backup' in restore_wrapper_source
-assert 'Восстановить исходную зону 8' in restore_wrapper_source
-assert 'Зоны 1–6 не записываются' in restore_wrapper_source
-assert 'const UI_VERSION = "0.6.48"' in sequential_wrapper_source
-assert 'irrigation-panel-v0647.mjs' in sequential_wrapper_source
-assert 'const UI_VERSION = "0.6.49"' in emergency_wrapper_source
-assert 'irrigation-panel-v0648.mjs' in emergency_wrapper_source
-assert 'Запись аварийно остановлена' in emergency_wrapper_source
-assert 'резерв: совпадает' in emergency_wrapper_source
-assert 'полный круг:' in emergency_wrapper_source
-assert 'const UI_VERSION = "0.6.50"' in anchor_date_wrapper_source
-assert 'irrigation-panel-v0649.mjs' in anchor_date_wrapper_source
-assert 'Расшифрованное состояние зоны 8' in anchor_date_wrapper_source
-assert '_zone8LatestDecoded' in anchor_date_wrapper_source
-assert 'Записать дату 02.09.2026 один раз' in anchor_date_wrapper_source
-assert 'test_zone8_anchor_date_write' in anchor_date_wrapper_source
-assert 'WRITE_ZONE8_ANCHOR_DATE_2026_09_02_ONCE' in anchor_date_wrapper_source
-assert 'const UI_VERSION = "0.6.51"' in safety_wrapper_source
-assert 'irrigation-panel-v0650.mjs' in safety_wrapper_source
-assert 'Запись расписаний отключена' in safety_wrapper_source
-assert 'зона 8 осталась без изменений' in safety_wrapper_source
-assert 'зоне 4' in safety_wrapper_source
-assert 'Только чтение' in safety_wrapper_source
-assert 'data-zone8-anchor-date-test' not in safety_wrapper_source
-assert 'const UI_VERSION = "0.6.52"' in program_form_wrapper_source
-assert 'irrigation-panel-v0651.mjs' in program_form_wrapper_source
-assert 'Базовая длительность' in program_form_wrapper_source
-assert 'Все шесть слотов' in program_form_wrapper_source
-assert 'Каждый день' in program_form_wrapper_source
-assert 'По дням недели' in program_form_wrapper_source
-assert 'Дата начала цикла' in program_form_wrapper_source
-assert 'Сезонная коррекция' in program_form_wrapper_source
-assert 'Ближайший запуск' in program_form_wrapper_source
-assert 'Датчик дождя' in program_form_wrapper_source
-assert '.zoneProgramDetail{min-height:0!important' in program_form_wrapper_source
-assert 'background-size:cover!important' in program_form_wrapper_source
-assert 'data-zone8-anchor-date-test' not in program_form_wrapper_source
-assert 'const UI_VERSION = "0.6.53"' in snapshot_wrapper_source
-assert 'irrigation-panel-v0652.mjs' in snapshot_wrapper_source
-assert 'capture_dp38_snapshot' in snapshot_wrapper_source
-assert 'DP38_FULL_SNAPSHOT_READ_ONLY' in snapshot_wrapper_source
-assert 'Снять исходный снимок 1–8' in snapshot_wrapper_source
-assert 'Снять контрольный снимок и сравнить' in snapshot_wrapper_source
-assert 'Команды записи DP38 не отправляются' in snapshot_wrapper_source
-assert 'data-program-section="general"' in snapshot_wrapper_source
-assert 'data-program-section="zones"' in snapshot_wrapper_source
-assert 'Общие параметры' in snapshot_wrapper_source
-assert 'Параметры зон' in snapshot_wrapper_source
-assert 'data-program-zone-select' in snapshot_wrapper_source
-assert 'data-program-zone-state' in snapshot_wrapper_source
-assert 'this.zoneDetail(e, zone)' in snapshot_wrapper_source
-assert 'this._programSection === "zones" ? "zones" : "general"' in snapshot_wrapper_source
-assert 'title.hidden = zoneMode' in snapshot_wrapper_source
-assert 'refresh.hidden = zoneMode' in snapshot_wrapper_source
-assert 'zoneState.hidden = !zoneMode' in snapshot_wrapper_source
-assert '.headerProgramContext{display:grid;place-items:center' in snapshot_wrapper_source
-assert 'Разрешение полива' in snapshot_wrapper_source
-assert 'Пауза полива' in snapshot_wrapper_source
-assert 'Сезонный коэффициент' in snapshot_wrapper_source
-assert 'programExpandedList' not in snapshot_wrapper_source
-assert 'Первый запуск' not in snapshot_wrapper_source
-assert 'data-zone8-anchor-date-test' not in snapshot_wrapper_source
-assert 'const UI_VERSION = "0.6.54"' in snapshot_mode_wrapper_source
-assert 'irrigation-panel-v0653.mjs' in snapshot_mode_wrapper_source
-assert 'operation !== "auto"' in snapshot_mode_wrapper_source
-assert 'контроллер и установите режим Auto' in snapshot_mode_wrapper_source
-assert 'Контроллер должен быть включён, находиться в режиме Auto' in snapshot_mode_wrapper_source
-assert 'Команды записи DP38 не отправляются' in snapshot_mode_wrapper_source
-assert 'const UI_VERSION = "0.6.55"' in full_frame_wrapper_source
-assert 'irrigation-panel-v0654.mjs' in full_frame_wrapper_source
-assert 'test_zone8_full_frame_write' in full_frame_wrapper_source
-assert 'Будут отправлены все восемь исходных блоков' in full_frame_wrapper_source
-assert 'Повтора и автоматического отката не будет' in full_frame_wrapper_source
-assert 'const UI_VERSION = "0.6.56"' in program_navigation_wrapper_source
-assert 'data-program-zone="${number}"' in program_navigation_wrapper_source
-assert 'Array.from({ length: 8 }' in program_navigation_wrapper_source
-assert 'const UI_VERSION = "0.6.57"' in mask_write_wrapper_source
-assert 'irrigation-panel-v0656.mjs' in mask_write_wrapper_source
-assert 'test_zone8_mask_write' in mask_write_wrapper_source
-assert 'Первый байт записи: 80' in mask_write_wrapper_source
-assert 'Передаётся ровно 20 байт' in mask_write_wrapper_source
-assert 'data-program-section' not in program_navigation_wrapper_source
-assert 'programZoneContext' not in program_navigation_wrapper_source
-assert 'const UI_VERSION = "0.6.58"' in system_artwork_wrapper_source
-assert 'irrigation-panel-v0657.mjs' in system_artwork_wrapper_source
-assert '["status", "mdi:tune-variant", "Система"]' in system_artwork_wrapper_source
-assert 'Состояние контроллера' not in system_artwork_wrapper_source
-assert 'data-zone-artwork-open' in system_artwork_wrapper_source
-assert 'Без картинки' in system_artwork_wrapper_source
-assert 'window.localStorage' in system_artwork_wrapper_source
-assert 'const UI_VERSION = "0.6.59"' in settings_wrapper_source
-assert 'irrigation-panel-v0658.mjs' in settings_wrapper_source
-assert 'data-system-settings' in settings_wrapper_source
-assert 'mdi:cog-outline' in settings_wrapper_source
-assert 'PHYSICAL_ZONES_STORAGE_KEY' in settings_wrapper_source
-assert 'data-physical-zone-toggle' in settings_wrapper_source
-assert 'Array.from({ length: 8 }' in settings_wrapper_source
-assert 'data-zone-artwork-overlay' in settings_wrapper_source
-assert '.showModal()' not in settings_wrapper_source
-assert 'system_settings_zone_image' == panel["panel"]["control_actions"]["program_view"]["zone_artwork_trigger"]
-assert 'system_settings_zone_image' == panel_manifest["control_actions"]["program_view"]["zone_artwork_trigger"]
-assert 'Следующая по программе' in settings_wrapper_source
-assert 'this._nextPhysicalZone(entities)' in settings_wrapper_source
-assert 'const UI_VERSION = "0.6.60"' in layout_wrapper_source
-assert 'irrigation-panel-v0659.mjs' in layout_wrapper_source
-assert 'viewport.classList.remove("zonesFitsViewport", "manualFitsViewport")' in layout_wrapper_source
-assert '.programZoneTabs{position:sticky' in layout_wrapper_source
-assert 'background-size:contain!important' in layout_wrapper_source
-assert 'const UI_VERSION = "0.6.61"' in scroll_wrapper_source
-assert 'irrigation-panel-v0660.mjs' in scroll_wrapper_source
-assert 'viewport.classList.toggle("longContentViewport", longContent)' in scroll_wrapper_source
-assert '.workViewport.isNative.longContentViewport .workCanvas{height:auto' in scroll_wrapper_source
-assert 'manualStartTop manualStartWide' in scroll_wrapper_source
-assert '<span>Старт полива</span>' in scroll_wrapper_source
-assert 'const UI_VERSION = "0.6.62"' in summary_wrapper_source
-assert 'irrigation-panel-v0661.mjs' in summary_wrapper_source
-assert '_systemWideZoneCard' in summary_wrapper_source
-assert 'systemZoneStatus' in summary_wrapper_source
-assert 'viewFootnote' in summary_wrapper_source
-assert '.systemSettingsButton{position:static' in summary_wrapper_source
-assert 'const UI_VERSION = "0.6.63"' in connection_wrapper_source
-assert 'irrigation-panel-v0662.mjs' in connection_wrapper_source
-assert 'systemConnectionLamp' in connection_wrapper_source
-assert 'systemConnectionCopy' in connection_wrapper_source
-assert 'grid-template-columns:10px minmax(0,1fr)' in connection_wrapper_source
-assert 'column-gap:11px' in connection_wrapper_source
-assert 'width:168px' in connection_wrapper_source
-assert 'min-height:58px' in connection_wrapper_source
-assert 'padding:12px 14px' in connection_wrapper_source
-assert 'border-radius:18px' in connection_wrapper_source
-assert 'font-size:16px' in connection_wrapper_source
-assert 'font-weight:700' in connection_wrapper_source
-assert 'font-size:13px!important' in connection_wrapper_source
-assert 'font-weight:600' in connection_wrapper_source
-assert '0 4px 14px rgba(0,0,0,.055)' in connection_wrapper_source
-assert 'var(--success-color,#43a047) 11%' in connection_wrapper_source
-assert 'var(--warning-color,#f6a623) 10%' in connection_wrapper_source
-assert 'var(--error-color,#db4437) 10%' in connection_wrapper_source
-assert 'var(--secondary-text-color,#6f6f72) 8%' in connection_wrapper_source
-assert 'const UI_VERSION = "0.6.64"' in seasonal_wrapper_source
-assert 'irrigation-panel-v0663.mjs' in seasonal_wrapper_source
-assert 'Array.from({ length: 20 }' in seasonal_wrapper_source
-assert 'data-seasonal-select' in seasonal_wrapper_source
-assert '<select data-season-value' in seasonal_wrapper_source
-assert 'seasonalSelectControl' in seasonal_wrapper_source
-assert 'native_select' == panel["panel"]["control_actions"]["seasonal_adjustment"]["input_control"]
-assert 'native_select' == panel_manifest["control_actions"]["seasonal_adjustment"]["input_control"]
-assert 'role="switch"' in manual_wrapper_source
-assert panel["panel"]["frontend"]["module_url"].endswith("irrigation-panel-v0664.mjs")
-assert panel_manifest["bundle"].endswith("irrigation-panel-v0664.mjs")
+require(
+    const_source,
+    f'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"',
+    EXPECTED_PANEL_BUNDLE,
+    "NUM_PRODUCTION_ZONES = 8",
+    "ZONE8_DP38_WRITES_ENABLED = False",
+    "ZONE8_DP38_HEX_PROBE_ENABLED = True",
+    "ZONE8_KNOWN_RESTORE_ENABLED = False",
+    "ZONE8_ANCHOR_DATE_TEST_ENABLED = False",
+    'ZONE8_KNOWN_BACKUP_HEX = "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090311"',
+    'ZONE8_ANCHOR_DATE_TEST_TARGET_HEX = "0800FFFFFFFFFFFFFFFFFFFFFFFF03011A090211"',
+)
+assert panel["panel"]["frontend"]["module_url"].endswith(EXPECTED_PANEL_BUNDLE)
+assert panel_manifest["bundle"].endswith(EXPECTED_PANEL_BUNDLE)
+
+require(
+    wrappers["irrigation-panel-v0638.mjs"],
+    'const UI_VERSION = "0.6.38"',
+    "irrigation-panel-v0637.mjs",
+    'className = "manualZoneRemaining"',
+    '`Осталось ${runtime.remaining} мин`',
+    ".manualZoneRemaining{",
+)
+require(
+    wrappers["irrigation-panel-v0639.mjs"],
+    'const UI_VERSION = "0.6.39"',
+    "set_zone8_schedule_field",
+    "restore_zone8_schedule",
+    "data-zone8-apply",
+    "Каждая кнопка меняет только одно поле",
+)
+require(
+    wrappers["irrigation-panel-v0640.mjs"],
+    'const UI_VERSION = "0.6.40"',
+    "this._ensureZone8LabEvents()",
+    "if (this._zone8LabEventsBound) return",
+    '"[data-zone8-field]"',
+)
+require(
+    wrappers["irrigation-panel-v0641.mjs"],
+    'const UI_VERSION = "0.6.41"',
+    "Запись DP38 аварийно отключена",
+)
+require(
+    wrappers["irrigation-panel-v0642.mjs"],
+    'const UI_VERSION = "0.6.42"',
+    "confirmation: CONFIRMATION",
+    "data-zone8-hex-probe",
+    "probe_zone8_dp38_hex",
+    "Тест не восстанавливает зоны 1, 2 и 4",
+)
+require(
+    wrappers["irrigation-panel-v0643.mjs"],
+    'const UI_VERSION = "0.6.43"',
+    "Активный сбор свежих DP38",
+    "Тест остановлен защитой до записи",
+)
+require(
+    wrappers["irrigation-panel-v0644.mjs"],
+    'const UI_VERSION = "0.6.44"',
+    "Прочитать зону 8",
+    "Команды записи не отправляются",
+    "Текущий блок зоны 8 прочитан без записи",
+)
+require(
+    wrappers["irrigation-panel-v0645.mjs"],
+    'const UI_VERSION = "0.6.45"',
+    "Контроллер вернул разные ответы",
+    "hex_probe_samples",
+)
+require(
+    wrappers["irrigation-panel-v0646.mjs"],
+    'const UI_VERSION = "0.6.46"',
+    "Собираются все ответы DP38 без фильтра по зоне",
+    "hex_probe_trace",
+    "Контроллер не вернул DP38",
+)
+require(
+    wrappers["irrigation-panel-v0647.mjs"],
+    'const UI_VERSION = "0.6.47"',
+    "Получен повреждённый блок зоны 8",
+    "restore_zone8_known_backup",
+    "Восстановить исходную зону 8",
+    "Зоны 1–6 не записываются",
+)
+require(
+    wrappers["irrigation-panel-v0648.mjs"],
+    'const UI_VERSION = "0.6.48"',
+    "irrigation-panel-v0647.mjs",
+)
+require(
+    wrappers["irrigation-panel-v0649.mjs"],
+    'const UI_VERSION = "0.6.49"',
+    "irrigation-panel-v0648.mjs",
+    "Запись аварийно остановлена",
+    "резерв: совпадает",
+    "полный круг:",
+)
+require(
+    wrappers["irrigation-panel-v0650.mjs"],
+    'const UI_VERSION = "0.6.50"',
+    "irrigation-panel-v0649.mjs",
+    "Расшифрованное состояние зоны 8",
+    "_zone8LatestDecoded",
+    "Записать дату 02.09.2026 один раз",
+    "test_zone8_anchor_date_write",
+    "WRITE_ZONE8_ANCHOR_DATE_2026_09_02_ONCE",
+)
+require(
+    wrappers["irrigation-panel-v0651.mjs"],
+    'const UI_VERSION = "0.6.51"',
+    "irrigation-panel-v0650.mjs",
+    "Запись расписаний отключена",
+    "зона 8 осталась без изменений",
+    "зоне 4",
+    "Только чтение",
+)
+assert "data-zone8-anchor-date-test" not in wrappers["irrigation-panel-v0651.mjs"]
+require(
+    wrappers["irrigation-panel-v0652.mjs"],
+    'const UI_VERSION = "0.6.52"',
+    "irrigation-panel-v0651.mjs",
+    "Базовая длительность",
+    "Все шесть слотов",
+    "Каждый день",
+    "По дням недели",
+    "Дата начала цикла",
+    "Сезонная коррекция",
+    "Ближайший запуск",
+    "Датчик дождя",
+    ".zoneProgramDetail{min-height:0!important",
+    "background-size:cover!important",
+)
+assert "data-zone8-anchor-date-test" not in wrappers["irrigation-panel-v0652.mjs"]
+require(
+    wrappers["irrigation-panel-v0653.mjs"],
+    'const UI_VERSION = "0.6.53"',
+    "irrigation-panel-v0652.mjs",
+    "capture_dp38_snapshot",
+    "DP38_FULL_SNAPSHOT_READ_ONLY",
+    "Снять исходный снимок 1–8",
+    "Снять контрольный снимок и сравнить",
+    "Команды записи DP38 не отправляются",
+    'data-program-section="general"',
+    'data-program-section="zones"',
+    "Общие параметры",
+    "Параметры зон",
+    "data-program-zone-select",
+    "data-program-zone-state",
+    "this.zoneDetail(e, zone)",
+    'this._programSection === "zones" ? "zones" : "general"',
+    "title.hidden = zoneMode",
+    "refresh.hidden = zoneMode",
+    "zoneState.hidden = !zoneMode",
+    ".headerProgramContext{display:grid;place-items:center",
+    "Разрешение полива",
+    "Пауза полива",
+    "Сезонный коэффициент",
+)
+assert "programExpandedList" not in wrappers["irrigation-panel-v0653.mjs"]
+assert "Первый запуск" not in wrappers["irrigation-panel-v0653.mjs"]
+assert "data-zone8-anchor-date-test" not in wrappers["irrigation-panel-v0653.mjs"]
+require(
+    wrappers["irrigation-panel-v0654.mjs"],
+    'const UI_VERSION = "0.6.54"',
+    "irrigation-panel-v0653.mjs",
+    'operation !== "auto"',
+    "контроллер и установите режим Auto",
+    "Контроллер должен быть включён, находиться в режиме Auto",
+    "Команды записи DP38 не отправляются",
+)
+require(
+    wrappers["irrigation-panel-v0655.mjs"],
+    'const UI_VERSION = "0.6.55"',
+    "irrigation-panel-v0654.mjs",
+    "test_zone8_full_frame_write",
+    "Будут отправлены все восемь исходных блоков",
+    "Повтора и автоматического отката не будет",
+)
+require(
+    wrappers["irrigation-panel-v0656.mjs"],
+    'const UI_VERSION = "0.6.56"',
+    'data-program-zone="${number}"',
+    "Array.from({ length: 8 }",
+)
+assert "data-program-section" not in wrappers["irrigation-panel-v0656.mjs"]
+assert "programZoneContext" not in wrappers["irrigation-panel-v0656.mjs"]
+require(
+    wrappers["irrigation-panel-v0657.mjs"],
+    'const UI_VERSION = "0.6.57"',
+    "irrigation-panel-v0656.mjs",
+    "test_zone8_mask_write",
+    "Первый байт записи: 80",
+    "Передаётся ровно 20 байт",
+)
+require(
+    wrappers["irrigation-panel-v0658.mjs"],
+    'const UI_VERSION = "0.6.58"',
+    "irrigation-panel-v0657.mjs",
+    '["status", "mdi:tune-variant", "Система"]',
+    "data-zone-artwork-open",
+    "Без картинки",
+    "window.localStorage",
+)
+assert "Состояние контроллера" not in wrappers["irrigation-panel-v0658.mjs"]
+require(
+    wrappers["irrigation-panel-v0659.mjs"],
+    'const UI_VERSION = "0.6.59"',
+    "irrigation-panel-v0658.mjs",
+    "data-system-settings",
+    "mdi:cog-outline",
+    "PHYSICAL_ZONES_STORAGE_KEY",
+    "data-physical-zone-toggle",
+    "Array.from({ length: 8 }",
+    "data-zone-artwork-overlay",
+    "Следующая по программе",
+    "this._nextPhysicalZone(entities)",
+)
+assert ".showModal()" not in wrappers["irrigation-panel-v0659.mjs"]
+require(
+    wrappers["irrigation-panel-v0660.mjs"],
+    'const UI_VERSION = "0.6.60"',
+    "irrigation-panel-v0659.mjs",
+    'viewport.classList.remove("zonesFitsViewport", "manualFitsViewport")',
+    ".programZoneTabs{position:sticky",
+    "background-size:contain!important",
+)
+require(
+    wrappers["irrigation-panel-v0661.mjs"],
+    'const UI_VERSION = "0.6.61"',
+    "irrigation-panel-v0660.mjs",
+    'viewport.classList.toggle("longContentViewport", longContent)',
+    ".workViewport.isNative.longContentViewport .workCanvas{height:auto",
+    "manualStartTop manualStartWide",
+    "<span>Старт полива</span>",
+)
+require(
+    wrappers["irrigation-panel-v0662.mjs"],
+    'const UI_VERSION = "0.6.62"',
+    "irrigation-panel-v0661.mjs",
+    "_systemWideZoneCard",
+    "systemZoneStatus",
+    "viewFootnote",
+    ".systemSettingsButton{position:static",
+)
+require(
+    wrappers["irrigation-panel-v0663.mjs"],
+    'const UI_VERSION = "0.6.63"',
+    "irrigation-panel-v0662.mjs",
+    "systemConnectionLamp",
+    "systemConnectionCopy",
+    "grid-template-columns:10px minmax(0,1fr)",
+    "column-gap:11px",
+    "width:168px",
+    "min-height:58px",
+    "padding:12px 14px",
+    "border-radius:18px",
+    "font-size:16px",
+    "font-weight:700",
+    "font-size:13px!important",
+    "font-weight:600",
+    "0 4px 14px rgba(0,0,0,.055)",
+    "var(--success-color,#43a047) 11%",
+    "var(--warning-color,#f6a623) 10%",
+    "var(--error-color,#db4437) 10%",
+    "var(--secondary-text-color,#6f6f72) 8%",
+)
+require(
+    wrappers["irrigation-panel-v0664.mjs"],
+    'const UI_VERSION = "0.6.64"',
+    "irrigation-panel-v0663.mjs",
+    "Array.from({ length: 20 }",
+    "data-seasonal-select",
+    "<select data-season-value",
+    "seasonalSelectControl",
+)
+feedback_source = wrappers["irrigation-panel-v0665.mjs"]
+require(
+    feedback_source,
+    'const UI_VERSION = "0.6.65"',
+    "irrigation-panel-v0664.mjs",
+    "FEEDBACK_DURATION_MS = 1500",
+    "_syncSeasonalApplyState",
+    "selected !== current",
+    "button.disabled = !enabled",
+    'button.dataset.seasonalChanged = changed ? "true" : "false"',
+    "seasonalFeedback-success",
+    "seasonalFeedback-same",
+    "seasonalFeedback-error",
+    "p.applySeasonalAdjustment = async function applySeasonalAdjustmentV0665",
+    ".settingsSeasonal [data-season-apply]:disabled",
+    "Не удалось подтвердить сезонную коррекцию",
+)
+assert "Сезонная коррекция ${value}% подтверждена контроллером" not in feedback_source
+assert 'this.notify("Это значение уже установлено")' not in feedback_source
+assert 'role="switch"' in wrappers["irrigation-panel-v0637.mjs"]
+
 connection_meta = panel["panel"]["system_visualization"]["connection_indicator"]
 manifest_connection_meta = panel_manifest["connection_indicator"]
 assert connection_meta["reference"] == "NikaS Specialized Panel UI Standard v2.2 / S8 OMNI"
 assert manifest_connection_meta["reference"] == connection_meta["reference"]
-assert connection_meta["state_invariant_width_px"] == 168
-assert manifest_connection_meta["state_invariant_width_px"] == 168
-assert connection_meta["min_height_px"] == 58
-assert connection_meta["padding_px"] == [12, 14]
-assert connection_meta["radius_px"] == 18
-assert connection_meta["lamp_px"] == 10
-assert connection_meta["column_gap_px"] == 11
-assert connection_meta["main_font"] == "16px/700"
-assert connection_meta["freshness_font"] == "13px/600"
-assert connection_meta["success_background_mix_percent"] == 11
-assert connection_meta["status_background_mix_percent"] == 10
-assert connection_meta["neutral_background_mix_percent"] == 8
-assert connection_meta["status_border_mix_percent"] == 30
-assert connection_meta["neutral_border_mix_percent"] == 28
-assert manifest_connection_meta["min_height_px"] == connection_meta["min_height_px"]
-assert manifest_connection_meta["padding_px"] == connection_meta["padding_px"]
-assert manifest_connection_meta["radius_px"] == connection_meta["radius_px"]
-assert manifest_connection_meta["lamp_px"] == connection_meta["lamp_px"]
-assert manifest_connection_meta["column_gap_px"] == connection_meta["column_gap_px"]
-assert manifest_connection_meta["main_font"] == connection_meta["main_font"]
-assert manifest_connection_meta["freshness_font"] == connection_meta["freshness_font"]
+for key, expected_value in {
+    "state_invariant_width_px": 168,
+    "min_height_px": 58,
+    "padding_px": [12, 14],
+    "radius_px": 18,
+    "lamp_px": 10,
+    "column_gap_px": 11,
+    "main_font": "16px/700",
+    "freshness_font": "13px/600",
+    "success_background_mix_percent": 11,
+    "status_background_mix_percent": 10,
+    "neutral_background_mix_percent": 8,
+    "status_border_mix_percent": 30,
+    "neutral_border_mix_percent": 28,
+}.items():
+    assert connection_meta[key] == expected_value
+    assert manifest_connection_meta[key] == expected_value
+
 seasonal_meta = panel["panel"]["control_actions"]["seasonal_adjustment"]
 manifest_seasonal_meta = panel_manifest["control_actions"]["seasonal_adjustment"]
 expected_seasonal_values = list(range(-90, 101, 10))
-assert seasonal_meta["range_percent"] == [-90, 100]
-assert seasonal_meta["step_percent"] == 10
-assert seasonal_meta["allowed_values_percent"] == expected_seasonal_values
-assert seasonal_meta["input_control"] == "native_select"
-assert seasonal_meta["native_keyboard"] is False
-assert manifest_seasonal_meta["allowed_values_percent"] == expected_seasonal_values
-assert manifest_seasonal_meta["input_control"] == "native_select"
-assert manifest_seasonal_meta["native_keyboard"] is False
-expected_program_subtabs = []
+for meta in (seasonal_meta, manifest_seasonal_meta):
+    assert meta["range_percent"] == [-90, 100]
+    assert meta["step_percent"] == 10
+    assert meta["allowed_values_percent"] == expected_seasonal_values
+    assert meta["input_control"] == "native_select"
+    assert meta["native_keyboard"] is False
+feedback_meta = manifest_seasonal_meta["feedback"]
+assert feedback_meta["scope"] == "seasonal_adjustment_only"
+assert feedback_meta["success"] == "pale_green_value_field_no_system_notification"
+assert feedback_meta["same_value"] == "pale_primary_value_field_no_system_notification"
+assert feedback_meta["error"] == "pale_error_value_field_and_system_notification"
+assert feedback_meta["duration_ms"] == 1500
+assert feedback_meta["success_requires_confirmed_readback"] is True
+assert feedback_meta["apply_enabled_when"] == "selected_value_differs_from_controller"
+assert feedback_meta["future_rollout"] == "other_write_controls_after_program_write"
+
 program_meta = panel["panel"]["control_actions"]["program_view"]
 manifest_program_meta = panel_manifest["control_actions"]["program_view"]
-assert program_meta["subtabs"] == expected_program_subtabs
-assert manifest_program_meta["subtabs"] == expected_program_subtabs
-assert program_meta["default_subtab"] == "zone_parameters"
-assert program_meta["zone_selector"] == "sticky_button_row_below_header"
-assert program_meta["selected_zone_status"] == "inside_zone_form"
-assert program_meta["zone_scope"] == list(range(1, 9))
-assert program_meta["zone_form"] == "complete_decoded_zone_detail_read_only"
-assert program_meta["zone_artwork"] == "browser_local_presets_or_neutral_gray"
-assert program_meta["zone_artwork_trigger"] == "system_settings_zone_image"
-assert manifest_program_meta["zone_artwork"] == program_meta["zone_artwork"]
-assert manifest_program_meta["zone_artwork_trigger"] == program_meta["zone_artwork_trigger"]
-assert program_meta["vertical_scroll"] == "central_work_area_only"
+for meta in (program_meta, manifest_program_meta):
+    assert meta["subtabs"] == []
+    assert meta["default_subtab"] == "zone_parameters"
+    assert meta["zone_selector"] == "sticky_button_row_below_header"
+    assert meta["selected_zone_status"] == "inside_zone_form"
+    assert meta["zone_scope"] == list(range(1, 9))
+    assert meta["zone_form"] == "complete_decoded_zone_detail_read_only"
+    assert meta["zone_artwork"] == "browser_local_presets_or_neutral_gray"
+    assert meta["zone_artwork_trigger"] == "system_settings_zone_image"
+    assert meta["vertical_scroll"] == "central_work_area_only"
+
 expected_zone_detail_fields = [
     "base_duration",
     "six_start_slots",
@@ -351,22 +472,27 @@ expected_zone_detail_fields = [
 ]
 assert panel["panel"]["system_visualization"]["zone_detail_fields"] == expected_zone_detail_fields
 assert panel_manifest["zone_detail_fields"] == expected_zone_detail_fields
-assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["write_enabled"] is False
-assert panel["panel"]["control_actions"]["zone_8_schedule_lab"]["hex_probe_enabled"] is True
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["recovery_enabled"] is False
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["maximum_writes_per_action"] == 0
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["anchor_date_test_enabled"] is False
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["anchor_date_test_maximum_writes_per_action"] == 0
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["observed_cross_zone_write"]["affected_zone"] == 4
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["observed_cross_zone_write"]["zone_8_unchanged"] is True
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_retry"] is False
-assert panel_manifest["control_actions"]["zone_8_schedule_lab"]["automatic_rollback"] is False
-snapshot_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["full_snapshot"]
+
+zone8_panel_meta = panel["panel"]["control_actions"]["zone_8_schedule_lab"]
+zone8_manifest_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]
+assert zone8_panel_meta["write_enabled"] is False
+assert zone8_panel_meta["hex_probe_enabled"] is True
+assert zone8_manifest_meta["write_enabled"] is False
+assert zone8_manifest_meta["recovery_enabled"] is False
+assert zone8_manifest_meta["maximum_writes_per_action"] == 0
+assert zone8_manifest_meta["anchor_date_test_enabled"] is False
+assert zone8_manifest_meta["anchor_date_test_maximum_writes_per_action"] == 0
+assert zone8_manifest_meta["observed_cross_zone_write"]["affected_zone"] == 4
+assert zone8_manifest_meta["observed_cross_zone_write"]["zone_8_unchanged"] is True
+assert zone8_manifest_meta["automatic_retry"] is False
+assert zone8_manifest_meta["automatic_rollback"] is False
+snapshot_meta = zone8_manifest_meta["full_snapshot"]
 assert snapshot_meta["zones"] == list(range(1, 9))
 assert snapshot_meta["read_only"] is True
 assert snapshot_meta["writes_performed"] == 0
-mask_write_meta = panel_manifest["control_actions"]["zone_8_schedule_lab"]["zone8_mask_write_test"]
+assert snapshot_meta["requires_physical_mode"] == "AUTO_ON"
+assert snapshot_meta["requires_idle_controller"] is True
+mask_write_meta = zone8_manifest_meta["zone8_mask_write_test"]
 assert mask_write_meta["enabled"] is True
 assert mask_write_meta["read_zone_identifier"] == "0x08"
 assert mask_write_meta["write_zone_mask"] == "0x80"
@@ -374,31 +500,42 @@ assert mask_write_meta["frame_bytes"] == 20
 assert mask_write_meta["maximum_writes_per_action"] == 1
 assert mask_write_meta["automatic_retry"] is False
 assert mask_write_meta["automatic_rollback"] is False
-assert snapshot_meta["requires_physical_mode"] == "AUTO_ON"
-assert snapshot_meta["requires_idle_controller"] is True
-assert '"hex_probe_allowed"' in sensor_source
-assert '"anchor_date_test_allowed"' in sensor_source
+
+require(sensor_source, '"hex_probe_allowed"', '"anchor_date_test_allowed"')
 assert "partial(_async_set_zone8_schedule_field, hass)" not in setup_source
 assert "partial(_async_restore_zone8_schedule, hass)" not in setup_source
-assert "partial(_async_probe_zone8_dp38_hex, hass)" in setup_source
-assert "partial(_async_restore_zone8_known_backup, hass)" in setup_source
-assert "if ZONE8_KNOWN_RESTORE_ENABLED:" in setup_source
-assert "if ZONE8_ANCHOR_DATE_TEST_ENABLED:" in setup_source
-assert "partial(_async_test_zone8_anchor_date_write, hass)" in setup_source
-assert "hass.services.async_remove(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)" in setup_source
-assert "hass.services.async_remove(DOMAIN, SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE)" in setup_source
+require(
+    setup_source,
+    "partial(_async_probe_zone8_dp38_hex, hass)",
+    "partial(_async_restore_zone8_known_backup, hass)",
+    "if ZONE8_KNOWN_RESTORE_ENABLED:",
+    "if ZONE8_ANCHOR_DATE_TEST_ENABLED:",
+    "partial(_async_test_zone8_anchor_date_write, hass)",
+    "hass.services.async_remove(DOMAIN, SERVICE_RESTORE_ZONE8_KNOWN_BACKUP)",
+    "hass.services.async_remove(DOMAIN, SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE)",
+)
 assert "restore_zone8_known_backup:" not in services_source
 assert "test_zone8_anchor_date_write:" not in services_source
-assert 'replace("<small>ПРОГРАММА</small>", "")' in compact_wrapper_source
-assert "Зоны — просмотр. Сезон — изменение с подтверждением." in fit_wrapper_source
-assert ".programPageIntro{padding-bottom:8px}" in fit_wrapper_source
-assert 'return raw_bitmask, "dp107" if raw_bitmask else "idle"' in sensor_source
-assert '"dp45_unconfirmed": bitmask == 0 and any(dp45_remaining.values())' in sensor_source
+require(
+    wrappers["irrigation-panel-v0634.mjs"],
+    'replace("<small>ПРОГРАММА</small>", "")',
+)
+require(
+    wrappers["irrigation-panel-v0635.mjs"],
+    "Зоны — просмотр. Сезон — изменение с подтверждением.",
+    ".programPageIntro{padding-bottom:8px}",
+)
+require(
+    sensor_source,
+    'return raw_bitmask, "dp107" if raw_bitmask else "idle"',
+    '"dp45_unconfirmed": bitmask == 0 and any(dp45_remaining.values())',
+)
 assert panel["panel"]["rule_set"] == "1.17"
 assert panel_manifest["rule_set"] == "1.17"
 
-assert "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI" in setup_source
-for marker in (
+require(setup_source, "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI")
+require(
+    manual_source,
     "class NativeManualHOSC8WAPI",
     "def start_manual_queue(",
     "def stop_manual(",
@@ -409,14 +546,11 @@ for marker in (
     "self._manual_queue_plan",
     "DP45 manual queue was sent",
     "DP45 reset did not confirm watering stop via DP107",
-):
-    assert marker in manual_source, f"Missing native manual-control marker: {marker}"
-
+)
 assert "DP_OPERATION_MODE" not in manual_source
 assert 'cloud_code="operation_mode"' not in manual_source
 assert '"OFF"' not in manual_source
-assert "SERVICE_SKIP_CURRENT_MANUAL" in setup_source
-assert "async_skip_current_manual" in setup_source
+require(setup_source, "SERVICE_SKIP_CURRENT_MANUAL", "async_skip_current_manual")
 
 manual_meta = panel["panel"]["control_actions"]["manual_queue"]
 assert manual_meta["write_dp"] == 45
@@ -429,7 +563,8 @@ assert manifest_manual_meta["write_dp"] == 45
 assert manifest_manual_meta["readback_dps"] == [107]
 assert manifest_manual_meta["operation_mode_dp101_write"] is False
 
-for marker in (
+require(
+    combined_frontend_source,
     'callService("nikas_ho_sc_8w", "start_manual_queue"',
     'callService("nikas_ho_sc_8w", "stop_manual"',
     'callService("nikas_ho_sc_8w", "skip_current_manual"',
@@ -441,9 +576,8 @@ for marker in (
     "manualZoneSwitch",
     "previousToggleManualZone.call",
     "Стоп всё",
-):
-    assert marker in combined_frontend_source, f"Missing frontend marker: {marker}"
+)
 assert "set_value(" not in combined_frontend_source
 assert "sendcommand(" not in combined_frontend_source
 
-print("HO-SC-8W DP45 native control, release, and manual UI contract passed")
+print("HO-SC-8W DP45 native control, release, seasonal feedback, and manual UI contract passed")

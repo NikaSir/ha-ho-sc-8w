@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.6.64",
-  "integration_version": "1.0.0-b005.84",
+  "panel_version": "0.6.65",
+  "integration_version": "1.0.0-b005.85",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -37,6 +37,16 @@
       "allowed_values_percent": [-90, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
       "input_control": "native_select",
       "native_keyboard": false,
+      "feedback": {
+        "scope": "seasonal_adjustment_only",
+        "success": "pale_green_value_field_no_system_notification",
+        "same_value": "pale_primary_value_field_no_system_notification",
+        "error": "pale_error_value_field_and_system_notification",
+        "duration_ms": 1500,
+        "success_requires_confirmed_readback": true,
+        "apply_enabled_when": "selected_value_differs_from_controller",
+        "future_rollout": "other_write_controls_after_program_write"
+      },
       "status_view": "read_only",
       "editable_view": "system_settings",
       "apply_location": "system_settings",
@@ -140,7 +150,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0664.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0665.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
