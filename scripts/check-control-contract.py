@@ -71,4 +71,4 @@ assert 'rain_sensor_follow' in ui
 assert 'value: "false"' in ui
 assert 'execute_zone7_lab' in ui
 assert 'plan_id: planId' in ui
-assert 'automatic rollback' in ui
+assert 'автоматического rollback' in ui
