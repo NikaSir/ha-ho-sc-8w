@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION = ROOT / "custom_components" / "nikas_ho_sc_8w"
 FRONTEND = INTEGRATION / "frontend"
-EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.86"
+EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"
 EXPECTED_PANEL_VERSION = "0.6.66"
 EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"
 
