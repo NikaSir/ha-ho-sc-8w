@@ -1,0 +1,111 @@
+name: Extract IIC-800 existing schedule edit path
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-iic800-edit-path.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Acquire APK and dump edit-path classes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          python - <<'PY'
+          import hashlib,re,urllib.parse,zipfile
+          from pathlib import Path
+          import requests
+          root=Path('/tmp/iic-edit'); root.mkdir(parents=True,exist_ok=True)
+          bundle=root/'bundle.bin'
+          pub='https://disk.yandex.ru/d/3T2zvV8ETXEwjA'
+          api='https://cloud-api.yandex.net/v1/disk/public/resources/download?'+urllib.parse.urlencode({'public_key':pub})
+          m=requests.get(api,timeout=60); m.raise_for_status()
+          with requests.get(m.json()['href'],stream=True,timeout=(60,900)) as r:
+              r.raise_for_status()
+              with bundle.open('wb') as f:
+                  for c in r.iter_content(1024*1024):
+                      if c: f.write(c)
+          q=[(bundle,0)]; seen=set(); n=0
+          while q:
+              src,d=q.pop(0)
+              if d>5 or src.suffix.lower()=='.apk' or not zipfile.is_zipfile(src): continue
+              h=hashlib.sha256(src.read_bytes()).hexdigest()
+              if h in seen: continue
+              seen.add(h); dst=root/f'l{n}'; n+=1; dst.mkdir()
+              with zipfile.ZipFile(src) as z: z.extractall(dst)
+              for p in dst.rglob('*'):
+                  if p.is_file() and p.suffix.lower() in {'.zip','.xapk','.apkm','.apks'} and zipfile.is_zipfile(p): q.append((p,d+1))
+          cand=[]
+          for apk in root.rglob('*.apk'):
+              with zipfile.ZipFile(apk) as z:
+                  dex=[x for x in z.namelist() if re.fullmatch(r'(?:.*/)?classes(?:\d+)?\.dex',x,re.I)]
+              if dex:
+                  nm=apk.name.lower(); score=(int(nm=='base.apk'),int(not nm.startswith('config.') and not nm.startswith('split_')),len(dex),apk.stat().st_size)
+                  cand.append((score,apk))
+          Path('/tmp/base-apk').write_text(str(max(cand,key=lambda x:x[0])[1]))
+          PY
+          APKANALYZER="$(command -v apkanalyzer || true)"
+          if [[ -z "$APKANALYZER" ]]; then APKANALYZER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/apkanalyzer"; fi
+          mkdir -p /tmp/iic-edit/smali
+          BASE="$(cat /tmp/base-apk)"
+          for cls in \
+            com.inkbird.inkbirdapp.device.iic800.activity.activity.Iic800AddPlanActivity \
+            com.inkbird.inkbirdapp.device.iic800.presenter.Iic800AddPlanPresenter \
+            com.inkbird.inkbirdapp.device.iic800.presenter.Iic800SchedulePresenter \
+            com.inkbird.inkbirdapp.device.iic800.bean.IicZoneBean; do
+              "$APKANALYZER" dex code --class "$cls" "$BASE" > "/tmp/iic-edit/smali/${cls##*.}.smali"
+          done
+      - name: Build focused edit-path report
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/iic-edit/smali')
+          out=[]
+          needles=re.compile(r'(iicZoneBean|setIicZoneBean|getIicZoneBean|setRunTime|getRunTime|setStartTimeList|getStartTimeList|setScheduleMode|getScheduleMode|setScheduleDay|getScheduleDay|setIntervalYear|setIntervalMonth|setIntervalDay|setEnable|isEnable|setSeaAdjSwitch|isSeaAdjSwitch|parseIICZoneBean|setScheduleTime|save|edit|update|putExtra|getSerializableExtra)',re.I)
+          for p in sorted(root.glob('*.smali')):
+              lines=p.read_text(errors='replace').splitlines()
+              methods=[]; start=None
+              for i,l in enumerate(lines):
+                  if l.startswith('.method '): start=i
+                  if start is not None and l.startswith('.end method'):
+                      block=lines[start:i+1]
+                      text='\n'.join(block)
+                      if needles.search(text): methods.append((start+1,i+1,block))
+                      start=None
+              out.append(f'# {p.stem}\n')
+              for a,b,block in methods:
+                  out.append(f'## lines {a}-{b}: `{block[0]}`\n\n```smali\n'+ '\n'.join(block) +'\n```\n')
+          dest=Path('docs/research/inkbird-apk-2.1.11/DP38_EXISTING_EDIT_PATH.md')
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_text('\n'.join(out),encoding='utf-8')
+          PY
+      - name: Commit report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11/DP38_EXISTING_EDIT_PATH.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record IIC-800 existing schedule edit path"
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
