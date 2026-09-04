@@ -1,0 +1,29 @@
+name: Check DP38 transactional dry-run
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - custom_components/nikas_ho_sc_8w/models.py
+      - custom_components/nikas_ho_sc_8w/dp38_patch.py
+      - custom_components/nikas_ho_sc_8w/dp38_transaction.py
+      - scripts/check-dp38-transaction.py
+      - .github/workflows/check-dp38-transaction.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run pure transactional contract
+        run: python scripts/check-dp38-transaction.py
