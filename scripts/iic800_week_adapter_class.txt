@@ -1,0 +1,1 @@
+com.inkbird.inkbirdapp.device.iic800.adapter.WeekAdapter
