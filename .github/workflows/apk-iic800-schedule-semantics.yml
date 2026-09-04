@@ -1,0 +1,107 @@
+name: Extract IIC-800 schedule semantics
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-iic800-schedule-semantics.yml
+      - scripts/extract_iic800_schedule_semantics.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Acquire base APK and dump target smali
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          python - <<'PY'
+          import hashlib, re, urllib.parse, zipfile
+          from pathlib import Path
+          import requests
+          public_url='https://disk.yandex.ru/d/3T2zvV8ETXEwjA'
+          root=Path('/tmp/iic800-schedule-work'); root.mkdir(parents=True, exist_ok=True)
+          bundle=root/'bundle.bin'
+          api='https://cloud-api.yandex.net/v1/disk/public/resources/download?'+urllib.parse.urlencode({'public_key':public_url})
+          meta=requests.get(api,timeout=60); meta.raise_for_status()
+          with requests.get(meta.json()['href'],stream=True,timeout=(60,900)) as r:
+              r.raise_for_status()
+              with bundle.open('wb') as f:
+                  for c in r.iter_content(1024*1024):
+                      if c: f.write(c)
+          def extract(src,dst):
+              dst.mkdir(parents=True,exist_ok=True); rr=dst.resolve()
+              with zipfile.ZipFile(src) as z:
+                  for info in z.infolist():
+                      t=(dst/info.filename).resolve()
+                      if t!=rr and rr not in t.parents: raise RuntimeError(info.filename)
+                  z.extractall(dst)
+          q=[(bundle,0)]; seen=set(); n=0
+          while q:
+              src,d=q.pop(0)
+              if d>5 or src.suffix.lower()=='.apk' or not zipfile.is_zipfile(src): continue
+              h=hashlib.sha256(src.read_bytes()).hexdigest()
+              if h in seen: continue
+              seen.add(h); dst=root/f'layer-{n:02d}-{src.stem[:30]}'; n+=1; extract(src,dst)
+              for ch in dst.rglob('*'):
+                  if ch.is_file() and ch.suffix.lower() in {'.zip','.xapk','.apkm','.apks'} and zipfile.is_zipfile(ch): q.append((ch,d+1))
+          cand=[]
+          for apk in root.rglob('*.apk'):
+              with zipfile.ZipFile(apk) as z: dex=[x for x in z.namelist() if re.fullmatch(r'(?:.*/)?classes(?:\d+)?\.dex',x,re.I)]
+              if dex:
+                  name=apk.name.lower(); score=(int(name=='base.apk'),int(not name.startswith('config.') and 'split_config' not in name and not name.startswith('split_')),len(dex),apk.stat().st_size)
+                  cand.append((score,apk))
+          _,base=max(cand,key=lambda x:x[0]); Path('/tmp/base-apk').write_text(str(base.resolve()))
+          PY
+          APKANALYZER="$(command -v apkanalyzer || true)"
+          if [[ -z "$APKANALYZER" ]]; then APKANALYZER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/apkanalyzer"; fi
+          test -x "$APKANALYZER"
+          mkdir -p /tmp/iic800-schedule-smali
+          for cls in \
+            com.inkbird.inkbirdapp.device.iic800.model.Iic800Model \
+            com.inkbird.inkbirdapp.device.iic800.presenter.Iic800SchedulePresenter \
+            com.inkbird.inkbirdapp.device.iic800.presenter.Iic800AddPlanPresenter \
+            com.inkbird.inkbirdapp.device.iic800.activity.activity.Iic800AddPlanActivity \
+            com.inkbird.inkbirdapp.device.iic800.bean.IicZoneBean \
+            com.inkbird.inkbirdapp.device.iic800.utils.Iic800Constant; do
+              "$APKANALYZER" dex code --class "$cls" "$(cat /tmp/base-apk)" > "/tmp/iic800-schedule-smali/${cls##*.}.smali"
+          done
+
+      - name: Build focused report
+        run: |
+          python scripts/extract_iic800_schedule_semantics.py \
+            --smali-root /tmp/iic800-schedule-smali \
+            --output docs/research/inkbird-apk-2.1.11/DP38_SCHEDULE_SEMANTICS_SMALI.md
+
+      - name: Commit report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11/DP38_SCHEDULE_SEMANTICS_SMALI.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record exact IIC-800 DP38 schedule semantics"
+          git pull --rebase origin analysis/apk-irrigation-commands
+          git push origin HEAD:analysis/apk-irrigation-commands
