@@ -22,6 +22,7 @@ from .const import (
     ATTR_DURATION_MINUTES,
     ATTR_FIELD,
     ATTR_PHASE,
+    ATTR_PLAN_ID,
     ATTR_VALUE,
     ATTR_ZONE,
     ATTR_ZONES,
@@ -45,6 +46,8 @@ from .const import (
     SEASONAL_ADJUST_STEP,
     SERVICE_CAPTURE_DP38_SNAPSHOT,
     SERVICE_PROBE_ZONE8_DP38_HEX,
+    SERVICE_PREPARE_ZONE7_LAB,
+    SERVICE_EXECUTE_ZONE7_LAB,
     SERVICE_RESUME_AUTOMATIC,
     SERVICE_RESTORE_ZONE8_SCHEDULE,
     SERVICE_RESTORE_ZONE8_KNOWN_BACKUP,
@@ -180,6 +183,36 @@ _ZONE8_MASK_WRITE_TEST_SCHEMA = vol.Schema(
         vol.Required(ATTR_CONFIRMATION): vol.In(
             {ZONE8_MASK_WRITE_TEST_CONFIRMATION}
         ),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+
+
+_ZONE7_LAB_PREPARE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_FIELD): vol.In(
+            {
+                "duration_minutes",
+                "cycle_mode",
+                "cycle_value",
+                "weekdays",
+                "anchor_date",
+                "program_enabled",
+                "rain_sensor_follow",
+            }
+        ),
+        vol.Required(ATTR_VALUE): cv.string,
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+_ZONE7_LAB_EXECUTE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_PLAN_ID): cv.string,
+        vol.Required(ATTR_CONFIRMATION): cv.string,
     },
     extra=vol.PREVENT_EXTRA,
 )
@@ -338,6 +371,27 @@ async def _async_test_zone8_mask_write(
         raise HomeAssistantError(str(exc)) from exc
 
 
+
+async def _async_prepare_zone7_lab(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_prepare_zone7_lab(
+            str(call.data[ATTR_FIELD]), str(call.data[ATTR_VALUE])
+        )
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
+async def _async_execute_zone7_lab(hass: HomeAssistant, call: ServiceCall) -> None:
+    coordinator = _coordinator_for_call(hass, call)
+    try:
+        await coordinator.async_execute_zone7_lab(
+            str(call.data[ATTR_PLAN_ID]), str(call.data[ATTR_CONFIRMATION])
+        )
+    except (PermissionError, RuntimeError, ValueError) as exc:
+        raise HomeAssistantError(str(exc)) from exc
+
+
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up integration-wide resources once per Home Assistant process."""
     await async_setup_panel(hass)
@@ -418,6 +472,20 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             SERVICE_TEST_ZONE8_MASK_WRITE,
             partial(_async_test_zone8_mask_write, hass),
             schema=_ZONE8_MASK_WRITE_TEST_SCHEMA,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_PREPARE_ZONE7_LAB):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_PREPARE_ZONE7_LAB,
+            partial(_async_prepare_zone7_lab, hass),
+            schema=_ZONE7_LAB_PREPARE_SCHEMA,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_EXECUTE_ZONE7_LAB,
+            partial(_async_execute_zone7_lab, hass),
+            schema=_ZONE7_LAB_EXECUTE_SCHEMA,
         )
     return True
 

@@ -51,6 +51,8 @@ SERVICE_CAPTURE_DP38_SNAPSHOT = "capture_dp38_snapshot"
 SERVICE_RESTORE_ZONE8_KNOWN_BACKUP = "restore_zone8_known_backup"
 SERVICE_TEST_ZONE8_ANCHOR_DATE_WRITE = "test_zone8_anchor_date_write"
 SERVICE_TEST_ZONE8_MASK_WRITE = "test_zone8_mask_write"
+SERVICE_PREPARE_ZONE7_LAB = "prepare_zone7_lab"
+SERVICE_EXECUTE_ZONE7_LAB = "execute_zone7_lab"
 
 ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 ATTR_ZONES = "zones"
@@ -60,6 +62,7 @@ ATTR_VALUE = "value"
 ATTR_FIELD = "field"
 ATTR_CONFIRMATION = "confirmation"
 ATTR_PHASE = "phase"
+ATTR_PLAN_ID = "plan_id"
 
 DP38_SNAPSHOT_CONFIRMATION = "DP38_FULL_SNAPSHOT_READ_ONLY"
 
