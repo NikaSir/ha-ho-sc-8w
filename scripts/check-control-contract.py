@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Recovery wrapper for the existing safety contract.
+"""Release wrapper for the existing safety contract.
 
-The controller/UI safety assertions remain in the preserved legacy checker.
-Release metadata remains intentionally tolerant while the native DP38 refresh
-field-test build advances to b005.89 without changing the production UI bundle.
+The preserved legacy checker still owns the safety-critical controller
+assertions.  This wrapper advances only release/UI metadata and adds explicit
+contracts for the field-confirmed native DP38 refresh and Zone-7 rain test UI.
 """
 from pathlib import Path
 
@@ -11,20 +11,22 @@ legacy_path = Path(__file__).with_name("check-control-contract-b00587.py")
 source = legacy_path.read_text(encoding="utf-8")
 source = source.replace(
     'EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-    'EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.89"',
+    'EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.90"',
 )
 source = source.replace(
-    'assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION',
-    'assert panel_manifest["integration_version"] in {"1.0.0-b005.87", EXPECTED_INTEGRATION_VERSION}',
+    'EXPECTED_PANEL_VERSION = "0.6.66"',
+    'EXPECTED_PANEL_VERSION = "0.6.67"',
 )
 source = source.replace(
-    'assert panel_manifest["integration_version"] == manifest["version"]',
-    'assert panel_manifest["integration_version"] in {"1.0.0-b005.87", manifest["version"]}',
+    'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
+    'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"',
 )
-# The legacy contract forbade even mentioning DP_OPERATION_MODE in manual_api
-# to guarantee DP101 was never written. Native DP38 refresh must read DP101 as
-# fresh safety telemetry, so enforce the actual invariant instead: no manual
-# transport write may target DP101.
+source = source.replace(
+    '    "irrigation-panel-v0666.mjs",\n]',
+    '    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n]',
+)
+# Native DP38 refresh reads DP101 only as safety telemetry. Keep the actual
+# invariant: manual_api must never send a DP101 write.
 source = source.replace(
     'assert "DP_OPERATION_MODE" not in manual_source',
     'assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source',
@@ -43,3 +45,20 @@ assert 'DP_NORMAL_TIME' in manual_api
 assert 'device.receive()' in manual_api
 assert 'active_requests_after_trigger": 0' in manual_api
 assert 'required_zones is None' in manual_api
+
+ui = (
+    Path(__file__).resolve().parents[1]
+    / "custom_components"
+    / "nikas_ho_sc_8w"
+    / "frontend"
+    / "irrigation-panel-v0667.mjs"
+).read_text(encoding="utf-8")
+assert 'const UI_VERSION = "0.6.67"' in ui
+assert 'capture_dp38_snapshot' in ui
+assert 'phase: "baseline"' in ui
+assert 'DP38_FULL_SNAPSHOT_READ_ONLY' in ui
+assert 'rain_sensor_follow' in ui
+assert 'value: "false"' in ui
+assert 'execute_zone7_lab' in ui
+assert 'plan_id: planId' in ui
+assert 'automatic rollback' in ui
