@@ -1,0 +1,900 @@
+{
+  "inventory": [
+    {
+      "class_name": "IIic800Model",
+      "source_file": "IIic800Model.smali",
+      "sha256": "871e636af2418e6aa17b019756382416bbf1a65164b69ec9409a07c43cd80e13",
+      "line_count": 24,
+      "method_count": 2,
+      "protocol_method_count": 0
+    },
+    {
+      "class_name": "Iic800AddPlanActivity",
+      "source_file": "Iic800AddPlanActivity.smali",
+      "sha256": "529285c5a13910a375266b13fddcbcb956ed7270c167dd7b212716d9ad955398",
+      "line_count": 3412,
+      "method_count": 48,
+      "protocol_method_count": 0
+    },
+    {
+      "class_name": "Iic800AddPlanPresenter",
+      "source_file": "Iic800AddPlanPresenter.smali",
+      "sha256": "1a8b2c0333ce4b87807aa9fe5041e44dbb1f8961a3959df6110fcb94542eec36",
+      "line_count": 940,
+      "method_count": 17,
+      "protocol_method_count": 3
+    },
+    {
+      "class_name": "Iic800Constant",
+      "source_file": "Iic800Constant.smali",
+      "sha256": "c2f665c5b85c38ac4c46092de81150aaa3b37c6dee8d99637d49972597618d90",
+      "line_count": 161,
+      "method_count": 4,
+      "protocol_method_count": 1
+    },
+    {
+      "class_name": "Iic800ManualFragment",
+      "source_file": "Iic800ManualFragment.smali",
+      "sha256": "72bd27ce31360ad0333d651d55fe08c7285ab9663c93fb088082d07901e9a5b1",
+      "line_count": 3263,
+      "method_count": 71,
+      "protocol_method_count": 0
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "sha256": "661f2a8d3b9d7709913ca1df6f59cde92aa605306330613459e648880d47495b",
+      "line_count": 1945,
+      "method_count": 20,
+      "protocol_method_count": 9
+    },
+    {
+      "class_name": "Iic800Model",
+      "source_file": "Iic800Model.smali",
+      "sha256": "b777100bdaee56905d1534ab7ddc07e2f441a5838e17b44f807567e6527e0fe4",
+      "line_count": 1118,
+      "method_count": 7,
+      "protocol_method_count": 1
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "sha256": "e4345ffe773c428f9cc8b17a1ff99cb8439f71656f0595ff5a90a56a89990897",
+      "line_count": 1949,
+      "method_count": 20,
+      "protocol_method_count": 6
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "sha256": "b82e2df22ea5b3777a0fd8e3257c458c5c2e993f1f18644ce8f95bd77fdc983e",
+      "line_count": 1800,
+      "method_count": 18,
+      "protocol_method_count": 7
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "sha256": "edc5c04e53dce118c54c3f79b2561e6668b753de04526531d19d55b930caa3b8",
+      "line_count": 840,
+      "method_count": 22,
+      "protocol_method_count": 8
+    },
+    {
+      "class_name": "IicZoneBean",
+      "source_file": "IicZoneBean.smali",
+      "sha256": "9cb9f837a48b8842fa5ca6ac61f8cfd2889b1470b7eae1f5ecec84ee2f424a82",
+      "line_count": 533,
+      "method_count": 46,
+      "protocol_method_count": 0
+    },
+    {
+      "class_name": "IrrigationBean",
+      "source_file": "IrrigationBean.smali",
+      "sha256": "fd02f1e005a0a1c43a7fb148e4af5d50703e05138d4f4ea7fe7380848e2d8838",
+      "line_count": 124,
+      "method_count": 11,
+      "protocol_method_count": 0
+    },
+    {
+      "class_name": "StartTimeBean",
+      "source_file": "StartTimeBean.smali",
+      "sha256": "0ae6166ff749273599d4221a888ca4a16935dffe5d476ee5477014006334b840",
+      "line_count": 174,
+      "method_count": 9,
+      "protocol_method_count": 0
+    }
+  ],
+  "methods": [
+    {
+      "class_name": "Iic800AddPlanPresenter",
+      "source_file": "Iic800AddPlanPresenter.smali",
+      "method_header": ".method private parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;",
+      "method_name": "parseIICZoneBean",
+      "start_line": 315,
+      "end_line": 551,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        323,
+        334,
+        378,
+        425,
+        448,
+        459,
+        470,
+        481,
+        492
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00315: .method private parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;\n00316:     .registers 8\n00317: \n00318:     .line 157\n00319:     new-instance v0, Ljava/lang/StringBuilder;\n00320: \n00321:     const/4 v1, 0x2\n00322: \n00323:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00324: \n00325:     move-result-object p1\n00326: \n00327:     invoke-direct {v0, p1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n00328: \n00329:     .line 158\n00330:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRunTime()I\n00331: \n00332:     move-result p1\n00333: \n00334:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00335: \n00336:     move-result-object p1\n00337: \n00338:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00339: \n00340:     const/4 p1, 0x0\n00341: \n00342:     move v2, p1\n00343: \n00344:     .line 159\n00345:     :goto_17\n00346:     const-string v3, \"FF\"\n00347: \n00348:     const/4 v4, 0x6\n00349: \n00350:     if-ge v2, v4, :cond_42\n00351: \n00352:     .line 160\n00353:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00354: \n00355:     move-result-object v4\n00356: \n00357:     invoke-interface {v4}, Ljava/util/List;->size()I\n00358: \n00359:     move-result v4\n00360: \n00361:     if-ge v2, v4, :cond_3c\n00362: \n00363:     .line 161\n00364:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00365: \n00366:     move-result-object v3\n00367: \n00368:     invoke-interface {v3, v2}, Ljava/util/List;->get(I)Ljava/lang/Object;\n00369: \n00370:     move-result-object v3\n00371: \n00372:     check-cast v3, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;\n00373: \n00374:     invoke-virtual {v3}, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;->getHour()I\n00375: \n00376:     move-result v3\n00377: \n00378:     invoke-static {v3, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00379: \n00380:     move-result-object v3\n00381: \n00382:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00383: \n00384:     goto :goto_3f\n00385: \n00386:     .line 163\n00387:     :cond_3c\n00388:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00389: \n00390:     :goto_3f\n00391:     add-int/lit8 v2, v2, 0x1\n00392: \n00393:     goto :goto_17\n00394: \n00395:     :cond_42\n00396:     :goto_42\n00397:     if-ge p1, v4, :cond_6a\n00398: \n00399:     .line 167\n00400:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00401: \n00402:     move-result-object v2\n00403: \n00404:     invoke-interface {v2}, Ljava/util/List;->size()I\n00405: \n00406:     move-result v2\n00407: \n00408:     if-ge p1, v2, :cond_64",
+        "00411:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00412: \n00413:     move-result-object v2\n00414: \n00415:     invoke-interface {v2, p1}, Ljava/util/List;->get(I)Ljava/lang/Object;\n00416: \n00417:     move-result-object v2\n00418: \n00419:     check-cast v2, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;\n00420: \n00421:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;->getMinute()I\n00422: \n00423:     move-result v2\n00424: \n00425:     invoke-static {v2, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00426: \n00427:     move-result-object v2\n00428: \n00429:     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00430: \n00431:     goto :goto_67\n00432: \n00433:     .line 170\n00434:     :cond_64\n00435:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00436: \n00437:     :goto_67\n00438:     add-int/lit8 p1, p1, 0x1\n00439: \n00440:     goto :goto_42\n00441: \n00442:     .line 173\n00443:     :cond_6a\n00444:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getScheduleMode()I\n00445: \n00446:     move-result p1\n00447: \n00448:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00449: \n00450:     move-result-object p1\n00451: \n00452:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00453: \n00454:     .line 174\n00455:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getScheduleDay()I\n00456: \n00457:     move-result p1\n00458: \n00459:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00460: \n00461:     move-result-object p1\n00462: \n00463:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00464: \n00465:     .line 175\n00466:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalYear()I\n00467: \n00468:     move-result p1\n00469: \n00470:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00471: \n00472:     move-result-object p1\n00473: \n00474:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00475: \n00476:     .line 176\n00477:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalMonth()I\n00478: \n00479:     move-result p1\n00480: \n00481:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00482: \n00483:     move-result-object p1\n00484: \n00485:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00486: \n00487:     .line 177\n00488:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalDay()I\n00489: \n00490:     move-result p1\n00491: \n00492:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00493: \n00494:     move-result-object p1\n00495: \n00496:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00497: \n00498:     .line 178\n00499:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isEnable()Z\n00500: \n00501:     move-result p1\n00502: \n00503:     const-string v1, \"1\"\n00504: \n00505:     const-string v2, \"0\"\n00506: \n00507:     if-eqz p1, :cond_af\n00508: \n00509:     .line 179\n00510:     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00511: \n00512:     goto :goto_b2\n00513: \n00514:     .line 181\n00515:     :cond_af\n00516:     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00517: \n00518:     .line 183\n00519:     :goto_b2\n00520:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isSeaAdjSwitch()Z\n00521: \n00522:     move-result p1"
+      ]
+    },
+    {
+      "class_name": "Iic800AddPlanPresenter",
+      "source_file": "Iic800AddPlanPresenter.smali",
+      "method_header": ".method public reset()V",
+      "method_name": "reset",
+      "start_line": 656,
+      "end_line": 734,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        694,
+        715,
+        723
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00656: .method public reset()V\n00657:     .registers 5\n00658: \n00659:     .line 68\n00660:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->iicZoneBean:Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n00661: \n00662:     if-eqz v0, :cond_3f\n00663: \n00664:     invoke-virtual {v0}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRunTime()I\n00665: \n00666:     move-result v0\n00667: \n00668:     if-lez v0, :cond_3f\n00669: \n00670:     .line 69\n00671:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->mContext:Landroid/app/Activity;\n00672: \n00673:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00674: \n00675:     .line 70\n00676:     new-instance v0, Ljava/lang/StringBuilder;\n00677: \n00678:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n00679: \n00680:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->iicZoneBean:Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n00681: \n00682:     invoke-virtual {v1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getZoneId()I\n00683: \n00684:     move-result v1\n00685: \n00686:     const/4 v2, 0x1\n00687: \n00688:     sub-int/2addr v1, v2\n00689: \n00690:     shl-int v1, v2, v1\n00691: \n00692:     const/4 v2, 0x2\n00693: \n00694:     invoke-static {v1, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00695: \n00696:     move-result-object v1\n00697: \n00698:     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00699: \n00700:     move-result-object v0\n00701: \n00702:     const-string v1, \"00ffffffffffffffffffffffff007f15090101\"\n00703: \n00704:     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00705: \n00706:     move-result-object v0\n00707: \n00708:     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n00709: \n00710:     move-result-object v0\n00711: \n00712:     .line 71\n00713:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->devId:Ljava/lang/String;\n00714: \n00715:     invoke-static {v1}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00716: \n00717:     move-result-object v1\n00718: \n00719:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->resetCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00720: \n00721:     const-string v3, \"38\"\n00722: \n00723:     invoke-static {v3, v0, v1, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00724: \n00725:     return-void\n00726: \n00727:     .line 73\n00728:     :cond_3f\n00729:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->mContext:Landroid/app/Activity;\n00730: \n00731:     invoke-virtual {v0}, Landroid/app/Activity;->finish()V\n00732: \n00733:     return-void\n00734: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800AddPlanPresenter",
+      "source_file": "Iic800AddPlanPresenter.smali",
+      "method_header": ".method public setPlan(Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)V",
+      "method_name": "setPlan",
+      "start_line": 736,
+      "end_line": 922,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        846,
+        852,
+        911,
+        917
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00832: \n00833:     move-result v0\n00834: \n00835:     sub-int/2addr v0, v2\n00836: \n00837:     shl-int v0, v2, v0\n00838: \n00839:     .line 91\n00840:     invoke-direct {p0, v0, p1}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;\n00841: \n00842:     move-result-object p1\n00843: \n00844:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->devId:Ljava/lang/String;\n00845: \n00846:     invoke-static {v0}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00847: \n00848:     move-result-object v0\n00849: \n00850:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->setCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00851: \n00852:     invoke-static {v1, p1, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00853: \n00854:     goto :goto_9c\n00855: \n00856:     .line 93\n00857:     :cond_67\n00858:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->zoneNumbers:Ljava/util/List;\n00859: \n00860:     if-eqz v0, :cond_9c\n00861: \n00862:     invoke-interface {v0}, Ljava/util/List;->size()I\n00863: \n00864:     move-result v0\n00865: \n00866:     if-eqz v0, :cond_9c\n00867: \n00868:     .line 95\n00869:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->zoneNumbers:Ljava/util/List;\n00870: \n00871:     invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n00872: \n00873:     move-result-object v0\n00874: \n00875:     const/4 v3, 0x0\n00876: \n00877:     :goto_78\n00878:     invoke-interface {v0}, Ljava/util/Iterator;->hasNext()Z\n00879: \n00880:     move-result v4\n00881: \n00882:     if-eqz v4, :cond_8d",
+        "00897:     shl-int v4, v2, v4\n00898: \n00899:     add-int/2addr v3, v4\n00900: \n00901:     goto :goto_78\n00902: \n00903:     .line 98\n00904:     :cond_8d\n00905:     invoke-direct {p0, v3, p1}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;\n00906: \n00907:     move-result-object p1\n00908: \n00909:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->devId:Ljava/lang/String;\n00910: \n00911:     invoke-static {v0}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00912: \n00913:     move-result-object v0\n00914: \n00915:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800AddPlanPresenter;->setCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00916: \n00917:     invoke-static {v1, p1, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00918: \n00919:     :cond_9c\n00920:     :goto_9c\n00921:     return-void\n00922: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800Constant",
+      "source_file": "Iic800Constant.smali",
+      "method_header": ".method static constructor <clinit>()V",
+      "method_name": "<clinit>",
+      "start_line": 33,
+      "end_line": 110,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        69,
+        71,
+        78,
+        80
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00033: .method static constructor <clinit>()V\n00034:     .registers 2\n00035: \n00036:     .line 11\n00037:     new-instance v0, Ljava/util/ArrayList;\n00038: \n00039:     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V\n00040: \n00041:     sput-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->historyBeans:Ljava/util/List;\n00042: \n00043:     .line 12\n00044:     const-string v0, \"IIC_800\"\n00045: \n00046:     sput-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->devType:Ljava/lang/String;\n00047: \n00048:     .line 13\n00049:     const-string v1, \"IIC_400\"\n00050: \n00051:     sput-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_400:Ljava/lang/String;\n00052: \n00053:     .line 14\n00054:     const-string v1, \"IIC_600\"\n00055: \n00056:     sput-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_600:Ljava/lang/String;\n00057: \n00058:     .line 15\n00059:     sput-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_800:Ljava/lang/String;\n00060: \n00061:     .line 16\n00062:     const-string v0, \"IIC_801\"\n00063: \n00064:     sput-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_801:Ljava/lang/String;\n00065: \n00066:     const/16 v0, 0x8\n00067: \n00068:     .line 27\n00069:     new-array v0, v0, [I\n00070: \n00071:     fill-array-data v0, :array_2c\n00072: \n00073:     sput-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->images:[I\n00074: \n00075:     const/4 v0, 0x7\n00076: \n00077:     .line 33\n00078:     new-array v0, v0, [I\n00079: \n00080:     fill-array-data v0, :array_40\n00081: \n00082:     sput-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->weeks:[I\n00083: \n00084:     return-void\n00085: \n00086:     nop\n00087: \n00088:     :array_2c\n00089:     .array-data 4\n00090:         0x7f100b20\n00091:         0x7f100b21\n00092:         0x7f100b22\n00093:         0x7f100b23\n00094:         0x7f100b24\n00095:         0x7f100b25\n00096:         0x7f100b26\n00097:         0x7f100b28\n00098:     .end array-data\n00099: \n00100:     :array_40\n00101:     .array-data 4\n00102:         0x7f141c96\n00103:         0x7f141c70\n00104:         0x7f141ca5\n00105:         0x7f141ca8\n00106:         0x7f141c9b\n00107:         0x7f141c68\n00108:         0x7f141c8b\n00109:     .end array-data\n00110: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public constructor <init>(Landroidx/fragment/app/Fragment;Lcom/inkbird/inkbirdapp/device/iic800/view/Iic800ManualView;)V",
+      "method_name": "<init>",
+      "start_line": 29,
+      "end_line": 73,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        66,
+        70
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00029: .method public constructor <init>(Landroidx/fragment/app/Fragment;Lcom/inkbird/inkbirdapp/device/iic800/view/Iic800ManualView;)V\n00030:     .registers 4\n00031: \n00032:     .line 60\n00033:     invoke-direct {p0}, Lcom/thingclips/smart/android/mvp/presenter/BasePresenter;-><init>()V\n00034: \n00035:     .line 264\n00036:     new-instance v0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter$1;\n00037: \n00038:     invoke-direct {v0, p0}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter$1;-><init>(Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;)V\n00039: \n00040:     iput-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00041: \n00042:     .line 61\n00043:     iput-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n00044: \n00045:     .line 62\n00046:     iput-object p2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/Iic800ManualView;\n00047: \n00048:     .line 63\n00049:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getActivity()Landroidx/fragment/app/FragmentActivity;\n00050: \n00051:     move-result-object p1\n00052: \n00053:     invoke-virtual {p1}, Landroidx/fragment/app/FragmentActivity;->getIntent()Landroid/content/Intent;\n00054: \n00055:     move-result-object p1\n00056: \n00057:     const-string p2, \"devId\"\n00058: \n00059:     invoke-virtual {p1, p2}, Landroid/content/Intent;->getStringExtra(Ljava/lang/String;)Ljava/lang/String;\n00060: \n00061:     move-result-object p1\n00062: \n00063:     iput-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->devId:Ljava/lang/String;\n00064: \n00065:     .line 64\n00066:     invoke-static {p1}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00067: \n00068:     move-result-object p1\n00069: \n00070:     iput-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00071: \n00072:     return-void\n00073: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public changeAllManual(Ljava/util/List;I)V",
+      "method_name": "changeAllManual",
+      "start_line": 540,
+      "end_line": 667,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        552,
+        594,
+        608,
+        620,
+        657,
+        663
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00540: .method public changeAllManual(Ljava/util/List;I)V\n00541:     .registers 8\n00542:     .annotation system Ldalvik/annotation/Signature;\n00543:         value = {\n00544:             \"(\",\n00545:             \"Ljava/util/List<\",\n00546:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n00547:             \">;I)V\"\n00548:         }\n00549:     .end annotation\n00550: \n00551:     .line 229\n00552:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00553: \n00554:     if-eqz v0, :cond_69\n00555: \n00556:     .line 230\n00557:     new-instance v0, Ljava/lang/StringBuilder;\n00558: \n00559:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n00560: \n00561:     .line 231\n00562:     new-instance v1, Ljava/lang/StringBuilder;\n00563: \n00564:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n00565: \n00566:     .line 232\n00567:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n00568: \n00569:     move-result-object p1\n00570: \n00571:     :goto_12\n00572:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n00573: \n00574:     move-result v2\n00575: \n00576:     if-eqz v2, :cond_44\n00577: \n00578:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n00579: \n00580:     move-result-object v2\n00581: \n00582:     check-cast v2, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n00583: \n00584:     .line 233\n00585:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isWateringSwitch()Z\n00586: \n00587:     move-result v3\n00588: \n00589:     const/4 v4, 0x4\n00590: \n00591:     if-eqz v3, :cond_2d\n00592: \n00593:     .line 234\n00594:     invoke-static {p2, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00595: \n00596:     move-result-object v3\n00597: \n00598:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00599: \n00600:     goto :goto_38\n00601: \n00602:     .line 236\n00603:     :cond_2d\n00604:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRemainTime()I\n00605: \n00606:     move-result v3\n00607: \n00608:     invoke-static {v3, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00609: \n00610:     move-result-object v3\n00611: \n00612:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00613: \n00614:     .line 238\n00615:     :goto_38\n00616:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWateredTime()I\n00617: \n00618:     move-result v2\n00619: \n00620:     invoke-static {v2, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00621: \n00622:     move-result-object v2\n00623: \n00624:     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00625: \n00626:     goto :goto_12\n00627: \n00628:     .line 241\n00629:     :cond_44\n00630:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n00631: \n00632:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n00633: \n00634:     move-result-object p1\n00635: \n00636:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00637: \n00638:     .line 242\n00639:     new-instance p1, Ljava/lang/StringBuilder;\n00640: \n00641:     const-string p2, \"0200\"\n00642: \n00643:     invoke-direct {p1, p2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n00644: \n00645:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n00646: \n00647:     move-result-object p1\n00648: \n00649:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n00650: \n00651:     move-result-object p1\n00652: \n00653:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n00654: \n00655:     move-result-object p1\n00656: \n00657:     iget-object p2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00658: \n00659:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00660: \n00661:     const-string v1, \"45\"\n00662: \n00663:     invoke-static {v1, p1, p2, v0}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00664: \n00665:     :cond_69\n00666:     return-void\n00667: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public changeManuals(Ljava/util/List;)V",
+      "method_name": "changeManuals",
+      "start_line": 669,
+      "end_line": 778,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        681,
+        720,
+        731,
+        768,
+        774
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00669: .method public changeManuals(Ljava/util/List;)V\n00670:     .registers 7\n00671:     .annotation system Ldalvik/annotation/Signature;\n00672:         value = {\n00673:             \"(\",\n00674:             \"Ljava/util/List<\",\n00675:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n00676:             \">;)V\"\n00677:         }\n00678:     .end annotation\n00679: \n00680:     .line 201\n00681:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00682: \n00683:     if-eqz v0, :cond_5b\n00684: \n00685:     .line 202\n00686:     new-instance v0, Ljava/lang/StringBuilder;\n00687: \n00688:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n00689: \n00690:     .line 203\n00691:     new-instance v1, Ljava/lang/StringBuilder;\n00692: \n00693:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n00694: \n00695:     .line 204\n00696:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n00697: \n00698:     move-result-object p1\n00699: \n00700:     :goto_12\n00701:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n00702: \n00703:     move-result v2\n00704: \n00705:     if-eqz v2, :cond_36\n00706: \n00707:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n00708: \n00709:     move-result-object v2\n00710: \n00711:     check-cast v2, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n00712: \n00713:     .line 205\n00714:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getManualTime()I\n00715: \n00716:     move-result v3\n00717: \n00718:     const/4 v4, 0x4\n00719: \n00720:     invoke-static {v3, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00721: \n00722:     move-result-object v3\n00723: \n00724:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00725: \n00726:     .line 206\n00727:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWateredTime()I\n00728: \n00729:     move-result v2\n00730: \n00731:     invoke-static {v2, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00732: \n00733:     move-result-object v2\n00734: \n00735:     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00736: \n00737:     goto :goto_12\n00738: \n00739:     .line 209\n00740:     :cond_36\n00741:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n00742: \n00743:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n00744: \n00745:     move-result-object p1\n00746: \n00747:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00748: \n00749:     .line 210\n00750:     new-instance p1, Ljava/lang/StringBuilder;\n00751: \n00752:     const-string v2, \"0201\"\n00753: \n00754:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n00755: \n00756:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n00757: \n00758:     move-result-object p1\n00759: \n00760:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n00761: \n00762:     move-result-object p1\n00763: \n00764:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n00765: \n00766:     move-result-object p1\n00767: \n00768:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00769: \n00770:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00771: \n00772:     const-string v2, \"45\"\n00773: \n00774:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00775: \n00776:     :cond_5b\n00777:     return-void\n00778: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public onDestroy()V",
+      "method_name": "onDestroy",
+      "start_line": 1114,
+      "end_line": 1130,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1121,
+        1126
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "01114: .method public onDestroy()V\n01115:     .registers 2\n01116: \n01117:     .line 69\n01118:     invoke-super {p0}, Lcom/thingclips/smart/android/mvp/presenter/BasePresenter;->onDestroy()V\n01119: \n01120:     .line 70\n01121:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01122: \n01123:     if-eqz v0, :cond_a\n01124: \n01125:     .line 71\n01126:     invoke-interface {v0}, Lcom/thingclips/smart/sdk/api/IThingDevice;->onDestroy()V\n01127: \n01128:     :cond_a\n01129:     return-void\n01130: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public startAllManual(I)V",
+      "method_name": "startAllManual",
+      "start_line": 1291,
+      "end_line": 1379,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1295,
+        1323,
+        1330,
+        1369,
+        1375
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01291: .method public startAllManual(I)V\n01292:     .registers 8\n01293: \n01294:     .line 215\n01295:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01296: \n01297:     if-eqz v0, :cond_4d\n01298: \n01299:     if-lez p1, :cond_4d\n01300: \n01301:     .line 216\n01302:     new-instance v0, Ljava/lang/StringBuilder;\n01303: \n01304:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n01305: \n01306:     .line 217\n01307:     new-instance v1, Ljava/lang/StringBuilder;\n01308: \n01309:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n01310: \n01311:     const/4 v2, 0x0\n01312: \n01313:     move v3, v2\n01314: \n01315:     :goto_12\n01316:     const/16 v4, 0x8\n01317: \n01318:     if-ge v3, v4, :cond_28\n01319: \n01320:     const/4 v4, 0x4\n01321: \n01322:     .line 219\n01323:     invoke-static {p1, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01324: \n01325:     move-result-object v5\n01326: \n01327:     invoke-virtual {v0, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01328: \n01329:     .line 220\n01330:     invoke-static {v2, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01331: \n01332:     move-result-object v4\n01333: \n01334:     invoke-virtual {v1, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01335: \n01336:     add-int/lit8 v3, v3, 0x1\n01337: \n01338:     goto :goto_12\n01339: \n01340:     .line 223\n01341:     :cond_28\n01342:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01343: \n01344:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01345: \n01346:     move-result-object p1\n01347: \n01348:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01349: \n01350:     .line 224\n01351:     new-instance p1, Ljava/lang/StringBuilder;\n01352: \n01353:     const-string v2, \"0100\"\n01354: \n01355:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01356: \n01357:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01358: \n01359:     move-result-object p1\n01360: \n01361:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01362: \n01363:     move-result-object p1\n01364: \n01365:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01366: \n01367:     move-result-object p1\n01368: \n01369:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01370: \n01371:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01372: \n01373:     const-string v2, \"45\"\n01374: \n01375:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01376: \n01377:     :cond_4d\n01378:     return-void\n01379: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public startManuals(Ljava/util/List;)V",
+      "method_name": "startManuals",
+      "start_line": 1381,
+      "end_line": 1556,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1393,
+        1475,
+        1486,
+        1523,
+        1529
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01381: .method public startManuals(Ljava/util/List;)V\n01382:     .registers 7\n01383:     .annotation system Ldalvik/annotation/Signature;\n01384:         value = {\n01385:             \"(\",\n01386:             \"Ljava/util/List<\",\n01387:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n01388:             \">;)V\"\n01389:         }\n01390:     .end annotation\n01391: \n01392:     .line 155\n01393:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01394: \n01395:     if-eqz v0, :cond_9b\n01396: \n01397:     .line 156\n01398:     invoke-virtual {p0}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->getPowerStatus()Z\n01399: \n01400:     move-result v0\n01401: \n01402:     if-nez v0, :cond_2c\n01403: \n01404:     .line 157\n01405:     invoke-static {}, Lcom/inkbird/inkbirdapp/base/widget/popwindow/PopWindowUtil;->getInstance()Lcom/inkbird/inkbirdapp/base/widget/popwindow/PopWindowUtil;\n01406: \n01407:     move-result-object p1\n01408: \n01409:     invoke-static {}, Lcom/inkbird/base/utils/ActivityManager;->getAppManager()Lcom/inkbird/base/utils/ActivityManager;\n01410: \n01411:     move-result-object v0\n01412: \n01413:     invoke-virtual {v0}, Lcom/inkbird/base/utils/ActivityManager;->currentActivity()Landroid/app/Activity;\n01414: \n01415:     move-result-object v0\n01416: \n01417:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01418: \n01419:     const v2, 0x7f141ca4\n01420: \n01421:     .line 158\n01422:     invoke-virtual {v1, v2}, Landroidx/fragment/app/Fragment;->getString(I)Ljava/lang/String;\n01423: \n01424:     move-result-object v1\n01425: \n01426:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01427: \n01428:     const v3, 0x7f141ba3\n01429: \n01430:     invoke-virtual {v2, v3}, Landroidx/fragment/app/Fragment;->getString(I)Ljava/lang/String;\n01431: \n01432:     move-result-object v2\n01433: \n01434:     .line 157\n01435:     invoke-virtual {p1, v0, v1, v2}, Lcom/inkbird/inkbirdapp/base/widget/popwindow/PopWindowUtil;->showTips(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V\n01436: \n01437:     return-void\n01438: \n01439:     .line 161\n01440:     :cond_2c\n01441:     new-instance v0, Ljava/lang/StringBuilder;\n01442: \n01443:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n01444: \n01445:     .line 162\n01446:     new-instance v1, Ljava/lang/StringBuilder;\n01447: \n01448:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n01449: \n01450:     .line 163\n01451:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01452: \n01453:     move-result-object p1\n01454: \n01455:     :goto_3a\n01456:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n01457: \n01458:     move-result v2\n01459: \n01460:     if-eqz v2, :cond_5e\n01461: \n01462:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n01463: \n01464:     move-result-object v2\n01465: \n01466:     check-cast v2, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n01467: \n01468:     .line 164\n01469:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getManualTime()I\n01470: \n01471:     move-result v3\n01472: \n01473:     const/4 v4, 0x4\n01474: \n01475:     invoke-static {v3, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01476: \n01477:     move-result-object v3\n01478: \n01479:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01480: \n01481:     .line 165\n01482:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWateredTime()I\n01483: \n01484:     move-result v2\n01485: \n01486:     invoke-static {v2, v4}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01487: \n01488:     move-result-object v2\n01489: \n01490:     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01491: \n01492:     goto :goto_3a\n01493: \n01494:     .line 168\n01495:     :cond_5e\n01496:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01497: \n01498:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->requireContext()Landroid/content/Context;\n01499: \n01500:     move-result-object p1\n01501: \n01502:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01503: \n01504:     .line 169\n01505:     new-instance p1, Ljava/lang/StringBuilder;\n01506: \n01507:     const-string v2, \"0101\"\n01508: \n01509:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01510: \n01511:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01512: \n01513:     move-result-object p1\n01514: \n01515:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01516: \n01517:     move-result-object p1\n01518: \n01519:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01520: \n01521:     move-result-object p1\n01522: \n01523:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01524: \n01525:     iget-object v3, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01526: \n01527:     const-string v4, \"45\"\n01528: \n01529:     invoke-static {v4, p1, v2, v3}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01530: \n01531:     .line 170\n01532:     new-instance p1, Ljava/lang/StringBuilder;\n01533: \n01534:     const-string v2, \"-------0101\"\n01535: \n01536:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01537: \n01538:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01539: \n01540:     move-result-object p1\n01541: \n01542:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01543: \n01544:     move-result-object p1\n01545: \n01546:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01547: \n01548:     move-result-object p1\n01549: \n01550:     const-string v0, \"45dp:\"\n01551: \n01552:     invoke-static {v0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I\n01553: \n01554:     :cond_9b\n01555:     return-void\n01556: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public startManuals2(Ljava/util/List;)V",
+      "method_name": "startManuals2",
+      "start_line": 1558,
+      "end_line": 1703,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1570,
+        1623,
+        1634,
+        1646,
+        1653,
+        1693,
+        1699
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01558: .method public startManuals2(Ljava/util/List;)V\n01559:     .registers 9\n01560:     .annotation system Ldalvik/annotation/Signature;\n01561:         value = {\n01562:             \"(\",\n01563:             \"Ljava/util/List<\",\n01564:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n01565:             \">;)V\"\n01566:         }\n01567:     .end annotation\n01568: \n01569:     .line 175\n01570:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01571: \n01572:     if-eqz v0, :cond_78\n01573: \n01574:     .line 176\n01575:     new-instance v0, Ljava/lang/StringBuilder;\n01576: \n01577:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n01578: \n01579:     .line 177\n01580:     new-instance v1, Ljava/lang/StringBuilder;\n01581: \n01582:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n01583: \n01584:     const/4 v2, 0x1\n01585: \n01586:     :goto_f\n01587:     const/16 v3, 0x9\n01588: \n01589:     if-ge v2, v3, :cond_53\n01590: \n01591:     .line 181\n01592:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01593: \n01594:     move-result-object v3\n01595: \n01596:     :cond_17\n01597:     invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z\n01598: \n01599:     move-result v4\n01600: \n01601:     const/4 v5, 0x4\n01602: \n01603:     if-eqz v4, :cond_41\n01604: \n01605:     invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n01606: \n01607:     move-result-object v4\n01608: \n01609:     check-cast v4, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n01610: \n01611:     .line 182\n01612:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getZoneId()I\n01613: \n01614:     move-result v6\n01615: \n01616:     if-ne v6, v2, :cond_17\n01617: \n01618:     .line 183\n01619:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getManualTime()I\n01620: \n01621:     move-result v3\n01622: \n01623:     invoke-static {v3, v5}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01624: \n01625:     move-result-object v3\n01626: \n01627:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01628: \n01629:     .line 184\n01630:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWateredTime()I\n01631: \n01632:     move-result v3\n01633: \n01634:     invoke-static {v3, v5}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01635: \n01636:     move-result-object v3\n01637: \n01638:     invoke-virtual {v1, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01639: \n01640:     goto :goto_50\n01641: \n01642:     :cond_41\n01643:     const/4 v3, 0x0\n01644: \n01645:     .line 190\n01646:     invoke-static {v3, v5}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01647: \n01648:     move-result-object v4\n01649: \n01650:     invoke-virtual {v0, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01651: \n01652:     .line 191\n01653:     invoke-static {v3, v5}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01654: \n01655:     move-result-object v3\n01656: \n01657:     invoke-virtual {v1, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01658: \n01659:     :goto_50\n01660:     add-int/lit8 v2, v2, 0x1\n01661: \n01662:     goto :goto_f\n01663: \n01664:     .line 195\n01665:     :cond_53\n01666:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01667: \n01668:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01669: \n01670:     move-result-object p1\n01671: \n01672:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01673: \n01674:     .line 196\n01675:     new-instance p1, Ljava/lang/StringBuilder;\n01676: \n01677:     const-string v2, \"0101\"\n01678: \n01679:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01680: \n01681:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01682: \n01683:     move-result-object p1\n01684: \n01685:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01686: \n01687:     move-result-object p1\n01688: \n01689:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01690: \n01691:     move-result-object p1\n01692: \n01693:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01694: \n01695:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01696: \n01697:     const-string v2, \"45\"\n01698: \n01699:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01700: \n01701:     :cond_78\n01702:     return-void\n01703: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public stopAllManual()V",
+      "method_name": "stopAllManual",
+      "start_line": 1705,
+      "end_line": 1781,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1709,
+        1736,
+        1742,
+        1759,
+        1765,
+        1771,
+        1777
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01705: .method public stopAllManual()V\n01706:     .registers 5\n01707: \n01708:     .line 142\n01709:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01710: \n01711:     if-eqz v0, :cond_40\n01712: \n01713:     .line 143\n01714:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01715: \n01716:     invoke-virtual {v0}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01717: \n01718:     move-result-object v0\n01719: \n01720:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01721: \n01722:     .line 144\n01723:     sget-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->devType:Ljava/lang/String;\n01724: \n01725:     sget-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_400:Ljava/lang/String;\n01726: \n01727:     invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n01728: \n01729:     move-result v0\n01730: \n01731:     const-string v1, \"45\"\n01732: \n01733:     if-eqz v0, :cond_23\n01734: \n01735:     .line 145\n01736:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01737: \n01738:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01739: \n01740:     const-string v3, \"010000000000000000000000000000000000\"\n01741: \n01742:     invoke-static {v1, v3, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01743: \n01744:     return-void\n01745: \n01746:     .line 146\n01747:     :cond_23\n01748:     sget-object v0, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->devType:Ljava/lang/String;\n01749: \n01750:     sget-object v2, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_600:Ljava/lang/String;\n01751: \n01752:     invoke-virtual {v0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n01753: \n01754:     move-result v0\n01755: \n01756:     if-eqz v0, :cond_37\n01757: \n01758:     .line 147\n01759:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01760: \n01761:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01762: \n01763:     const-string v3, \"0100000000000000000000000000000000000000000000000000\"\n01764: \n01765:     invoke-static {v1, v3, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01766: \n01767:     return-void\n01768: \n01769:     .line 149\n01770:     :cond_37\n01771:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01772: \n01773:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01774: \n01775:     const-string v3, \"01000000000000000000000000000000000000000000000000000000000000000000\"\n01776: \n01777:     invoke-static {v1, v3, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01778: \n01779:     :cond_40\n01780:     return-void\n01781: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800ManualPresenter",
+      "source_file": "Iic800ManualPresenter.smali",
+      "method_header": ".method public stopManual(Ljava/util/List;)V",
+      "method_name": "stopManual",
+      "start_line": 1783,
+      "end_line": 1944,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1795,
+        1848,
+        1855,
+        1871,
+        1882,
+        1914,
+        1934,
+        1940
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01783: .method public stopManual(Ljava/util/List;)V\n01784:     .registers 10\n01785:     .annotation system Ldalvik/annotation/Signature;\n01786:         value = {\n01787:             \"(\",\n01788:             \"Ljava/util/List<\",\n01789:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n01790:             \">;)V\"\n01791:         }\n01792:     .end annotation\n01793: \n01794:     .line 117\n01795:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01796: \n01797:     if-eqz v0, :cond_84\n01798: \n01799:     .line 118\n01800:     new-instance v0, Ljava/lang/StringBuilder;\n01801: \n01802:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n01803: \n01804:     .line 119\n01805:     new-instance v1, Ljava/lang/StringBuilder;\n01806: \n01807:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n01808: \n01809:     .line 122\n01810:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01811: \n01812:     move-result-object p1\n01813: \n01814:     const/4 v2, 0x0\n01815: \n01816:     move v3, v2\n01817: \n01818:     move v4, v3\n01819: \n01820:     :goto_15\n01821:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n01822: \n01823:     move-result v5\n01824: \n01825:     if-eqz v5, :cond_54\n01826: \n01827:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n01828: \n01829:     move-result-object v4\n01830: \n01831:     check-cast v4, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n01832: \n01833:     .line 123\n01834:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getManualMode()I\n01835: \n01836:     move-result v5\n01837: \n01838:     .line 124\n01839:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isWateringSwitch()Z\n01840: \n01841:     move-result v6\n01842: \n01843:     const/4 v7, 0x4\n01844: \n01845:     if-eqz v6, :cond_3c\n01846: \n01847:     .line 126\n01848:     invoke-static {v2, v7}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01849: \n01850:     move-result-object v3\n01851: \n01852:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01853: \n01854:     .line 127\n01855:     invoke-static {v2, v7}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01856: \n01857:     move-result-object v3\n01858: \n01859:     invoke-virtual {v1, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01860: \n01861:     const/4 v3, 0x1\n01862: \n01863:     goto :goto_52\n01864: \n01865:     .line 129\n01866:     :cond_3c\n01867:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRemainTime()I\n01868: \n01869:     move-result v6\n01870: \n01871:     invoke-static {v6, v7}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01872: \n01873:     move-result-object v6\n01874: \n01875:     invoke-virtual {v0, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01876: \n01877:     .line 130\n01878:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWateredTime()I\n01879: \n01880:     move-result v4\n01881: \n01882:     invoke-static {v4, v7}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01883: \n01884:     move-result-object v4\n01885: \n01886:     invoke-virtual {v1, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01887: \n01888:     :goto_52\n01889:     move v4, v5\n01890: \n01891:     goto :goto_15\n01892: \n01893:     :cond_54\n01894:     if-eqz v3, :cond_84\n01895: \n01896:     .line 135\n01897:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mContext:Landroidx/fragment/app/Fragment;\n01898: \n01899:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01900: \n01901:     move-result-object p1\n01902: \n01903:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01904: \n01905:     .line 136\n01906:     new-instance p1, Ljava/lang/StringBuilder;\n01907: \n01908:     const-string v2, \"01\"\n01909: \n01910:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01911: \n01912:     const/4 v2, 0x2\n01913: \n01914:     invoke-static {v4, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01915: \n01916:     move-result-object v2\n01917: \n01918:     invoke-virtual {p1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01919: \n01920:     move-result-object p1\n01921: \n01922:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01923: \n01924:     move-result-object p1\n01925: \n01926:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01927: \n01928:     move-result-object p1\n01929: \n01930:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01931: \n01932:     move-result-object p1\n01933: \n01934:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01935: \n01936:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800ManualPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01937: \n01938:     const-string v2, \"45\"\n01939: \n01940:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01941: \n01942:     :cond_84\n01943:     return-void\n01944: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800Model",
+      "source_file": "Iic800Model.smali",
+      "method_header": ".method public parseZoneInfo(Ljava/util/List;Ljava/lang/Object;Lcom/thingclips/smart/sdk/bean/DeviceBean;)Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;",
+      "method_name": "parseZoneInfo",
+      "start_line": 498,
+      "end_line": 1021,
+      "dp_constants": [
+        38
+      ],
+      "strong_hit_lines": [
+        770
+      ],
+      "reasons": [
+        "DP constants 38",
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00756:     invoke-virtual {v1, v3, v5}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n00757: \n00758:     move-result-object v3\n00759: \n00760:     invoke-static {v3, v8}, Ljava/lang/Integer;->valueOf(Ljava/lang/String;I)Ljava/lang/Integer;\n00761: \n00762:     move-result-object v3\n00763: \n00764:     invoke-virtual {v3}, Ljava/lang/Integer;->intValue()I\n00765: \n00766:     move-result v3\n00767: \n00768:     invoke-virtual {v0, v3}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->setIntervalMonth(I)V\n00769: \n00770:     const/16 v3, 0x26\n00771: \n00772:     .line 63\n00773:     invoke-virtual {v1, v5, v3}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n00774: \n00775:     move-result-object v5\n00776: \n00777:     invoke-static {v5, v8}, Ljava/lang/Integer;->valueOf(Ljava/lang/String;I)Ljava/lang/Integer;\n00778: \n00779:     move-result-object v5\n00780: \n00781:     invoke-virtual {v5}, Ljava/lang/Integer;->intValue()I\n00782: \n00783:     move-result v5\n00784: \n00785:     invoke-virtual {v0, v5}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->setIntervalDay(I)V\n00786: \n00787:     const/16 v5, 0x27\n00788: \n00789:     .line 64\n00790:     invoke-virtual {v1, v3, v5}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n00791: \n00792:     move-result-object v3\n00793: \n00794:     invoke-static {v3, v8}, Ljava/lang/Integer;->valueOf(Ljava/lang/String;I)Ljava/lang/Integer;\n00795: \n00796:     move-result-object v3\n00797: \n00798:     invoke-virtual {v3}, Ljava/lang/Integer;->intValue()I\n00799: \n00800:     move-result v3"
+      ]
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "method_header": ".method static bridge synthetic -$$Nest$fgetmDevice(Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;)Lcom/thingclips/smart/sdk/api/IThingDevice;",
+      "method_name": "-$$Nest$fgetmDevice",
+      "start_line": 64,
+      "end_line": 70,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        64,
+        67
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00064: .method static bridge synthetic -$$Nest$fgetmDevice(Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00065:     .registers 1\n00066: \n00067:     iget-object p0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00068: \n00069:     return-object p0\n00070: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "method_header": ".method private initData()V",
+      "method_name": "initData",
+      "start_line": 195,
+      "end_line": 544,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        344,
+        348,
+        353
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00330:     sput-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->devType:Ljava/lang/String;\n00331: \n00332:     goto :goto_79\n00333: \n00334:     .line 75\n00335:     :cond_75\n00336:     sget-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_800:Ljava/lang/String;\n00337: \n00338:     sput-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->devType:Ljava/lang/String;\n00339: \n00340:     .line 77\n00341:     :goto_79\n00342:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->devId:Ljava/lang/String;\n00343: \n00344:     invoke-static {v1}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00345: \n00346:     move-result-object v1\n00347: \n00348:     iput-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00349: \n00350:     if-eqz v1, :cond_86\n00351: \n00352:     .line 80\n00353:     invoke-interface {v1, p0}, Lcom/thingclips/smart/sdk/api/IThingDevice;->registerDevListener(Lcom/thingclips/smart/sdk/api/IDevListener;)V\n00354: \n00355:     :cond_86\n00356:     const/4 v1, 0x0\n00357: \n00358:     if-eqz v0, :cond_cd\n00359: \n00360:     .line 84\n00361:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;\n00362: \n00363:     invoke-virtual {v0}, Lcom/thingclips/smart/sdk/bean/DeviceBean;->getName()Ljava/lang/String;\n00364: \n00365:     move-result-object v3\n00366: \n00367:     invoke-interface {v2, v3}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;->setDeviceName(Ljava/lang/String;)V\n00368: \n00369:     .line 85\n00370:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;\n00371: \n00372:     invoke-virtual {v0}, Lcom/thingclips/smart/sdk/bean/DeviceBean;->getIsOnline()Ljava/lang/Boolean;\n00373: \n00374:     move-result-object v3\n00375: \n00376:     invoke-interface {v2, v3}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;->setOnlineState(Ljava/lang/Boolean;)V\n00377: \n00378:     .line 86\n00379:     invoke-virtual {v0}, Lcom/thingclips/smart/sdk/bean/DeviceBean;->getDps()Ljava/util/Map;\n00380: \n00381:     move-result-object v0\n00382: \n00383:     if-eqz v0, :cond_cd"
+      ]
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "method_header": ".method private initNormalTime()V",
+      "method_name": "initNormalTime",
+      "start_line": 546,
+      "end_line": 559,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        552,
+        556
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00546: .method private initNormalTime()V\n00547:     .registers 4\n00548: \n00549:     .line 173\n00550:     const-string v0, \"0000000000000000000000000000000000000000\"\n00551: \n00552:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00553: \n00554:     const-string v2, \"38\"\n00555: \n00556:     invoke-static {v2, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;)V\n00557: \n00558:     return-void\n00559: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "method_header": ".method public clearAlarm()V",
+      "method_name": "clearAlarm",
+      "start_line": 730,
+      "end_line": 754,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        745,
+        751
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00730: .method public clearAlarm()V\n00731:     .registers 5\n00732: \n00733:     .line 235\n00734:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mContext:Landroid/app/Activity;\n00735: \n00736:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00737: \n00738:     const/4 v0, 0x1\n00739: \n00740:     .line 236\n00741:     invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n00742: \n00743:     move-result-object v0\n00744: \n00745:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00746: \n00747:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00748: \n00749:     const-string v3, \"109\"\n00750: \n00751:     invoke-static {v3, v0, v1, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00752: \n00753:     return-void\n00754: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "method_header": ".method public onDestroy()V",
+      "method_name": "onDestroy",
+      "start_line": 798,
+      "end_line": 821,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        812,
+        817
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00798: .method public onDestroy()V\n00799:     .registers 2\n00800: \n00801:     .line 122\n00802:     invoke-super {p0}, Lcom/thingclips/smart/android/mvp/presenter/BasePresenter;->onDestroy()V\n00803: \n00804:     .line 123\n00805:     invoke-static {}, Lcom/thingclips/sdk/eventbus/EventBus;->getDefault()Lcom/thingclips/sdk/eventbus/EventBus;\n00806: \n00807:     move-result-object v0\n00808: \n00809:     invoke-virtual {v0, p0}, Lcom/thingclips/sdk/eventbus/EventBus;->unregister(Ljava/lang/Object;)V\n00810: \n00811:     .line 124\n00812:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00813: \n00814:     if-eqz v0, :cond_11\n00815: \n00816:     .line 125\n00817:     invoke-interface {v0}, Lcom/thingclips/smart/sdk/api/IThingDevice;->unRegisterDevListener()V\n00818: \n00819:     :cond_11\n00820:     return-void\n00821: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800Presenter",
+      "source_file": "Iic800Presenter.smali",
+      "method_header": ".method public onDpUpdate(Ljava/lang/String;Ljava/lang/String;)V",
+      "method_name": "onDpUpdate",
+      "start_line": 859,
+      "end_line": 1887,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        886,
+        893,
+        900,
+        983,
+        998,
+        1226,
+        1239,
+        1307,
+        1314,
+        1373,
+        1380,
+        1435,
+        1442,
+        1464,
+        1616,
+        1623,
+        1681,
+        1734,
+        1741,
+        1831,
+        1838
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00872:     move-result v0\n00873: \n00874:     if-eqz v0, :cond_35b\n00875: \n00876:     .line 247\n00877:     invoke-static {}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->getDataInstance()Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;\n00878: \n00879:     move-result-object v0\n00880: \n00881:     invoke-interface {v0, p1}, Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;->getDeviceBean(Ljava/lang/String;)Lcom/thingclips/smart/sdk/bean/DeviceBean;\n00882: \n00883:     move-result-object p1\n00884: \n00885:     .line 248\n00886:     invoke-static {p2}, Lcom/alibaba/fastjson/JSON;->parseObject(Ljava/lang/String;)Lcom/alibaba/fastjson/JSONObject;\n00887: \n00888:     move-result-object p2\n00889: \n00890:     .line 249\n00891:     const-string v0, \"38\"\n00892: \n00893:     invoke-virtual {p2, v0}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n00894: \n00895:     move-result v1\n00896: \n00897:     if-eqz v1, :cond_6a\n00898: \n00899:     .line 250\n00900:     invoke-virtual {p2, v0}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n00901: \n00902:     move-result-object v0\n00903: \n00904:     if-eqz v0, :cond_6a\n00905: \n00906:     .line 251\n00907:     const-string v1, \"0000000000000000000000000000000000000000\"\n00908: \n00909:     invoke-virtual {v0}, Ljava/lang/Object;->toString()Ljava/lang/String;\n00910: \n00911:     move-result-object v2\n00912: \n00913:     invoke-virtual {v1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n00914: \n00915:     move-result v1\n00916: \n00917:     if-nez v1, :cond_6a\n00918: \n00919:     .line 252\n00920:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/Iic800Model;\n00921: \n00922:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n00923: \n00924:     invoke-virtual {v1, v2, v0, p1}, Lcom/inkbird/inkbirdapp/device/iic800/model/Iic800Model;->parseZoneInfo(Ljava/util/List;Ljava/lang/Object;Lcom/thingclips/smart/sdk/bean/DeviceBean;)Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n00925: \n00926:     move-result-object v0\n00927: \n00928:     .line 253\n00929:     invoke-virtual {v0}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getZoneId()I\n00930: ",
+        "00969: \n00970:     .line 256\n00971:     invoke-static {}, Lcom/thingclips/sdk/eventbus/EventBus;->getDefault()Lcom/thingclips/sdk/eventbus/EventBus;\n00972: \n00973:     move-result-object v2\n00974: \n00975:     invoke-virtual {v2, v1}, Lcom/thingclips/sdk/eventbus/EventBus;->post(Ljava/lang/Object;)V\n00976: \n00977:     goto :goto_56\n00978: \n00979:     .line 262\n00980:     :cond_6a\n00981:     const-string v0, \"45\"\n00982: \n00983:     invoke-virtual {p2, v0}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n00984: \n00985:     move-result v1\n00986: \n00987:     const/4 v2, 0x2\n00988: \n00989:     const/16 v3, 0x10\n00990: \n00991:     const/4 v4, 0x1\n00992: \n00993:     const/4 v5, 0x4\n00994: \n00995:     if-eqz v1, :cond_13a\n00996: \n00997:     .line 263\n00998:     invoke-virtual {p2, v0}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n00999: \n01000:     move-result-object v0\n01001: \n01002:     if-eqz v0, :cond_82\n01003: \n01004:     .line 264\n01005:     invoke-virtual {v0}, Ljava/lang/Object;->toString()Ljava/lang/String;\n01006: \n01007:     move-result-object v0\n01008: \n01009:     goto :goto_84\n01010: \n01011:     :cond_82\n01012:     const-string v0, \"00000000000000000000000000000000000000000000000000000000000000000000\"\n01013: \n01014:     .line 265\n01015:     :goto_84\n01016:     invoke-virtual {v0, v2, v5}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n01017: \n01018:     move-result-object v1\n01019: \n01020:     invoke-static {v1, v3}, Ljava/lang/Integer;->valueOf(Ljava/lang/String;I)Ljava/lang/Integer;\n01021: \n01022:     move-result-object v1\n01023: \n01024:     invoke-virtual {v1}, Ljava/lang/Integer;->intValue()I\n01025: \n01026:     move-result v1\n01027: \n01028:     .line 266",
+        "01212:     .line 277\n01213:     :goto_131\n01214:     invoke-static {}, Lcom/thingclips/sdk/eventbus/EventBus;->getDefault()Lcom/thingclips/sdk/eventbus/EventBus;\n01215: \n01216:     move-result-object v8\n01217: \n01218:     invoke-virtual {v8, v7}, Lcom/thingclips/sdk/eventbus/EventBus;->post(Ljava/lang/Object;)V\n01219: \n01220:     goto/16 :goto_9a\n01221: \n01222:     .line 281\n01223:     :cond_13a\n01224:     const-string v0, \"101\"\n01225: \n01226:     invoke-virtual {p2, v0}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01227: \n01228:     move-result v1\n01229: \n01230:     const-string v6, \"Auto\"\n01231: \n01232:     const-string v7, \"OFF\"\n01233: \n01234:     const/4 v8, 0x0\n01235: \n01236:     if-eqz v1, :cond_17b\n01237: \n01238:     .line 282\n01239:     invoke-virtual {p2, v0}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01240: \n01241:     move-result-object v1\n01242: \n01243:     if-eqz v1, :cond_152\n01244: \n01245:     .line 283\n01246:     invoke-virtual {v1}, Ljava/lang/Object;->toString()Ljava/lang/String;\n01247: \n01248:     move-result-object v1\n01249: \n01250:     goto :goto_153\n01251: \n01252:     :cond_152\n01253:     move-object v1, v7\n01254: \n01255:     .line 284\n01256:     :goto_153\n01257:     iget-object v9, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n01258: \n01259:     invoke-interface {v9}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01260: \n01261:     move-result-object v9\n01262: \n01263:     :cond_159\n01264:     :goto_159\n01265:     invoke-interface {v9}, Ljava/util/Iterator;->hasNext()Z\n01266: \n01267:     move-result v10\n01268: \n01269:     if-eqz v10, :cond_178",
+        "01293:     .line 287\n01294:     :cond_174\n01295:     invoke-virtual {v10, v8}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->setManualTime(I)V\n01296: \n01297:     goto :goto_159\n01298: \n01299:     .line 290\n01300:     :cond_178\n01301:     invoke-direct {p0}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->updateNextTime()V\n01302: \n01303:     .line 293\n01304:     :cond_17b\n01305:     const-string v1, \"102\"\n01306: \n01307:     invoke-virtual {p2, v1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01308: \n01309:     move-result v9\n01310: \n01311:     if-eqz v9, :cond_1b1\n01312: \n01313:     .line 294\n01314:     invoke-virtual {p2, v1}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01315: \n01316:     move-result-object v1\n01317: \n01318:     if-eqz v1, :cond_193\n01319: \n01320:     .line 295\n01321:     check-cast v1, Ljava/lang/Boolean;\n01322: \n01323:     invoke-virtual {v1}, Ljava/lang/Boolean;->booleanValue()Z\n01324: \n01325:     move-result v1\n01326: \n01327:     if-eqz v1, :cond_193\n01328: \n01329:     move v1, v4\n01330: \n01331:     goto :goto_194\n01332: \n01333:     :cond_193\n01334:     move v1, v8\n01335: \n01336:     .line 296\n01337:     :goto_194\n01338:     iget-object v9, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n01339: \n01340:     invoke-interface {v9}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01341: \n01342:     move-result-object v9\n01343: \n01344:     :goto_19a",
+        "01359: \n01360:     .line 298\n01361:     invoke-static {}, Lcom/thingclips/sdk/eventbus/EventBus;->getDefault()Lcom/thingclips/sdk/eventbus/EventBus;\n01362: \n01363:     move-result-object v11\n01364: \n01365:     invoke-virtual {v11, v10}, Lcom/thingclips/sdk/eventbus/EventBus;->post(Ljava/lang/Object;)V\n01366: \n01367:     goto :goto_19a\n01368: \n01369:     .line 302\n01370:     :cond_1b1\n01371:     const-string v1, \"103\"\n01372: \n01373:     invoke-virtual {p2, v1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01374: \n01375:     move-result v9\n01376: \n01377:     if-eqz v9, :cond_1e4\n01378: \n01379:     .line 303\n01380:     invoke-virtual {p2, v1}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01381: \n01382:     move-result-object v1\n01383: \n01384:     if-eqz v1, :cond_1c6\n01385: \n01386:     .line 304\n01387:     check-cast v1, Ljava/lang/Integer;\n01388: \n01389:     invoke-virtual {v1}, Ljava/lang/Integer;->intValue()I\n01390: \n01391:     move-result v1\n01392: \n01393:     goto :goto_1c7\n01394: \n01395:     :cond_1c6\n01396:     move v1, v8\n01397: \n01398:     .line 305\n01399:     :goto_1c7\n01400:     iget-object v9, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n01401: \n01402:     invoke-interface {v9}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01403: \n01404:     move-result-object v9\n01405: \n01406:     :goto_1cd\n01407:     invoke-interface {v9}, Ljava/util/Iterator;->hasNext()Z\n01408: \n01409:     move-result v10\n01410: ",
+        "01421: \n01422:     .line 307\n01423:     invoke-static {}, Lcom/thingclips/sdk/eventbus/EventBus;->getDefault()Lcom/thingclips/sdk/eventbus/EventBus;\n01424: \n01425:     move-result-object v11\n01426: \n01427:     invoke-virtual {v11, v10}, Lcom/thingclips/sdk/eventbus/EventBus;->post(Ljava/lang/Object;)V\n01428: \n01429:     goto :goto_1cd\n01430: \n01431:     .line 311\n01432:     :cond_1e4\n01433:     const-string v1, \"104\"\n01434: \n01435:     invoke-virtual {p2, v1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01436: \n01437:     move-result v9\n01438: \n01439:     if-eqz v9, :cond_27d\n01440: \n01441:     .line 312\n01442:     invoke-virtual {p2, v1}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01443: \n01444:     move-result-object v1\n01445: \n01446:     if-eqz v1, :cond_1f9\n01447: \n01448:     .line 313\n01449:     check-cast v1, Ljava/lang/Integer;\n01450: \n01451:     invoke-virtual {v1}, Ljava/lang/Integer;->intValue()I\n01452: \n01453:     move-result v1\n01454: \n01455:     goto :goto_1fa\n01456: \n01457:     :cond_1f9\n01458:     move v1, v8\n01459: \n01460:     :goto_1fa\n01461:     const/16 v9, 0x8\n01462: \n01463:     .line 314\n01464:     invoke-static {v1, v9}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01465: \n01466:     move-result-object v1\n01467: \n01468:     .line 315\n01469:     const-string v9, \"1\"\n01470: \n01471:     invoke-virtual {v1, v4, v2}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n01472: \n01473:     move-result-object v10\n01474: \n01475:     invoke-virtual {v9, v10}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n01476: \n01477:     move-result v9\n01478: \n01479:     const/4 v10, 0x3\n01480: \n01481:     .line 316\n01482:     invoke-virtual {v1, v2, v10}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n01483: \n01484:     move-result-object v11\n01485: \n01486:     invoke-static {v11, v3}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;I)I\n01487: \n01488:     move-result v11\n01489: \n01490:     .line 317\n01491:     invoke-virtual {v1, v10, v5}, Ljava/lang/String;->substring(II)Ljava/lang/String;\n01492: \n01493:     move-result-object v1\n01494: ",
+        "01602: \n01603:     if-eqz p1, :cond_27a\n01604: \n01605:     invoke-virtual {p1}, Ljava/lang/Object;->toString()Ljava/lang/String;\n01606: \n01607:     move-result-object v7\n01608: \n01609:     :cond_27a\n01610:     invoke-interface {v0, v7}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;->setCurrentFragment(Ljava/lang/String;)V\n01611: \n01612:     .line 337\n01613:     :cond_27d\n01614:     const-string p1, \"106\"\n01615: \n01616:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01617: \n01618:     move-result v0\n01619: \n01620:     if-eqz v0, :cond_2b1\n01621: \n01622:     .line 338\n01623:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01624: \n01625:     move-result-object p1\n01626: \n01627:     if-eqz p1, :cond_295\n01628: \n01629:     .line 339\n01630:     check-cast p1, Ljava/lang/Boolean;\n01631: \n01632:     invoke-virtual {p1}, Ljava/lang/Boolean;->booleanValue()Z\n01633: \n01634:     move-result p1\n01635: \n01636:     if-eqz p1, :cond_295\n01637: \n01638:     move p1, v4\n01639: \n01640:     goto :goto_296\n01641: \n01642:     :cond_295\n01643:     move p1, v8\n01644: \n01645:     .line 340\n01646:     :goto_296\n01647:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n01648: \n01649:     invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01650: \n01651:     move-result-object v0\n01652: \n01653:     :goto_29c",
+        "01667:     invoke-virtual {v1, p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->setAlarm(Z)V\n01668: \n01669:     goto :goto_29c\n01670: \n01671:     .line 343\n01672:     :cond_2ac\n01673:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;\n01674: \n01675:     invoke-interface {v0, p1}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800View;->deviceAlarm(Z)V\n01676: \n01677:     .line 346\n01678:     :cond_2b1\n01679:     const-string p1, \"107\"\n01680: \n01681:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01682: \n01683:     move-result p1\n01684: \n01685:     if-eqz p1, :cond_2de\n01686: \n01687:     .line 347\n01688:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n01689: \n01690:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01691: \n01692:     move-result-object p1\n01693: \n01694:     :cond_2bf\n01695:     :goto_2bf\n01696:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n01697: \n01698:     move-result v0\n01699: \n01700:     if-eqz v0, :cond_2db\n01701: \n01702:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n01703: \n01704:     move-result-object v0\n01705: \n01706:     check-cast v0, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n01707: \n01708:     .line 348\n01709:     invoke-virtual {v0}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWorkMode()Ljava/lang/String;\n01710: \n01711:     move-result-object v1",
+        "01720:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/Iic800Model;\n01721: \n01722:     invoke-virtual {v1, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/Iic800Model;->setNextTime(Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)V\n01723: \n01724:     goto :goto_2bf\n01725: \n01726:     .line 352\n01727:     :cond_2db\n01728:     invoke-direct {p0}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->updateNextTime()V\n01729: \n01730:     .line 355\n01731:     :cond_2de\n01732:     const-string p1, \"108\"\n01733: \n01734:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01735: \n01736:     move-result v0\n01737: \n01738:     if-eqz v0, :cond_32e\n01739: \n01740:     .line 356\n01741:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01742: \n01743:     move-result-object p1\n01744: \n01745:     .line 357\n01746:     check-cast p1, Ljava/lang/Integer;\n01747: \n01748:     invoke-virtual {p1}, Ljava/lang/Integer;->intValue()I\n01749: \n01750:     move-result p1\n01751: \n01752:     move v0, v8\n01753: \n01754:     .line 358\n01755:     :goto_2f1\n01756:     iget v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneNum:I\n01757: \n01758:     if-ge v0, v1, :cond_314\n01759: \n01760:     shr-int v1, p1, v0\n01761: \n01762:     .line 359\n01763:     rem-int/2addr v1, v2\n01764: \n01765:     if-nez v1, :cond_306\n01766: \n01767:     .line 360\n01768:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->zoneBeans:Ljava/util/List;\n01769: \n01770:     invoke-interface {v1, v0}, Ljava/util/List;->get(I)Ljava/lang/Object;\n01771: ",
+        "01817: \n01818:     .line 367\n01819:     invoke-static {}, Lcom/thingclips/sdk/eventbus/EventBus;->getDefault()Lcom/thingclips/sdk/eventbus/EventBus;\n01820: \n01821:     move-result-object v1\n01822: \n01823:     invoke-virtual {v1, v0}, Lcom/thingclips/sdk/eventbus/EventBus;->post(Ljava/lang/Object;)V\n01824: \n01825:     goto :goto_31a\n01826: \n01827:     .line 371\n01828:     :cond_32e\n01829:     const-string p1, \"110\"\n01830: \n01831:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->containsKey(Ljava/lang/Object;)Z\n01832: \n01833:     move-result v0\n01834: \n01835:     if-eqz v0, :cond_35b\n01836: \n01837:     .line 372\n01838:     invoke-virtual {p2, p1}, Lcom/alibaba/fastjson/JSONObject;->get(Ljava/lang/Object;)Ljava/lang/Object;\n01839: \n01840:     move-result-object p1\n01841: \n01842:     if-eqz p1, :cond_35b\n01843: \n01844:     .line 374\n01845:     instance-of p2, p1, Ljava/lang/Boolean;\n01846: \n01847:     if-eqz p2, :cond_349\n01848: \n01849:     .line 375\n01850:     check-cast p1, Ljava/lang/Boolean;\n01851: \n01852:     invoke-virtual {p1}, Ljava/lang/Boolean;->booleanValue()Z\n01853: \n01854:     move-result p1\n01855: \n01856:     iput-boolean p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800Presenter;->isOta:Z\n01857: \n01858:     return-void\n01859: \n01860:     .line 376\n01861:     :cond_349\n01862:     instance-of p2, p1, Ljava/lang/Integer;\n01863: \n01864:     if-eqz p2, :cond_35b\n01865: \n01866:     .line 377\n01867:     check-cast p1, Ljava/lang/Integer;\n01868: "
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method public constructor <init>(Landroidx/fragment/app/Fragment;Lcom/inkbird/inkbirdapp/device/iic800/view/Iic800ScheduleView;)V",
+      "method_name": "<init>",
+      "start_line": 29,
+      "end_line": 73,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        66,
+        70
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00029: .method public constructor <init>(Landroidx/fragment/app/Fragment;Lcom/inkbird/inkbirdapp/device/iic800/view/Iic800ScheduleView;)V\n00030:     .registers 4\n00031: \n00032:     .line 56\n00033:     invoke-direct {p0}, Lcom/thingclips/smart/android/mvp/presenter/BasePresenter;-><init>()V\n00034: \n00035:     .line 343\n00036:     new-instance v0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter$1;\n00037: \n00038:     invoke-direct {v0, p0}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter$1;-><init>(Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;)V\n00039: \n00040:     iput-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00041: \n00042:     .line 57\n00043:     iput-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mContext:Landroidx/fragment/app/Fragment;\n00044: \n00045:     .line 58\n00046:     iput-object p2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/Iic800ScheduleView;\n00047: \n00048:     .line 59\n00049:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getActivity()Landroidx/fragment/app/FragmentActivity;\n00050: \n00051:     move-result-object p1\n00052: \n00053:     invoke-virtual {p1}, Landroidx/fragment/app/FragmentActivity;->getIntent()Landroid/content/Intent;\n00054: \n00055:     move-result-object p1\n00056: \n00057:     const-string p2, \"devId\"\n00058: \n00059:     invoke-virtual {p1, p2}, Landroid/content/Intent;->getStringExtra(Ljava/lang/String;)Ljava/lang/String;\n00060: \n00061:     move-result-object p1\n00062: \n00063:     iput-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->devId:Ljava/lang/String;\n00064: \n00065:     .line 60\n00066:     invoke-static {p1}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00067: \n00068:     move-result-object p1\n00069: \n00070:     iput-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00071: \n00072:     return-void\n00073: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method private parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;",
+      "method_name": "parseIICZoneBean",
+      "start_line": 93,
+      "end_line": 320,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        101,
+        112,
+        156,
+        203,
+        226,
+        237,
+        248,
+        259,
+        270
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00093: .method private parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;\n00094:     .registers 8\n00095: \n00096:     .line 127\n00097:     new-instance v0, Ljava/lang/StringBuilder;\n00098: \n00099:     const/4 v1, 0x2\n00100: \n00101:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00102: \n00103:     move-result-object p1\n00104: \n00105:     invoke-direct {v0, p1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n00106: \n00107:     .line 128\n00108:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRunTime()I\n00109: \n00110:     move-result p1\n00111: \n00112:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00113: \n00114:     move-result-object p1\n00115: \n00116:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00117: \n00118:     const/4 p1, 0x0\n00119: \n00120:     move v2, p1\n00121: \n00122:     .line 129\n00123:     :goto_17\n00124:     const-string v3, \"FF\"\n00125: \n00126:     const/4 v4, 0x6\n00127: \n00128:     if-ge v2, v4, :cond_42\n00129: \n00130:     .line 130\n00131:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00132: \n00133:     move-result-object v4\n00134: \n00135:     invoke-interface {v4}, Ljava/util/List;->size()I\n00136: \n00137:     move-result v4\n00138: \n00139:     if-ge v2, v4, :cond_3c\n00140: \n00141:     .line 131\n00142:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00143: \n00144:     move-result-object v3\n00145: \n00146:     invoke-interface {v3, v2}, Ljava/util/List;->get(I)Ljava/lang/Object;\n00147: \n00148:     move-result-object v3\n00149: \n00150:     check-cast v3, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;\n00151: \n00152:     invoke-virtual {v3}, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;->getHour()I\n00153: \n00154:     move-result v3\n00155: \n00156:     invoke-static {v3, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00157: \n00158:     move-result-object v3\n00159: \n00160:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00161: \n00162:     goto :goto_3f\n00163: \n00164:     .line 133\n00165:     :cond_3c\n00166:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00167: \n00168:     :goto_3f\n00169:     add-int/lit8 v2, v2, 0x1\n00170: \n00171:     goto :goto_17\n00172: \n00173:     :cond_42\n00174:     :goto_42\n00175:     if-ge p1, v4, :cond_6a\n00176: \n00177:     .line 137\n00178:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00179: \n00180:     move-result-object v2\n00181: \n00182:     invoke-interface {v2}, Ljava/util/List;->size()I\n00183: \n00184:     move-result v2\n00185: \n00186:     if-ge p1, v2, :cond_64",
+        "00189:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n00190: \n00191:     move-result-object v2\n00192: \n00193:     invoke-interface {v2, p1}, Ljava/util/List;->get(I)Ljava/lang/Object;\n00194: \n00195:     move-result-object v2\n00196: \n00197:     check-cast v2, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;\n00198: \n00199:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;->getMinute()I\n00200: \n00201:     move-result v2\n00202: \n00203:     invoke-static {v2, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00204: \n00205:     move-result-object v2\n00206: \n00207:     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00208: \n00209:     goto :goto_67\n00210: \n00211:     .line 140\n00212:     :cond_64\n00213:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00214: \n00215:     :goto_67\n00216:     add-int/lit8 p1, p1, 0x1\n00217: \n00218:     goto :goto_42\n00219: \n00220:     .line 143\n00221:     :cond_6a\n00222:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getScheduleMode()I\n00223: \n00224:     move-result p1\n00225: \n00226:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00227: \n00228:     move-result-object p1\n00229: \n00230:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00231: \n00232:     .line 144\n00233:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getScheduleDay()I\n00234: \n00235:     move-result p1\n00236: \n00237:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00238: \n00239:     move-result-object p1\n00240: \n00241:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00242: \n00243:     .line 145\n00244:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalYear()I\n00245: \n00246:     move-result p1\n00247: \n00248:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00249: \n00250:     move-result-object p1\n00251: \n00252:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00253: \n00254:     .line 146\n00255:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalMonth()I\n00256: \n00257:     move-result p1\n00258: \n00259:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00260: \n00261:     move-result-object p1\n00262: \n00263:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00264: \n00265:     .line 147\n00266:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalDay()I\n00267: \n00268:     move-result p1\n00269: \n00270:     invoke-static {p1, v1}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n00271: \n00272:     move-result-object p1\n00273: \n00274:     invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00275: \n00276:     .line 148\n00277:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isEnable()Z\n00278: \n00279:     move-result p1\n00280: \n00281:     const-string v1, \"1\"\n00282: \n00283:     const-string v2, \"0\"\n00284: \n00285:     if-eqz p1, :cond_af\n00286: \n00287:     .line 149\n00288:     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00289: \n00290:     goto :goto_b2\n00291: \n00292:     .line 151\n00293:     :cond_af\n00294:     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00295: \n00296:     .line 153\n00297:     :goto_b2\n00298:     invoke-virtual {p2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isSeaAdjSwitch()Z\n00299: \n00300:     move-result p1"
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method public onDestroy()V",
+      "method_name": "onDestroy",
+      "start_line": 1077,
+      "end_line": 1093,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1084,
+        1089
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "01077: .method public onDestroy()V\n01078:     .registers 2\n01079: \n01080:     .line 65\n01081:     invoke-super {p0}, Lcom/thingclips/smart/android/mvp/presenter/BasePresenter;->onDestroy()V\n01082: \n01083:     .line 66\n01084:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01085: \n01086:     if-eqz v0, :cond_a\n01087: \n01088:     .line 67\n01089:     invoke-interface {v0}, Lcom/thingclips/smart/sdk/api/IThingDevice;->onDestroy()V\n01090: \n01091:     :cond_a\n01092:     return-void\n01093: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method public setPlan(Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)V",
+      "method_name": "setPlan",
+      "start_line": 1254,
+      "end_line": 1295,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1284,
+        1292
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01254: .method public setPlan(Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)V\n01255:     .registers 5\n01256: \n01257:     .line 120\n01258:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mContext:Landroidx/fragment/app/Fragment;\n01259: \n01260:     invoke-virtual {v0}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01261: \n01262:     move-result-object v0\n01263: \n01264:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01265: \n01266:     .line 122\n01267:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getZoneId()I\n01268: \n01269:     move-result v0\n01270: \n01271:     const/4 v1, 0x1\n01272: \n01273:     sub-int/2addr v0, v1\n01274: \n01275:     shl-int v0, v1, v0\n01276: \n01277:     .line 123\n01278:     invoke-direct {p0, v0, p1}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->parseIICZoneBean(ILcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;)Ljava/lang/String;\n01279: \n01280:     move-result-object p1\n01281: \n01282:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->devId:Ljava/lang/String;\n01283: \n01284:     invoke-static {v0}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n01285: \n01286:     move-result-object v0\n01287: \n01288:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01289: \n01290:     const-string v2, \"38\"\n01291: \n01292:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01293: \n01294:     return-void\n01295: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method public setScheduleTime(Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;I)V",
+      "method_name": "setScheduleTime",
+      "start_line": 1297,
+      "end_line": 1547,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1315,
+        1322,
+        1366,
+        1413,
+        1436,
+        1447,
+        1458,
+        1469,
+        1480,
+        1538,
+        1544
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01301:     new-instance v0, Ljava/lang/StringBuilder;\n01302: \n01303:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getZoneId()I\n01304: \n01305:     move-result v1\n01306: \n01307:     const/4 v2, 0x1\n01308: \n01309:     sub-int/2addr v1, v2\n01310: \n01311:     shl-int v1, v2, v1\n01312: \n01313:     const/4 v2, 0x2\n01314: \n01315:     invoke-static {v1, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01316: \n01317:     move-result-object v1\n01318: \n01319:     invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01320: \n01321:     .line 164\n01322:     invoke-static {p2, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01323: \n01324:     move-result-object p2\n01325: \n01326:     invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01327: \n01328:     const/4 p2, 0x0\n01329: \n01330:     move v1, p2\n01331: \n01332:     .line 165\n01333:     :goto_1b\n01334:     const-string v3, \"FF\"\n01335: \n01336:     const/4 v4, 0x6\n01337: \n01338:     if-ge v1, v4, :cond_46\n01339: \n01340:     .line 166\n01341:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n01342: \n01343:     move-result-object v4\n01344: \n01345:     invoke-interface {v4}, Ljava/util/List;->size()I\n01346: \n01347:     move-result v4\n01348: \n01349:     if-ge v1, v4, :cond_40\n01350: \n01351:     .line 167\n01352:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n01353: \n01354:     move-result-object v3\n01355: \n01356:     invoke-interface {v3, v1}, Ljava/util/List;->get(I)Ljava/lang/Object;\n01357: \n01358:     move-result-object v3\n01359: \n01360:     check-cast v3, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;\n01361: \n01362:     invoke-virtual {v3}, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;->getHour()I\n01363: \n01364:     move-result v3\n01365: \n01366:     invoke-static {v3, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01367: \n01368:     move-result-object v3\n01369: \n01370:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01371: \n01372:     goto :goto_43\n01373: \n01374:     .line 169\n01375:     :cond_40\n01376:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01377: \n01378:     :goto_43\n01379:     add-int/lit8 v1, v1, 0x1\n01380: \n01381:     goto :goto_1b\n01382: \n01383:     :cond_46\n01384:     :goto_46\n01385:     if-ge p2, v4, :cond_6e\n01386: \n01387:     .line 173\n01388:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n01389: \n01390:     move-result-object v1\n01391: \n01392:     invoke-interface {v1}, Ljava/util/List;->size()I\n01393: \n01394:     move-result v1\n01395: \n01396:     if-ge p2, v1, :cond_68",
+        "01399:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getStartTimeList()Ljava/util/List;\n01400: \n01401:     move-result-object v1\n01402: \n01403:     invoke-interface {v1, p2}, Ljava/util/List;->get(I)Ljava/lang/Object;\n01404: \n01405:     move-result-object v1\n01406: \n01407:     check-cast v1, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;\n01408: \n01409:     invoke-virtual {v1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/StartTimeBean;->getMinute()I\n01410: \n01411:     move-result v1\n01412: \n01413:     invoke-static {v1, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01414: \n01415:     move-result-object v1\n01416: \n01417:     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01418: \n01419:     goto :goto_6b\n01420: \n01421:     .line 176\n01422:     :cond_68\n01423:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01424: \n01425:     :goto_6b\n01426:     add-int/lit8 p2, p2, 0x1\n01427: \n01428:     goto :goto_46\n01429: \n01430:     .line 179\n01431:     :cond_6e\n01432:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getScheduleMode()I\n01433: \n01434:     move-result p2\n01435: \n01436:     invoke-static {p2, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01437: \n01438:     move-result-object p2\n01439: \n01440:     invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01441: \n01442:     .line 180\n01443:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getScheduleDay()I\n01444: \n01445:     move-result p2\n01446: \n01447:     invoke-static {p2, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01448: \n01449:     move-result-object p2\n01450: \n01451:     invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01452: \n01453:     .line 181\n01454:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalYear()I\n01455: \n01456:     move-result p2\n01457: \n01458:     invoke-static {p2, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01459: \n01460:     move-result-object p2\n01461: \n01462:     invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01463: \n01464:     .line 182\n01465:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalMonth()I\n01466: \n01467:     move-result p2\n01468: \n01469:     invoke-static {p2, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01470: \n01471:     move-result-object p2\n01472: \n01473:     invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01474: \n01475:     .line 183\n01476:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getIntervalDay()I\n01477: \n01478:     move-result p2\n01479: \n01480:     invoke-static {p2, v2}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01481: \n01482:     move-result-object p2\n01483: \n01484:     invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01485: \n01486:     .line 185\n01487:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isEnable()Z\n01488: \n01489:     move-result p2\n01490: \n01491:     const-string v1, \"1\"\n01492: \n01493:     const-string v2, \"0\"\n01494: \n01495:     if-eqz p2, :cond_b3\n01496: \n01497:     .line 186\n01498:     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01499: \n01500:     goto :goto_b6\n01501: \n01502:     .line 188\n01503:     :cond_b3\n01504:     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01505: \n01506:     .line 191\n01507:     :goto_b6\n01508:     invoke-virtual {p1}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isSeaAdjSwitch()Z\n01509: \n01510:     move-result p1",
+        "01524:     :goto_c3\n01525:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mContext:Landroidx/fragment/app/Fragment;\n01526: \n01527:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01528: \n01529:     move-result-object p1\n01530: \n01531:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01532: \n01533:     .line 198\n01534:     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01535: \n01536:     move-result-object p1\n01537: \n01538:     iget-object p2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01539: \n01540:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01541: \n01542:     const-string v1, \"38\"\n01543: \n01544:     invoke-static {v1, p1, p2, v0}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01545: \n01546:     return-void\n01547: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method public startManuals(Ljava/util/List;)V",
+      "method_name": "startManuals",
+      "start_line": 1549,
+      "end_line": 1656,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1561,
+        1600,
+        1609,
+        1646,
+        1652
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01549: .method public startManuals(Ljava/util/List;)V\n01550:     .registers 6\n01551:     .annotation system Ldalvik/annotation/Signature;\n01552:         value = {\n01553:             \"(\",\n01554:             \"Ljava/util/List<\",\n01555:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n01556:             \">;)V\"\n01557:         }\n01558:     .end annotation\n01559: \n01560:     .line 83\n01561:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01562: \n01563:     if-eqz v0, :cond_58\n01564: \n01565:     .line 84\n01566:     new-instance v0, Ljava/lang/StringBuilder;\n01567: \n01568:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n01569: \n01570:     .line 85\n01571:     new-instance v1, Ljava/lang/StringBuilder;\n01572: \n01573:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n01574: \n01575:     .line 86\n01576:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01577: \n01578:     move-result-object p1\n01579: \n01580:     :goto_12\n01581:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n01582: \n01583:     move-result v2\n01584: \n01585:     if-eqz v2, :cond_33\n01586: \n01587:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n01588: \n01589:     move-result-object v2\n01590: \n01591:     check-cast v2, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n01592: \n01593:     .line 87\n01594:     invoke-virtual {v2}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRemainTime()I\n01595: \n01596:     move-result v2\n01597: \n01598:     const/4 v3, 0x4\n01599: \n01600:     invoke-static {v2, v3}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01601: \n01602:     move-result-object v2\n01603: \n01604:     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01605: \n01606:     const/4 v2, 0x0\n01607: \n01608:     .line 88\n01609:     invoke-static {v2, v3}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01610: \n01611:     move-result-object v2\n01612: \n01613:     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01614: \n01615:     goto :goto_12\n01616: \n01617:     .line 91\n01618:     :cond_33\n01619:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mContext:Landroidx/fragment/app/Fragment;\n01620: \n01621:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01622: \n01623:     move-result-object p1\n01624: \n01625:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01626: \n01627:     .line 92\n01628:     new-instance p1, Ljava/lang/StringBuilder;\n01629: \n01630:     const-string v2, \"0201\"\n01631: \n01632:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01633: \n01634:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01635: \n01636:     move-result-object p1\n01637: \n01638:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01639: \n01640:     move-result-object p1\n01641: \n01642:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01643: \n01644:     move-result-object p1\n01645: \n01646:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01647: \n01648:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01649: \n01650:     const-string v2, \"45\"\n01651: \n01652:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01653: \n01654:     :cond_58\n01655:     return-void\n01656: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SchedulePresenter",
+      "source_file": "Iic800SchedulePresenter.smali",
+      "method_header": ".method public stopManual(Ljava/util/List;)V",
+      "method_name": "stopManual",
+      "start_line": 1658,
+      "end_line": 1799,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        1670,
+        1716,
+        1723,
+        1739,
+        1750,
+        1789,
+        1795
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "01658: .method public stopManual(Ljava/util/List;)V\n01659:     .registers 9\n01660:     .annotation system Ldalvik/annotation/Signature;\n01661:         value = {\n01662:             \"(\",\n01663:             \"Ljava/util/List<\",\n01664:             \"Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\",\n01665:             \">;)V\"\n01666:         }\n01667:     .end annotation\n01668: \n01669:     .line 97\n01670:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01671: \n01672:     if-eqz v0, :cond_75\n01673: \n01674:     .line 98\n01675:     new-instance v0, Ljava/lang/StringBuilder;\n01676: \n01677:     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V\n01678: \n01679:     .line 99\n01680:     new-instance v1, Ljava/lang/StringBuilder;\n01681: \n01682:     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V\n01683: \n01684:     .line 101\n01685:     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;\n01686: \n01687:     move-result-object p1\n01688: \n01689:     const/4 v2, 0x0\n01690: \n01691:     move v3, v2\n01692: \n01693:     :goto_14\n01694:     invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z\n01695: \n01696:     move-result v4\n01697: \n01698:     if-eqz v4, :cond_4e\n01699: \n01700:     invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;\n01701: \n01702:     move-result-object v4\n01703: \n01704:     check-cast v4, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;\n01705: \n01706:     .line 102\n01707:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->isWateringSwitch()Z\n01708: \n01709:     move-result v5\n01710: \n01711:     const/4 v6, 0x4\n01712: \n01713:     if-eqz v5, :cond_37\n01714: \n01715:     .line 104\n01716:     invoke-static {v2, v6}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01717: \n01718:     move-result-object v3\n01719: \n01720:     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01721: \n01722:     .line 105\n01723:     invoke-static {v2, v6}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01724: \n01725:     move-result-object v3\n01726: \n01727:     invoke-virtual {v1, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01728: \n01729:     const/4 v3, 0x1\n01730: \n01731:     goto :goto_14\n01732: \n01733:     .line 107\n01734:     :cond_37\n01735:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getRemainTime()I\n01736: \n01737:     move-result v5\n01738: \n01739:     invoke-static {v5, v6}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01740: \n01741:     move-result-object v5\n01742: \n01743:     invoke-virtual {v0, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01744: \n01745:     .line 108\n01746:     invoke-virtual {v4}, Lcom/inkbird/inkbirdapp/device/iic800/bean/IicZoneBean;->getWateredTime()I\n01747: \n01748:     move-result v4\n01749: \n01750:     invoke-static {v4, v6}, Lcom/inkbird/base/utils/StringUtils;->intToHex(II)Ljava/lang/String;\n01751: \n01752:     move-result-object v4\n01753: \n01754:     invoke-virtual {v1, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n01755: \n01756:     goto :goto_14\n01757: \n01758:     :cond_4e\n01759:     if-eqz v3, :cond_75\n01760: \n01761:     .line 113\n01762:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mContext:Landroidx/fragment/app/Fragment;\n01763: \n01764:     invoke-virtual {p1}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;\n01765: \n01766:     move-result-object p1\n01767: \n01768:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n01769: \n01770:     .line 114\n01771:     new-instance p1, Ljava/lang/StringBuilder;\n01772: \n01773:     const-string v2, \"0201\"\n01774: \n01775:     invoke-direct {p1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V\n01776: \n01777:     invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01778: \n01779:     move-result-object p1\n01780: \n01781:     invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;\n01782: \n01783:     move-result-object p1\n01784: \n01785:     invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n01786: \n01787:     move-result-object p1\n01788: \n01789:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n01790: \n01791:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SchedulePresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n01792: \n01793:     const-string v2, \"45\"\n01794: \n01795:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n01796: \n01797:     :cond_75\n01798:     return-void\n01799: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method private initData()V",
+      "method_name": "initData",
+      "start_line": 90,
+      "end_line": 193,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        122,
+        126,
+        131
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00090: .method private initData()V\n00091:     .registers 4\n00092: \n00093:     .line 49\n00094:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00095: \n00096:     invoke-virtual {v0}, Landroid/app/Activity;->getIntent()Landroid/content/Intent;\n00097: \n00098:     move-result-object v0\n00099: \n00100:     const-string v1, \"devId\"\n00101: \n00102:     invoke-virtual {v0, v1}, Landroid/content/Intent;->getStringExtra(Ljava/lang/String;)Ljava/lang/String;\n00103: \n00104:     move-result-object v0\n00105: \n00106:     iput-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00107: \n00108:     .line 50\n00109:     invoke-static {}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->getDataInstance()Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;\n00110: \n00111:     move-result-object v0\n00112: \n00113:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00114: \n00115:     invoke-interface {v0, v1}, Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;->getDeviceBean(Ljava/lang/String;)Lcom/thingclips/smart/sdk/bean/DeviceBean;\n00116: \n00117:     move-result-object v0\n00118: \n00119:     .line 51\n00120:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00121: \n00122:     invoke-static {v1}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->newDeviceInstance(Ljava/lang/String;)Lcom/thingclips/smart/sdk/api/IThingDevice;\n00123: \n00124:     move-result-object v1\n00125: \n00126:     iput-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00127: \n00128:     if-eqz v1, :cond_25\n00129: \n00130:     .line 54\n00131:     invoke-interface {v1, p0}, Lcom/thingclips/smart/sdk/api/IThingDevice;->registerDevListener(Lcom/thingclips/smart/sdk/api/IDevListener;)V\n00132: \n00133:     :cond_25\n00134:     if-eqz v0, :cond_5d\n00135: \n00136:     .line 58\n00137:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;\n00138: \n00139:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00140: \n00141:     invoke-interface {v2, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getRainSenTotal(Lcom/thingclips/smart/sdk/bean/DeviceBean;)Z\n00142: \n00143:     move-result v2\n00144: \n00145:     invoke-interface {v1, v2}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;->setRainSenTotal(Z)V\n00146: \n00147:     .line 59\n00148:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;\n00149: \n00150:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00151: \n00152:     invoke-interface {v2, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getSenAdj(Lcom/thingclips/smart/sdk/bean/DeviceBean;)I\n00153: \n00154:     move-result v2\n00155: \n00156:     invoke-interface {v1, v2}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;->setSenAdjRange(I)V\n00157: \n00158:     .line 60\n00159:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;\n00160: \n00161:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00162: \n00163:     invoke-interface {v2, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getPowerStatus(Lcom/thingclips/smart/sdk/bean/DeviceBean;)Z\n00164: \n00165:     move-result v2\n00166: \n00167:     invoke-interface {v1, v2}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;->setPowerStatus(Z)V\n00168: \n00169:     .line 61\n00170:     sget-object v1, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->devType:Ljava/lang/String;\n00171: \n00172:     sget-object v2, Lcom/inkbird/inkbirdapp/device/iic800/utils/Iic800Constant;->IIC_800:Ljava/lang/String;\n00173: \n00174:     invoke-virtual {v1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n00175: \n00176:     move-result v1\n00177: \n00178:     if-nez v1, :cond_5d\n00179: \n00180:     .line 62\n00181:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mView:Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;\n00182: \n00183:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00184: \n00185:     invoke-interface {v2, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getMainValue2(Lcom/thingclips/smart/sdk/bean/DeviceBean;)Z\n00186: \n00187:     move-result v0\n00188: \n00189:     invoke-interface {v1, v0}, Lcom/inkbird/inkbirdapp/device/iic800/view/IIic800SettingsView;->setMainValue(Z)V\n00190: \n00191:     :cond_5d\n00192:     return-void\n00193: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method private synthetic lambda$showMainValueDialog$0(Landroid/app/Dialog;Landroid/view/View;)V",
+      "method_name": "lambda$showMainValueDialog$0",
+      "start_line": 195,
+      "end_line": 222,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        213,
+        219
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00195: .method private synthetic lambda$showMainValueDialog$0(Landroid/app/Dialog;Landroid/view/View;)V\n00196:     .registers 5\n00197: \n00198:     .line 208\n00199:     invoke-virtual {p1}, Landroid/app/Dialog;->dismiss()V\n00200: \n00201:     .line 209\n00202:     iget-object p1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00203: \n00204:     invoke-static {p1}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00205: \n00206:     const/4 p1, 0x0\n00207: \n00208:     .line 210\n00209:     invoke-static {p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n00210: \n00211:     move-result-object p1\n00212: \n00213:     iget-object p2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00214: \n00215:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00216: \n00217:     const-string v1, \"111\"\n00218: \n00219:     invoke-static {v1, p1, p2, v0}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00220: \n00221:     return-void\n00222: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method public changeMainValve()V",
+      "method_name": "changeMainValve",
+      "start_line": 307,
+      "end_line": 359,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        350,
+        356
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00307: .method public changeMainValve()V\n00308:     .registers 5\n00309: \n00310:     .line 90\n00311:     invoke-static {}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->getDataInstance()Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;\n00312: \n00313:     move-result-object v0\n00314: \n00315:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00316: \n00317:     invoke-interface {v0, v1}, Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;->getDeviceBean(Ljava/lang/String;)Lcom/thingclips/smart/sdk/bean/DeviceBean;\n00318: \n00319:     move-result-object v0\n00320: \n00321:     if-eqz v0, :cond_18\n00322: \n00323:     .line 91\n00324:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00325: \n00326:     invoke-interface {v1, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getMainValue2(Lcom/thingclips/smart/sdk/bean/DeviceBean;)Z\n00327: \n00328:     move-result v0\n00329: \n00330:     if-eqz v0, :cond_18\n00331: \n00332:     .line 92\n00333:     invoke-direct {p0}, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->showMainValueDialog()V\n00334: \n00335:     return-void\n00336: \n00337:     .line 94\n00338:     :cond_18\n00339:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00340: \n00341:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00342: \n00343:     const/4 v0, 0x1\n00344: \n00345:     .line 95\n00346:     invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n00347: \n00348:     move-result-object v0\n00349: \n00350:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00351: \n00352:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00353: \n00354:     const-string v3, \"111\"\n00355: \n00356:     invoke-static {v3, v0, v1, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00357: \n00358:     return-void\n00359: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method public changeRainSensor()V",
+      "method_name": "changeRainSensor",
+      "start_line": 361,
+      "end_line": 405,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        395,
+        401
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00361: .method public changeRainSensor()V\n00362:     .registers 5\n00363: \n00364:     .line 76\n00365:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00366: \n00367:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00368: \n00369:     .line 77\n00370:     invoke-static {}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->getDataInstance()Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;\n00371: \n00372:     move-result-object v0\n00373: \n00374:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00375: \n00376:     invoke-interface {v0, v1}, Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;->getDeviceBean(Ljava/lang/String;)Lcom/thingclips/smart/sdk/bean/DeviceBean;\n00377: \n00378:     move-result-object v0\n00379: \n00380:     if-eqz v0, :cond_26\n00381: \n00382:     .line 79\n00383:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00384: \n00385:     invoke-interface {v1, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getRainSenTotal(Lcom/thingclips/smart/sdk/bean/DeviceBean;)Z\n00386: \n00387:     move-result v0\n00388: \n00389:     xor-int/lit8 v0, v0, 0x1\n00390: \n00391:     invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n00392: \n00393:     move-result-object v0\n00394: \n00395:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00396: \n00397:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00398: \n00399:     const-string v3, \"102\"\n00400: \n00401:     invoke-static {v3, v0, v1, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00402: \n00403:     :cond_26\n00404:     return-void\n00405: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method public changeSeaAdjValue(I)V",
+      "method_name": "changeSeaAdjValue",
+      "start_line": 407,
+      "end_line": 433,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        407,
+        424,
+        430
+      ],
+      "reasons": [
+        "protocol/transport/array markers",
+        "protocol-facing method name"
+      ],
+      "excerpts": [
+        "00407: .method public changeSeaAdjValue(I)V\n00408:     .registers 5\n00409: \n00410:     .line 100\n00411:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00412: \n00413:     if-eqz v0, :cond_7\n00414: \n00415:     .line 101\n00416:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00417: \n00418:     .line 102\n00419:     :cond_7\n00420:     invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;\n00421: \n00422:     move-result-object p1\n00423: \n00424:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00425: \n00426:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00427: \n00428:     const-string v2, \"103\"\n00429: \n00430:     invoke-static {v2, p1, v0, v1}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00431: \n00432:     return-void\n00433: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method public onDestroy()V",
+      "method_name": "onDestroy",
+      "start_line": 560,
+      "end_line": 576,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        567,
+        572
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00560: .method public onDestroy()V\n00561:     .registers 2\n00562: \n00563:     .line 69\n00564:     invoke-super {p0}, Lcom/thingclips/smart/android/mvp/presenter/BasePresenter;->onDestroy()V\n00565: \n00566:     .line 70\n00567:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00568: \n00569:     if-eqz v0, :cond_a\n00570: \n00571:     .line 71\n00572:     invoke-interface {v0}, Lcom/thingclips/smart/sdk/api/IThingDevice;->unRegisterDevListener()V\n00573: \n00574:     :cond_a\n00575:     return-void\n00576: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method public resetDevice()V",
+      "method_name": "resetDevice",
+      "start_line": 699,
+      "end_line": 787,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        778,
+        784
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00699: .method public resetDevice()V\n00700:     .registers 6\n00701: \n00702:     .line 113\n00703:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00704: \n00705:     invoke-virtual {v0}, Landroid/app/Activity;->getPackageName()Ljava/lang/String;\n00706: \n00707:     move-result-object v1\n00708: \n00709:     const/4 v2, 0x0\n00710: \n00711:     invoke-virtual {v0, v1, v2}, Landroid/app/Activity;->getSharedPreferences(Ljava/lang/String;I)Landroid/content/SharedPreferences;\n00712: \n00713:     move-result-object v0\n00714: \n00715:     .line 114\n00716:     invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;\n00717: \n00718:     move-result-object v0\n00719: \n00720:     const/4 v1, 0x1\n00721: \n00722:     move v2, v1\n00723: \n00724:     :goto_11\n00725:     const/16 v3, 0x8\n00726: \n00727:     if-gt v2, v3, :cond_34\n00728: \n00729:     .line 116\n00730:     new-instance v3, Ljava/lang/StringBuilder;\n00731: \n00732:     invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V\n00733: \n00734:     iget-object v4, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00735: \n00736:     invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00737: \n00738:     move-result-object v3\n00739: \n00740:     invoke-virtual {v3, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;\n00741: \n00742:     move-result-object v3\n00743: \n00744:     const-string v4, \"SeaAdjSwitch\"\n00745: \n00746:     invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n00747: \n00748:     move-result-object v3\n00749: \n00750:     invoke-virtual {v3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n00751: \n00752:     move-result-object v3\n00753: \n00754:     invoke-interface {v0, v3, v1}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;\n00755: \n00756:     add-int/lit8 v2, v2, 0x1\n00757: \n00758:     goto :goto_11\n00759: \n00760:     .line 118\n00761:     :cond_34\n00762:     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V\n00763: \n00764:     .line 119\n00765:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mContext:Landroid/app/Activity;\n00766: \n00767:     if-eqz v0, :cond_3e\n00768: \n00769:     .line 120\n00770:     invoke-static {v0}, Lcom/thingclips/smart/uispecs/component/ProgressUtils;->showLoadingViewFullPage(Landroid/content/Context;)V\n00771: \n00772:     .line 121\n00773:     :cond_3e\n00774:     invoke-static {v1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n00775: \n00776:     move-result-object v0\n00777: \n00778:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00779: \n00780:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00781: \n00782:     const-string v3, \"105\"\n00783: \n00784:     invoke-static {v3, v0, v1, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00785: \n00786:     return-void\n00787: .end method"
+      ]
+    },
+    {
+      "class_name": "Iic800SettingsPresenter",
+      "source_file": "Iic800SettingsPresenter.smali",
+      "method_header": ".method public setPowerStatus()V",
+      "method_name": "setPowerStatus",
+      "start_line": 789,
+      "end_line": 839,
+      "dp_constants": [],
+      "strong_hit_lines": [
+        817,
+        823,
+        829,
+        835
+      ],
+      "reasons": [
+        "protocol/transport/array markers"
+      ],
+      "excerpts": [
+        "00789: .method public setPowerStatus()V\n00790:     .registers 5\n00791: \n00792:     .line 125\n00793:     invoke-static {}, Lcom/thingclips/smart/home/sdk/ThingHomeSdk;->getDataInstance()Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;\n00794: \n00795:     move-result-object v0\n00796: \n00797:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->devId:Ljava/lang/String;\n00798: \n00799:     invoke-interface {v0, v1}, Lcom/thingclips/smart/home/sdk/api/IThingHomeDataManager;->getDeviceBean(Ljava/lang/String;)Lcom/thingclips/smart/sdk/bean/DeviceBean;\n00800: \n00801:     move-result-object v0\n00802: \n00803:     if-eqz v0, :cond_29\n00804: \n00805:     .line 127\n00806:     iget-object v1, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mModel:Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;\n00807: \n00808:     invoke-interface {v1, v0}, Lcom/inkbird/inkbirdapp/device/iic800/model/IIic800SettingsModel;->getPowerStatus(Lcom/thingclips/smart/sdk/bean/DeviceBean;)Z\n00809: \n00810:     move-result v0\n00811: \n00812:     const-string v1, \"101\"\n00813: \n00814:     if-eqz v0, :cond_20\n00815: \n00816:     .line 128\n00817:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00818: \n00819:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00820: \n00821:     const-string v3, \"OFF\"\n00822: \n00823:     invoke-static {v1, v3, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00824: \n00825:     return-void\n00826: \n00827:     .line 130\n00828:     :cond_20\n00829:     iget-object v0, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->mDevice:Lcom/thingclips/smart/sdk/api/IThingDevice;\n00830: \n00831:     iget-object v2, p0, Lcom/inkbird/inkbirdapp/device/iic800/presenter/Iic800SettingsPresenter;->resultCallback:Lcom/thingclips/smart/sdk/api/IResultCallback;\n00832: \n00833:     const-string v3, \"Auto\"\n00834: \n00835:     invoke-static {v1, v3, v0, v2}, Lcom/inkbird/base/common/wifi/DeviceUtils;->sendCommand(Ljava/lang/String;Ljava/lang/Object;Lcom/thingclips/smart/sdk/api/IThingDevice;Lcom/thingclips/smart/sdk/api/IResultCallback;)V\n00836: \n00837:     :cond_29\n00838:     return-void\n00839: .end method"
+      ]
+    }
+  ]
+}
