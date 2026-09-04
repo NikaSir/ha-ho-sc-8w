@@ -1,0 +1,13 @@
+com.inkbird.inkbirdapp.device.iic800.utils.Iic800Constant
+com.inkbird.inkbirdapp.device.iic800.model.IIic800Model
+com.inkbird.inkbirdapp.device.iic800.model.Iic800Model
+com.inkbird.inkbirdapp.device.iic800.presenter.Iic800Presenter
+com.inkbird.inkbirdapp.device.iic800.presenter.Iic800ManualPresenter
+com.inkbird.inkbirdapp.device.iic800.presenter.Iic800SchedulePresenter
+com.inkbird.inkbirdapp.device.iic800.presenter.Iic800AddPlanPresenter
+com.inkbird.inkbirdapp.device.iic800.presenter.Iic800SettingsPresenter
+com.inkbird.inkbirdapp.device.iic800.activity.fragment.Iic800ManualFragment
+com.inkbird.inkbirdapp.device.iic800.activity.activity.Iic800AddPlanActivity
+com.inkbird.inkbirdapp.device.iic800.bean.IicZoneBean
+com.inkbird.inkbirdapp.device.iic800.bean.IrrigationBean
+com.inkbird.inkbirdapp.device.iic800.bean.StartTimeBean
