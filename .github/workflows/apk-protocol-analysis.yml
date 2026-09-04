@@ -1,0 +1,113 @@
+name: Analyze INKBIRD 2.1.11 irrigation protocol
+
+on:
+  push:
+    branches:
+      - analysis/apk-irrigation-commands
+    paths:
+      - .github/workflows/apk-protocol-analysis.yml
+      - scripts/analyze_inkbird_apk.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inkbird-apk-protocol-analysis
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out analysis branch
+        uses: actions/checkout@v4
+        with:
+          ref: analysis/apk-irrigation-commands
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install analysis prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir requests
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq binutils jq unzip
+
+      - name: Download current JADX release
+        shell: bash
+        run: |
+          set -euo pipefail
+          JADX_URL="$(
+            curl -fsSL --retry 3 https://api.github.com/repos/skylot/jadx/releases/latest \
+              | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' \
+              | head -n 1
+          )"
+          test -n "${JADX_URL}"
+          curl -fL --retry 3 --retry-delay 2 "${JADX_URL}" -o /tmp/jadx.zip
+          mkdir -p /tmp/jadx
+          unzip -q /tmp/jadx.zip -d /tmp/jadx
+          chmod +x /tmp/jadx/bin/jadx
+          /tmp/jadx/bin/jadx --version
+
+      - name: Acquire, inspect and decompile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/analyze_inkbird_apk.py \
+            --public-url "https://disk.yandex.ru/d/3T2zvV8ETXEwjA" \
+            --work-dir "${RUNNER_TEMP}/inkbird-apk-work" \
+            --output-dir "${GITHUB_WORKSPACE}/apk-analysis-output" \
+            --jadx-bin /tmp/jadx/bin/jadx
+
+      - name: Publish evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkbird-2.1.11-irrigation-protocol-evidence
+          path: apk-analysis-output/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 9
+
+      - name: Commit generated report to analysis branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/inkbird-apk-2.1.11
+          cp apk-analysis-output/report.md \
+             docs/research/inkbird-apk-2.1.11/protocol-report.md
+          cp apk-analysis-output/evidence-contexts.txt \
+             docs/research/inkbird-apk-2.1.11/evidence-contexts.txt
+          cp apk-analysis-output/apk-inventory.json \
+             docs/research/inkbird-apk-2.1.11/apk-inventory.json
+          cp apk-analysis-output/raw-hits.json \
+             docs/research/inkbird-apk-2.1.11/raw-hits.json
+          cp apk-analysis-output/decompiled-contexts.json \
+             docs/research/inkbird-apk-2.1.11/decompiled-contexts.json
+          cp apk-analysis-output/jadx.log \
+             docs/research/inkbird-apk-2.1.11/jadx.log
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research/inkbird-apk-2.1.11
+          if git diff --cached --quiet; then
+            echo "No report changes to commit"
+            exit 0
+          fi
+          git commit -m "Record INKBIRD 2.1.11 APK protocol evidence"
+          git push origin HEAD:analysis/apk-irrigation-commands
