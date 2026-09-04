@@ -14,6 +14,33 @@ const p = Panel.prototype;
 const previousRender = p._render;
 const previousStyles = p.styles;
 
+function seasonalValue(value) {
+  const numeric = Number(String(value ?? "").replace(",", "."));
+  return Number.isInteger(numeric)
+    && numeric >= -90
+    && numeric <= 100
+    && numeric % 10 === 0
+    ? numeric
+    : null;
+}
+
+p._currentSeasonalValue = function currentSeasonalValueV0665() {
+  return seasonalValue(this.state(this.entities().seasonal));
+};
+
+p._syncSeasonalApplyState = function syncSeasonalApplyStateV0665(selectedOverride) {
+  const select = this.shadowRoot?.querySelector("[data-seasonal-select]");
+  const button = this.shadowRoot?.querySelector("[data-season-apply]");
+  if (!select || !button) return;
+  const selected = seasonalValue(selectedOverride ?? select.value);
+  const current = this._currentSeasonalValue();
+  const changed = selected !== null && current !== null && selected !== current;
+  const enabled = changed && this.commandAvailable("set_seasonal_adjustment");
+  button.disabled = !enabled;
+  button.setAttribute("aria-disabled", String(!enabled));
+  button.dataset.seasonalChanged = changed ? "true" : "false";
+};
+
 p._applySeasonalFeedbackState = function applySeasonalFeedbackStateV0665() {
   const now = Date.now();
   if (this._seasonalFeedbackKind && now >= Number(this._seasonalFeedbackUntil || 0)) {
@@ -50,7 +77,9 @@ p._setSeasonalFeedback = function setSeasonalFeedbackV0665(kind) {
   this._seasonalFeedbackUntil = Date.now() + FEEDBACK_DURATION_MS;
   this.render();
   requestAnimationFrame(() => {
-    if (this._seasonalFeedbackToken === token) this._applySeasonalFeedbackState();
+    if (this._seasonalFeedbackToken !== token) return;
+    this._applySeasonalFeedbackState();
+    this._syncSeasonalApplyState();
   });
   this._seasonalFeedbackTimer = setTimeout(() => {
     if (this._seasonalFeedbackToken !== token) return;
@@ -58,6 +87,7 @@ p._setSeasonalFeedback = function setSeasonalFeedbackV0665(kind) {
     this._seasonalFeedbackUntil = 0;
     this._seasonalFeedbackTimer = null;
     this._applySeasonalFeedbackState();
+    this._syncSeasonalApplyState();
   }, FEEDBACK_DURATION_MS + 40);
 };
 
@@ -66,7 +96,16 @@ p._ensureSeasonalFeedbackEvents = function ensureSeasonalFeedbackEventsV0665() {
   this._seasonalFeedbackEventsBound = true;
   this.shadowRoot.addEventListener("change", (event) => {
     const select = event.target.closest?.("[data-seasonal-select]");
-    if (select) this._clearSeasonalFeedback();
+    if (!select) return;
+    this._seasonalDraft = select.value;
+    const selected = seasonalValue(select.value);
+    const current = this._currentSeasonalValue();
+    if (selected !== null && current !== null && selected === current) {
+      this._setSeasonalFeedback("same");
+    } else {
+      this._clearSeasonalFeedback();
+    }
+    this._syncSeasonalApplyState(select.value);
   }, true);
 };
 
@@ -76,17 +115,18 @@ p.applySeasonalAdjustment = async function applySeasonalAdjustmentV0665() {
     return;
   }
   const input = this.shadowRoot.querySelector("[data-season-value]");
-  const value = Number(input?.value ?? this._seasonalDraft);
-  if (!Number.isInteger(value) || value < -90 || value > 100 || value % 10 !== 0) {
+  const value = seasonalValue(input?.value ?? this._seasonalDraft);
+  if (value === null) {
     this.notify("Сезонная коррекция: от −90% до 100%, шаг 10%");
     input?.focus();
     this._setSeasonalFeedback("error");
     return;
   }
   const currentRaw = this.state(this.entities().seasonal);
-  const current = Number(String(currentRaw).replace(",", "."));
-  if (Number.isFinite(current) && value === current) {
+  const current = seasonalValue(currentRaw);
+  if (current !== null && value === current) {
     this._setSeasonalFeedback("same");
+    this._syncSeasonalApplyState(value);
     return;
   }
   if (!window.confirm(`Применить сезонную коррекцию ${value}%?\n\nТекущее значение: ${currentRaw}%.`)) return;
@@ -115,15 +155,23 @@ p._render = function renderV0665() {
   previousRender.call(this);
   this._ensureSeasonalFeedbackEvents();
   this._applySeasonalFeedbackState();
+  this._syncSeasonalApplyState();
   const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
   if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
 };
 
 p.styles = function stylesV0665() {
   return `${previousStyles.call(this)}
-    /* UI v0.6.65 — local write feedback for seasonal adjustment. */
+    /* UI v0.6.65 — local write feedback and change-gated Apply action. */
     .settingsSeasonal .seasonalSelectControl{
       transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease;
+    }
+    .settingsSeasonal [data-season-apply]:disabled{
+      opacity:1;
+      border-color:var(--line);
+      background:var(--soft);
+      color:var(--muted);
+      box-shadow:none;
     }
     .settingsSeasonal .seasonalSelectControl.seasonalFeedback-success{
       background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--soft));
