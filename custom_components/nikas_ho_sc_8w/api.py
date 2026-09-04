@@ -55,7 +55,7 @@ from .const import (
     ZONE8_KNOWN_RESTORE_CONFIRMATION,
     ZONE8_KNOWN_RESTORE_ENABLED,
 )
-from .dp38_transaction import prepare_dp38_transaction, verify_dp38_readback
+from .dp38_transaction import prepare_dp38_transaction
 from .models import (
     PROFILE,
     ScheduleChannel,
@@ -1965,7 +1965,23 @@ class HOSC8WAPI:
 
                 write_block = bytes.fromhex(str(plan["write_hex"]))
                 validate_dp38_write_block(write_block, expected_zone=7)
-                self._write_dp38_hex_block(write_block)
+                if write_block[0] != 0x40:
+                    raise RuntimeError("Zone 7 write selector must be exactly 0x40")
+                required_safety = {
+                    DP_OPERATION_MODE,
+                    DP_ACTIVE_ZONE,
+                    DP_QUEUED_ZONE,
+                }
+                seen_safety = set(
+                    self.device.zone8_hex_probe_trace.get("safety_dps_seen", [])
+                )
+                if not required_safety.issubset(seen_safety):
+                    raise RuntimeError("Fresh DP101/107/108 safety state was not received")
+                if str(self.device.operation_mode).lower() != "auto":
+                    raise RuntimeError("Set the physical controller to ON/Auto before the Zone 7 lab write")
+                # Use only the already field-validated one-hot-mask transport.
+                # The legacy read-side DP38 writer remains blocked.
+                self._write_dp38_mask_block(write_block, zone=7)
                 time.sleep(1.0)
 
                 self._collect_zone8_dp38_samples(
