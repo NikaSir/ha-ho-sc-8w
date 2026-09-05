@@ -43,10 +43,14 @@ class ProductionHOSC8WAPI(StartProbeHOSC8WAPI):
             raw_times = schedule["start_times"]
             if not isinstance(raw_times, list) or len(raw_times) > 6:
                 raise ValueError("start_times must contain at most six values")
-            parsed: list[tuple[int, int]] = []
+            parsed: list[tuple[int, int] | None] = []
             for raw in raw_times:
                 value = str(raw or "").strip()
                 if not value:
+                    # Preserve the physical slot index.  A blank value means
+                    # this exact slot must be encoded as FF/FF; do not compact
+                    # later values into earlier slots.
+                    parsed.append(None)
                     continue
                 try:
                     hour_text, minute_text = value.split(":", 1)
