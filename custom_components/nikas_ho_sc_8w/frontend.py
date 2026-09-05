@@ -20,6 +20,9 @@ from .const import (
     PANEL_URL_PATH,
     PANEL_VERSION,
 )
+from .program_enable_probe_patch import apply_patch as _apply_program_enable_probe_patch
+
+_apply_program_enable_probe_patch()
 
 _LOGGER = logging.getLogger(__name__)
 
