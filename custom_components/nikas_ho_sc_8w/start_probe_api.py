@@ -7,13 +7,122 @@ source matches the exact state expected from preceding confirmed experiments.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
+from .const import (
+    CONNECTION_MODE_LOCAL,
+    DP38_SNAPSHOT_CONFIRMATION,
+    DP_ACTIVE_ZONE,
+    DP_OPERATION_MODE,
+    DP_QUEUED_ZONE,
+    NUM_ZONES,
+)
 from .manual_api import NativeManualHOSC8WAPI
 
 
 class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
     """Native API plus guarded Zone-7 laboratory targets."""
+
+    def capture_dp38_snapshot(
+        self, phase: str, confirmation: str
+    ) -> dict[str, Any]:
+        """Capture a baseline during Auto watering without weakening write guards.
+
+        The native DP38 zero-trigger is a read/synchronization operation.  The
+        production Program view uses the baseline phase to refresh schedules,
+        so an active automatic zone must not make that read-only refresh fail.
+        Comparison snapshots retain the base implementation and its historical
+        laboratory policy.
+        """
+        if phase != "baseline":
+            return super().capture_dp38_snapshot(phase, confirmation)
+        if confirmation != DP38_SNAPSHOT_CONFIRMATION:
+            raise PermissionError(
+                "Explicit read-only DP38 snapshot confirmation is required"
+            )
+        if self.active_transport != CONNECTION_MODE_LOCAL:
+            raise RuntimeError("The full DP38 snapshot is local-transport only")
+        if not self._command_lock.acquire(blocking=False):
+            raise RuntimeError("Another controller action is still in progress")
+        try:
+            with self._io_lock:
+                self.device.dp38_snapshot_status = "capturing_baseline"
+                self.device.dp38_snapshot_detail = ""
+                self._collect_zone8_dp38_samples(
+                    timeout_seconds=35.0,
+                    required_zones=set(range(1, NUM_ZONES + 1)),
+                    max_requests=80,
+                )
+                self.device.dp38_snapshot_trace = dict(
+                    self.device.zone8_hex_probe_trace
+                )
+                required_safety = {
+                    DP_OPERATION_MODE,
+                    DP_ACTIVE_ZONE,
+                    DP_QUEUED_ZONE,
+                }
+                seen_safety = set(
+                    self.device.zone8_hex_probe_trace.get("safety_dps_seen", [])
+                )
+                if not required_safety.issubset(seen_safety):
+                    raise RuntimeError("Fresh DP101/107/108 safety state was not received")
+                if str(self.device.operation_mode).lower() != "auto":
+                    raise RuntimeError(
+                        "Set the physical controller to ON/Auto before the DP38 snapshot"
+                    )
+
+                # Read-only Program refresh is allowed while an automatic zone
+                # or controller queue is active.  All DP38 write paths keep
+                # their independent idle-controller guards in the base API.
+                self.device.dp38_snapshot_trace.update(
+                    {
+                        "active_watering_allowed": True,
+                        "active_zone_at_capture": int(self.device.active_zone or 0),
+                        "queued_zone_at_capture": int(self.device.queued_zone or 0),
+                    }
+                )
+                snapshot = self._build_full_dp38_snapshot()
+                captured_at = datetime.now(timezone.utc).isoformat()
+                for entry in snapshot.values():
+                    if entry["valid"]:
+                        self.device.ingest_schedule_block(
+                            bytes.fromhex(entry["raw_hex"]), source="controller"
+                        )
+
+                self.device.dp38_snapshot_baseline = snapshot
+                self.device.dp38_snapshot_current = {}
+                self.device.dp38_snapshot_diff = {
+                    "changed": False,
+                    "changed_zones": [],
+                    "unchanged_zones": list(range(1, NUM_ZONES + 1)),
+                    "changes": [],
+                }
+                self.device.dp38_snapshot_baseline_at = captured_at
+                self.device.dp38_snapshot_current_at = ""
+                self.device.dp38_snapshot_status = "baseline_saved"
+                self.device.dp38_snapshot_detail = (
+                    "Complete read-only baseline for zones 1-8 was saved"
+                )
+                return {
+                    "verified": True,
+                    "read_only": True,
+                    "writes_performed": 0,
+                    "phase": phase,
+                    "captured_at": captured_at,
+                    "blocks": {
+                        str(zone): item["raw_hex"]
+                        for zone, item in snapshot.items()
+                    },
+                    "diff": self.device.dp38_snapshot_diff,
+                    "trace": self.device.dp38_snapshot_trace,
+                }
+        except Exception as exc:
+            self.device.dp38_snapshot_status = "incomplete"
+            self.device.dp38_snapshot_detail = str(exc)
+            raise
+        finally:
+            self._command_lock.release()
 
     @staticmethod
     def _zone7_lab_patch_kwargs(field: str, raw_value: str) -> dict[str, Any]:
