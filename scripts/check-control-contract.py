@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Release wrapper for the existing safety contract.
 
-UI 0.6.79 adds only the guarded Zone-7 anchor day 03->04 target while retaining
-the confirmed probes, Program auto-refresh and generic one-shot writer.
+UI 0.6.79 retains the guarded Zone-7 probes. Integration b006.3 separates the
+read-only Program baseline refresh from idle-only DP38 write safety so Auto
+watering does not make schedule viewing stale.
 """
 from pathlib import Path
 import subprocess
@@ -13,8 +14,8 @@ source = legacy_path.read_text(encoding="utf-8")
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"','EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.90"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"','EXPECTED_PANEL_VERSION = "0.6.67"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"','EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"')
-source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.2"')
-source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.2"')
+source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.3"')
+source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.3"')
 source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.79"\'')
 source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0679.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
 source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n]')
@@ -31,6 +32,12 @@ assert 'device.receive()' in manual_api
 assert 'active_requests_after_trigger": 0' in manual_api
 
 start_probe = (root / "custom_components" / "nikas_ho_sc_8w" / "start_probe_api.py").read_text(encoding="utf-8")
+assert 'def capture_dp38_snapshot(' in start_probe
+assert 'if phase != "baseline"' in start_probe
+assert '"active_watering_allowed": True' in start_probe
+assert '"active_zone_at_capture"' in start_probe
+assert '"queued_zone_at_capture"' in start_probe
+assert 'Stop all watering before the DP38 snapshot' not in start_probe
 assert 'field_name == "start_time_1"' in start_probe
 assert 'value == "06:30"' in start_probe
 assert 'value == "06:30,12:45"' in start_probe
@@ -45,6 +52,11 @@ assert 'expected_offsets = {0, 3, 9}' in start_probe
 assert 'expected_offsets = {0, 4, 10}' in start_probe
 assert 'return {"anchor_date": (2026, 9, 4)}' in start_probe
 assert '_validate_zone7_anchor_date_plan' in start_probe
+
+api_source = (root / "custom_components" / "nikas_ho_sc_8w" / "api.py").read_text(encoding="utf-8")
+assert 'Stop all watering before preparing a Zone 7 lab transaction' in api_source
+assert 'Stop all watering before executing a Zone 7 lab transaction' in api_source
+assert 'Zone 7 write selector must be exactly 0x40' in api_source
 
 init_source = (root / "custom_components" / "nikas_ho_sc_8w" / "__init__.py").read_text(encoding="utf-8")
 assert 'from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI' in init_source
