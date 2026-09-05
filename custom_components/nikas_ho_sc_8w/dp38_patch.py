@@ -23,7 +23,7 @@ def build_dp38_patch(
     read_block: bytes,
     *,
     duration_minutes: int | None = None,
-    start_times: list[tuple[int, int]] | None = None,
+    start_times: list[tuple[int, int] | None] | None = None,
     cycle_mode: int | None = None,
     weekdays: Iterable[str] | None = None,
     interval_days: int | None = None,
@@ -36,6 +36,10 @@ def build_dp38_patch(
     The input must use the controller read representation in byte 0 (zone 1..8).
     The returned block uses the proven one-hot write selector.  Fields omitted
     by the caller are byte-for-byte preserved.
+
+    ``start_times`` is positional.  Each list index maps to the corresponding
+    physical controller slot.  ``None`` explicitly clears that slot to FF/FF;
+    values are never compacted or shifted into earlier slots.
     """
     validate_dp38_block(read_block)
     if len(read_block) != DP38_BLOCK_SIZE:
@@ -57,7 +61,10 @@ def build_dp38_patch(
         for slot in range(6):
             block[2 + slot] = 0xFF
             block[8 + slot] = 0xFF
-        for slot, (hour, minute) in enumerate(start_times):
+        for slot, start in enumerate(start_times):
+            if start is None:
+                continue
+            hour, minute = start
             if not 0 <= hour <= 23 or not 0 <= minute <= 59:
                 raise ValueError(f"Invalid start time {hour}:{minute}")
             block[2 + slot] = hour
