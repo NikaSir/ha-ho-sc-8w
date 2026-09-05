@@ -166,8 +166,11 @@ assert 'programTimeEmpty' in ui
 assert 'empty.textContent = "--:--"' in ui
 assert 'patch.start_times = Array.from({ length: 6 }' in ui
 assert 'confirmed: [...requestedFields]' in ui
-assert 'remainingPatch' in ui
+assert 'remainingFields' in ui
 assert 'programEditField.confirmed' in ui
 assert 'programEditField.rejected' in ui
+assert '_restoreDp38SnapshotLabV0688' in ui
+assert 'Переснять исходный снимок 1–8' in ui
+assert 'Снять контрольный снимок и сравнить' in ui
 subprocess.run(["node", "--check", str(ui_path)], check=True)
 subprocess.run([sys.executable, str(root / "scripts" / "check-zone7-anchor-date-probe.py")], check=True)
