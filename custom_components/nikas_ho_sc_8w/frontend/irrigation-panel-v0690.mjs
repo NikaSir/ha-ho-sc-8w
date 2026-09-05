@@ -9,14 +9,27 @@ const previousRender = p._render;
 const previousStructureKey = p._structureKey;
 const previousStyles = p.styles;
 
+const WEEKDAY_LABELS = Object.freeze({ sun: "Вс", mon: "Пн", tue: "Вт", wed: "Ср", thu: "Чт", fri: "Пт", sat: "Сб" });
+
 p._programReadOnlyCardV0690 = function programReadOnlyCardV0690(entities, zone) {
-  const runtime = this.zoneRuntime(entities, zone);
   const attrs = this.attrs(entities.zones[zone]?.schedule);
   const base = this._programEditorBase(entities, zone);
   const seasonal = this.state(entities.seasonal);
   const starts = Array.from({ length: 6 }, (_, index) => base.start_times[index] || "--:--");
   const startsCount = base.start_times.filter(Boolean).length;
-  const repeat = this._zoneCyclePresentation(attrs);
+  let repeatTitle = String(base.cycle_mode || "Нет данных");
+  let repeatDetail = "Из DP38";
+  if (base.cycle_mode === "interval") {
+    repeatTitle = "Интервал";
+    repeatDetail = `Каждые ${this.esc(base.interval_days)} дн.`;
+  } else if (base.cycle_mode === "weekly") {
+    repeatTitle = "По дням недели";
+    repeatDetail = (base.weekdays || []).map((day) => WEEKDAY_LABELS[day] || day).join(" · ") || "Дни не заданы";
+  } else if (base.cycle_mode === "odd") {
+    repeatTitle = "Нечётные дни";
+  } else if (base.cycle_mode === "even") {
+    repeatTitle = "Чётные дни";
+  }
   const date = base.anchor_date && /^\d{4}-\d{2}-\d{2}$/.test(base.anchor_date)
     ? new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${base.anchor_date}T12:00:00`))
     : "Не задана";
@@ -26,13 +39,13 @@ p._programReadOnlyCardV0690 = function programReadOnlyCardV0690(entities, zone) 
   return `<section class="detailCard zoneProgramDetail programReadOnly">
     <div class="zoneProgramHero">
       <span class="scene scene${zone} zoneProgramScene" aria-hidden="true"></span>
-      <div class="zoneProgramIdentity"><small>ЗОНА ${zone}</small><h2>Зона ${zone}</h2><span class="zoneProgramStatus ${runtime.tone}"><ha-icon icon="mdi:eye-outline"></ha-icon>Просмотр</span><span class="zoneProgramCount">${startsCount} из 6</span></div>
+      <div class="zoneProgramIdentity"><small>ЗОНА ${zone}</small><h2>Зона ${zone}</h2><span class="zoneProgramStatus ready"><ha-icon icon="mdi:eye-outline"></ha-icon>Просмотр</span><span class="zoneProgramCount">${startsCount} из 6</span></div>
     </div>
     <div class="programReadFresh"><span><i></i><b>Фактическая программа контроллера</b></span>${received ? `<em>${this.esc(received)}</em>` : ""}</div>
     <div class="programReadGrid">
       <article><small>Базовая длительность</small><b>${this.esc(base.duration_minutes)} мин</b><em>До сезонной коррекции</em></article>
       <article><small>Сезонная коррекция</small><b>${this.bad(seasonal) ? "Нет данных" : `${this.esc(seasonal)} %`}</b><em>Общая для всех зон</em></article>
-      <article><small>Режим повтора</small><b>${this.esc(repeat.value || base.cycle_mode)}</b><em>${base.cycle_mode === "interval" ? `Интервал ${this.esc(base.interval_days)} дн.` : "Из DP38"}</em></article>
+      <article><small>Режим повтора</small><b>${this.esc(repeatTitle)}</b><em>${this.esc(repeatDetail)}</em></article>
       <article><small>Опорная дата</small><b>${this.esc(date)}</b><em>Фактическое значение DP38</em></article>
       <article><small>Датчик дождя</small><b>${this.esc(rain)}</b><em>Правило этой зоны</em></article>
       <article><small>Состояние программы</small><b>${this.esc(enabled)}</b><em>High nibble byte 19</em></article>
@@ -70,7 +83,7 @@ p._render = function renderV0690() {
 
 p.styles = function stylesV0690() {
   return `${previousStyles.call(this)}
-    .programReadOnly{gap:12px!important}.programReadFresh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px;color:var(--muted);font-size:11px}.programReadFresh>span{display:flex;align-items:center;gap:7px}.programReadFresh i{width:9px;height:9px;border-radius:50%;background:var(--green)}.programReadFresh b{color:var(--green);font-size:12px}.programReadFresh em{font-style:normal}.programReadGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.programReadGrid article{display:grid;align-content:start;gap:5px;min-height:100px;padding:11px;border:1px solid var(--line);border-radius:17px;background:var(--soft)}.programReadGrid small,.programReadStarts small{color:var(--muted);font-size:11px;font-weight:800}.programReadGrid b{font-size:18px;line-height:1.15}.programReadGrid em{color:var(--muted);font-size:10.5px;font-style:normal;line-height:1.25}.programReadStarts{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--card)}.programReadStarts>div:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.programReadStarts article{display:grid;gap:5px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}.programReadStarts article b{font-size:18px;text-align:center}.programReadStarts article.empty b{color:var(--muted)}.programReadNote{display:grid!important;grid-template-columns:28px minmax(0,1fr);align-items:start;gap:7px;margin:0!important;padding:10px;border-radius:14px;background:var(--soft);color:var(--muted)!important;font-size:10.5px!important;line-height:1.35}.programReadNote ha-icon{color:var(--a);--mdc-icon-size:22px}.programReadOnly .programZoneStatus.ready{color:var(--green)}
+    .programReadOnly{gap:12px!important}.programReadFresh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px;color:var(--muted);font-size:11px}.programReadFresh>span{display:flex;align-items:center;gap:7px}.programReadFresh i{width:9px;height:9px;border-radius:50%;background:var(--green)}.programReadFresh b{color:var(--green);font-size:12px}.programReadFresh em{font-style:normal}.programReadGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.programReadGrid article{display:grid;align-content:start;gap:5px;min-height:100px;padding:11px;border:1px solid var(--line);border-radius:17px;background:var(--soft)}.programReadGrid small,.programReadStarts small{color:var(--muted);font-size:11px;font-weight:800}.programReadGrid b{font-size:18px;line-height:1.15}.programReadGrid em{color:var(--muted);font-size:10.5px;font-style:normal;line-height:1.25}.programReadStarts{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--card)}.programReadStarts>div:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.programReadStarts article{display:grid;gap:5px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}.programReadStarts article b{font-size:18px;text-align:center}.programReadStarts article.empty b{color:var(--muted)}.programReadNote{display:grid!important;grid-template-columns:28px minmax(0,1fr);align-items:start;gap:7px;margin:0!important;padding:10px;border-radius:14px;background:var(--soft);color:var(--muted)!important;font-size:10.5px!important;line-height:1.35}.programReadNote ha-icon{color:var(--a);--mdc-icon-size:22px}.programReadOnly .zoneProgramStatus.ready{color:var(--green)}
     @media(max-width:520px){.programReadGrid{gap:7px}.programReadGrid article{min-height:96px;padding:10px}.programReadStarts>div:last-child{gap:6px}}
   `;
 };
