@@ -94,15 +94,13 @@ CONF_CLOUD_API_REGION = "cloud_api_region"
 CONNECTION_MODE_AUTO = "auto"
 CONNECTION_MODE_LOCAL = "local"
 CONNECTION_MODE_CLOUD = "cloud"
-CONNECTION_MODES = frozenset(
-    {CONNECTION_MODE_AUTO, CONNECTION_MODE_CLOUD, CONNECTION_MODE_LOCAL}
-)
+CONNECTION_MODES = frozenset({CONNECTION_MODE_AUTO, CONNECTION_MODE_CLOUD, CONNECTION_MODE_LOCAL})
 
 PANEL_TITLE = "Автополив"
 PANEL_ICON = "mdi:sprinkler"
 PANEL_URL_PATH = "dashboard-irrigation"
 PANEL_PARENT_PATH = "/dashboard-actions/home"
 PANEL_ELEMENT_NAME = "nikas-ho-sc-8w-panel"
-PANEL_VERSION = "0.6.89"
+PANEL_VERSION = "0.6.90"
 PANEL_STATIC_URL = "/nikas-ho-sc-8w"
-PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0689.mjs"
+PANEL_JS_URL = f"{PANEL_STATIC_URL}/irrigation-panel-v0690.mjs"
