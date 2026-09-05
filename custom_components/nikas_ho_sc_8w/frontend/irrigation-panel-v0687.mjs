@@ -70,14 +70,14 @@ p._render = function renderV0687() {
 
 p.styles = function stylesV0687() {
   return `${previousStyles.call(this)}
-    /* UI v0.6.87 — native picker stability and explicit zone imagery. */
+    /* UI v0.6.87 — native picker stability and approved zone imagery. */
     .zoneProgramScene,.zoneRow .scene,.manualZone .scene{background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
-    .scene1{background-image:url("/nikas-ho-sc-8w/assets/zone-1.webp")!important}
-    .scene2{background-image:url("/nikas-ho-sc-8w/assets/zone-2.webp")!important}
-    .scene3{background-image:url("/nikas-ho-sc-8w/assets/zone-3.webp")!important}
-    .scene4{background-image:url("/nikas-ho-sc-8w/assets/zone-4.webp")!important}
-    .scene5{background-image:url("/nikas-ho-sc-8w/assets/zone-5.webp")!important}
-    .scene6{background-image:url("/nikas-ho-sc-8w/assets/zone-6.webp")!important}
+    .scene1{background-image:url("/nikas-ho-sc-8w/assets/zone-lawn-v2.webp")!important}
+    .scene2{background-image:url("/nikas-ho-sc-8w/assets/zone-lawn-v2.webp")!important}
+    .scene3{background-image:url("/nikas-ho-sc-8w/assets/zone-lawn-v2.webp")!important}
+    .scene4{background-image:url("/nikas-ho-sc-8w/assets/zone-flowers-v2.webp")!important}
+    .scene5{background-image:url("/nikas-ho-sc-8w/assets/zone-shrubs-v2.webp")!important}
+    .scene6{background-image:url("/nikas-ho-sc-8w/assets/zone-greenhouse-v2.webp")!important}
     .programEditField input,.programEditField select,.programEditStart input,.programInterval input{touch-action:manipulation}
   `;
 };
