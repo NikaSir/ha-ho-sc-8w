@@ -50,14 +50,16 @@ assert 'start_times: list[tuple[int, int] | None] | None' in patch_builder
 assert 'if start is None:' in patch_builder
 assert 'never compacted or shifted' in patch_builder
 
-editor_patch = (component / "frontend" / "irrigation-panel-v0688.mjs").read_text(encoding="utf-8")
+editor_patch_path = component / "frontend" / "irrigation-panel-v0688.mjs"
+editor_patch = editor_patch_path.read_text(encoding="utf-8")
 assert 'data-program-start-clear' in editor_patch
 assert 'empty.textContent = "--:--"' in editor_patch
 assert 'patch.start_times = Array.from({ length: 6 }' in editor_patch
 assert 'programEditField.confirmed' in editor_patch
 assert 'programEditField.rejected' in editor_patch
 
-lab_ui = (component / "frontend" / "irrigation-panel-v0689.mjs").read_text(encoding="utf-8")
+lab_ui_path = component / "frontend" / "irrigation-panel-v0689.mjs"
+lab_ui = lab_ui_path.read_text(encoding="utf-8")
 assert '_dp38SnapshotLabV0689' in lab_ui
 assert 'Переснять исходный снимок 1–8' in lab_ui
 assert 'Снять контрольный снимок и сравнить' in lab_ui
@@ -75,7 +77,7 @@ assert 'this._programEditorCard(entities, number)' in ui
 assert 'data-program-apply' not in ui
 assert 'program:readonly:' in ui
 assert 'Редактирование выполняется через «Зоны»' in ui
-subprocess.run(["node", "--check", str(editor_patch)], check=True)
-subprocess.run(["node", "--check", str(lab_ui)], check=True)
+subprocess.run(["node", "--check", str(editor_patch_path)], check=True)
+subprocess.run(["node", "--check", str(lab_ui_path)], check=True)
 subprocess.run(["node", "--check", str(ui_path)], check=True)
 subprocess.run([sys.executable, str(root / "scripts" / "check-zone7-anchor-date-probe.py")], check=True)
