@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Release wrapper for the existing safety contract.
 
-UI 0.6.79 retains the guarded Zone-7 probes. Integration b006.3 separates the
-read-only Program baseline refresh from idle-only DP38 write safety so Auto
-watering does not make schedule viewing stale.
+UI 0.6.80 adds a fixed Zone-7 interval->weekly mode probe. Integration b006.4
+keeps the b006.3 read-only Program refresh behavior and all idle-only write guards.
 """
 from pathlib import Path
 import subprocess
@@ -14,11 +13,11 @@ source = legacy_path.read_text(encoding="utf-8")
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"','EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.90"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"','EXPECTED_PANEL_VERSION = "0.6.67"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"','EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"')
-source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.3"')
-source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.3"')
-source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.79"\'')
-source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0679.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
-source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n]')
+source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.4"')
+source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.4"')
+source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.80"\'')
+source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0680.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
+source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n]')
 source = source.replace('require(setup_source, "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI")','require(setup_source, "from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI")')
 source = source.replace('assert "DP_OPERATION_MODE" not in manual_source','assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source')
 source = source.replace('assert snapshot_meta["read_only"] is True','assert snapshot_meta.get("read_only", snapshot_meta.get("read_only_semantics")) is True')
@@ -57,23 +56,35 @@ api_source = (root / "custom_components" / "nikas_ho_sc_8w" / "api.py").read_tex
 assert 'Stop all watering before preparing a Zone 7 lab transaction' in api_source
 assert 'Stop all watering before executing a Zone 7 lab transaction' in api_source
 assert 'Zone 7 write selector must be exactly 0x40' in api_source
+assert '"weekly": 0' in api_source
+
+models = (root / "custom_components" / "nikas_ho_sc_8w" / "models.py").read_text(encoding="utf-8")
+assert '"mon": 0x02' in models
+assert 'cycle_mode_name' in models
 
 init_source = (root / "custom_components" / "nikas_ho_sc_8w" / "__init__.py").read_text(encoding="utf-8")
 assert 'from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI' in init_source
-assert '"start_time_1"' in init_source
-assert '"cycle_value"' in init_source
-assert '"anchor_date"' in init_source
+assert '"cycle_mode"' in init_source
+assert '"weekdays"' in init_source
 
 sensor = (root / "custom_components" / "nikas_ho_sc_8w" / "sensor.py").read_text(encoding="utf-8")
 assert 'if self._zone == 8:' in sensor
 assert '"dp38_snapshot_baseline_available"' in sensor
 assert '"dp38_snapshot_baseline_at"' in sensor
 
-ui = (root / "custom_components" / "nikas_ho_sc_8w" / "frontend" / "irrigation-panel-v0679.mjs").read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.79"' in ui
-assert 'import "./irrigation-panel-v0678.mjs"' in ui
-assert 'const TARGET_FIELD = "anchor_date"' in ui
-assert 'const TARGET_VALUE = "2026-09-04"' in ui
-assert 'byte 18: 03 → 04' in ui
+ui_path = root / "custom_components" / "nikas_ho_sc_8w" / "frontend" / "irrigation-panel-v0680.mjs"
+ui = ui_path.read_text(encoding="utf-8")
+assert 'const UI_VERSION = "0.6.80"' in ui
+assert 'import "./irrigation-panel-v0679.mjs"' in ui
+assert 'const TARGET_FIELD = "cycle_mode"' in ui
+assert 'const TARGET_VALUE = "weekly"' in ui
+assert 'const EXPECTED_SOURCE = "0711060C17FFFFFF1E2D3BFFFFFF03021A090410"' in ui
+assert 'const EXPECTED_WRITE = "4011060C17FFFFFF1E2D3BFFFFFF00021A090410"' in ui
+assert 'const EXPECTED_READ = "0711060C17FFFFFF1E2D3BFFFFFF00021A090410"' in ui
+assert 'byte 14 03 → 00' in ui
+assert 'data-zone7-weekly-prepare' in ui
+assert 'data-zone7-weekly-execute' in ui
+assert 'exactPrepared' in ui and 'exactVerified' in ui
 assert 'execute_zone7_lab' in ui
+subprocess.run(["node", "--check", str(ui_path)], check=True)
 subprocess.run([sys.executable, str(root / "scripts" / "check-zone7-anchor-date-probe.py")], check=True)
