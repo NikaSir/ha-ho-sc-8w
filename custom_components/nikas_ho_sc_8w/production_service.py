@@ -87,6 +87,10 @@ async def _async_apply_zone_schedule(
             await coordinator.schedule_cache.async_save()
             coordinator.async_set_updated_data(coordinator.api.device)
     except (PermissionError, RuntimeError, TypeError, ValueError) as exc:
+        # apply_zone_schedule publishes any complete factual post-write DP38
+        # snapshot before raising a mismatch. Persist that reconciled state too;
+        # an error must not leave the panel/cache on the pre-write baseline.
+        await coordinator.schedule_cache.async_save()
         coordinator.async_set_updated_data(coordinator.api.device)
         raise HomeAssistantError(str(exc)) from exc
 
