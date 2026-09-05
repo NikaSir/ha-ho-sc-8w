@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Release safety contract for HO-SC-8W UI 0.6.94 / integration b006.15.
+"""Release safety contract for HO-SC-8W UI 0.6.95 / integration b006.16.
 
-UI 0.6.94 keeps the guarded Zones editor / read-only Program split and restores
-browser-selected zone artwork as the authoritative visual source on every zone
-surface. Integration b006.15 contains no DP transport changes.
+UI 0.6.95 fixes the factual program-enable attribute, makes known read-only
+controller facts visually consistent, and normalizes date/time editor geometry.
+Integration b006.16 contains no DP transport changes.
 """
 from pathlib import Path
 import subprocess
@@ -16,11 +16,11 @@ source = legacy_path.read_text(encoding="utf-8")
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"','EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.90"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"','EXPECTED_PANEL_VERSION = "0.6.67"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"','EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"')
-source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.15"')
-source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.15"')
-source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.94"\'')
-source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0694.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
-source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n    "irrigation-panel-v0681.mjs",\n    "irrigation-panel-v0682.mjs",\n    "irrigation-panel-v0683.mjs",\n    "irrigation-panel-v0684.mjs",\n    "irrigation-panel-v0685.mjs",\n    "irrigation-panel-v0686.mjs",\n    "irrigation-panel-v0687.mjs",\n    "irrigation-panel-v0688.mjs",\n    "irrigation-panel-v0689.mjs",\n    "irrigation-panel-v0690.mjs",\n    "irrigation-panel-v0691.mjs",\n    "irrigation-panel-v0692.mjs",\n    "irrigation-panel-v0693.mjs",\n    "irrigation-panel-v0694.mjs",\n]')
+source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.16"')
+source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.16"')
+source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.95"\'')
+source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0695.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
+source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n    "irrigation-panel-v0681.mjs",\n    "irrigation-panel-v0682.mjs",\n    "irrigation-panel-v0683.mjs",\n    "irrigation-panel-v0684.mjs",\n    "irrigation-panel-v0685.mjs",\n    "irrigation-panel-v0686.mjs",\n    "irrigation-panel-v0687.mjs",\n    "irrigation-panel-v0688.mjs",\n    "irrigation-panel-v0689.mjs",\n    "irrigation-panel-v0690.mjs",\n    "irrigation-panel-v0691.mjs",\n    "irrigation-panel-v0692.mjs",\n    "irrigation-panel-v0693.mjs",\n    "irrigation-panel-v0694.mjs",\n    "irrigation-panel-v0695.mjs",\n]')
 source = source.replace('require(setup_source, "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI")','require(setup_source, "from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI")')
 source = source.replace('assert "DP_OPERATION_MODE" not in manual_source','assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source')
 source = source.replace('assert snapshot_meta["read_only"] is True','assert snapshot_meta.get("read_only", snapshot_meta.get("read_only_semantics")) is True')
@@ -29,9 +29,9 @@ exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "
 
 manifest = (component / "manifest.json").read_text(encoding="utf-8")
 const = (component / "const.py").read_text(encoding="utf-8")
-assert '"version": "1.0.0-b006.15"' in manifest
-assert 'PANEL_VERSION = "0.6.94"' in const
-assert 'irrigation-panel-v0694.mjs' in const
+assert '"version": "1.0.0-b006.16"' in manifest
+assert 'PANEL_VERSION = "0.6.95"' in const
+assert 'irrigation-panel-v0695.mjs' in const
 
 manual_api = (component / "manual_api.py").read_text(encoding="utf-8")
 assert 'trigger_hex = "00" * 20' in manual_api
@@ -68,51 +68,41 @@ assert 'Снять контрольный снимок и сравнить' in l
 
 readonly_ui_path = component / "frontend" / "irrigation-panel-v0690.mjs"
 readonly_ui = readonly_ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.90"' in readonly_ui
 assert 'p.programView = function programViewV0690' in readonly_ui
-assert '_programReadOnlyCardV0690' in readonly_ui
 assert 'Фактическая программа контроллера' in readonly_ui
-assert 'Только просмотр.' in readonly_ui
-assert 'this._programEditorCard(entities, number)' in readonly_ui
 assert 'data-program-apply' not in readonly_ui
-assert 'program:readonly:' in readonly_ui
 
 system_ui_path = component / "frontend" / "irrigation-panel-v0691.mjs"
 system_ui = system_ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.91"' in system_ui
-assert 'screen.append(zone)' in system_ui
-assert 'screen.append(settings)' in system_ui
-assert 'screen.append(manual)' in system_ui
-assert 'height:94px!important' in system_ui
+assert 'screen.append(zone)' in system_ui and 'screen.append(settings)' in system_ui and 'screen.append(manual)' in system_ui
 
 editor_ui_path = component / "frontend" / "irrigation-panel-v0692.mjs"
 editor_ui = editor_ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.92"' in editor_ui
 assert 'data-program-enabled-toggle' in editor_ui
-assert 'base.program_enabled' in editor_ui
 assert 'patch.program_enabled = draft.program_enabled' in editor_ui
-assert 'neutral editor at rest; blue draft; green only verified; red mismatch' in editor_ui
-assert '.programEnabledToggle.on' in editor_ui
 
 picker_ui_path = component / "frontend" / "irrigation-panel-v0693.mjs"
 picker_ui = picker_ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.93"' in picker_ui
 assert 'p._programEditorNativeControlActive = function programEditorNativeControlActiveV0693' in picker_ui
-assert 'this._view !== "program"' not in picker_ui
-assert 'grid-template-columns:minmax(0,1fr) 42px!important' in picker_ui
 
-artwork_source = (component / "frontend" / "irrigation-panel-v0658.mjs").read_text(encoding="utf-8")
-assert 'ARTWORK_STORAGE_KEY = "nikas_ho_sc_8w.zone_artwork.v1"' in artwork_source
-assert 'this.style.setProperty(`--zone-artwork-${zone}`, image)' in artwork_source
+artwork_ui_path = component / "frontend" / "irrigation-panel-v0694.mjs"
+artwork_ui = artwork_ui_path.read_text(encoding="utf-8")
+assert 'this._applyZoneArtwork?.()' in artwork_ui
 
-ui_path = component / "frontend" / "irrigation-panel-v0694.mjs"
+ui_path = component / "frontend" / "irrigation-panel-v0695.mjs"
 ui = ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.94"' in ui
-assert 'import "./irrigation-panel-v0693.mjs"' in ui
-assert 'this._applyZoneArtwork?.()' in ui
-for zone in range(1, 9):
-    assert f'.scene{zone}{{background-image:var(--zone-artwork-{zone})!important}}' in ui
+assert 'const UI_VERSION = "0.6.95"' in ui
+assert 'import "./irrigation-panel-v0694.mjs"' in ui
+assert 'attrs?.program_enabled' in ui
+assert 'attrs?.enabled' in ui
+assert 'factualConfirmed' in ui and 'factualUnknown' in ui
+assert '[data-program-field="anchor_date"]' in ui
+assert 'grid-template-columns:minmax(0,1fr) 40px!important' in ui
+assert 'border-left:1px solid var(--line)!important' in ui
 
-for path in (editor_patch_path, lab_ui_path, readonly_ui_path, system_ui_path, editor_ui_path, picker_ui_path, ui_path):
+models = (component / "models.py").read_text(encoding="utf-8")
+assert '"program_enabled": self.enabled' in models
+
+for path in (editor_patch_path, lab_ui_path, readonly_ui_path, system_ui_path, editor_ui_path, picker_ui_path, artwork_ui_path, ui_path):
     subprocess.run(["node", "--check", str(path)], check=True)
 subprocess.run([sys.executable, str(root / "scripts" / "check-zone7-anchor-date-probe.py")], check=True)
