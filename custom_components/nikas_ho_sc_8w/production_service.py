@@ -1,6 +1,6 @@
 """Production schedule-editor service for HO-SC-8W.
 
-The runtime integration still instantiates StartProbeHOSC8WAPI.  This module
+The runtime integration still instantiates StartProbeHOSC8WAPI. This module
 adds the verified production DP38 writer to that class and registers one
 Home Assistant service used by the UI editor.
 """
@@ -12,7 +12,6 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
@@ -29,7 +28,9 @@ ATTR_SCHEDULE = "schedule"
 _APPLY_ZONE_SCHEDULE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
-        vol.Required(ATTR_ZONE): vol.All(vol.Coerce(int), vol.Range(min=1, max=NUM_ZONES)),
+        vol.Required(ATTR_ZONE): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=NUM_ZONES)
+        ),
         vol.Required(ATTR_SCHEDULE): dict,
     },
     extra=vol.PREVENT_EXTRA,
@@ -46,7 +47,9 @@ def _install_api_methods() -> None:
     StartProbeHOSC8WAPI._normalize_schedule_patch = staticmethod(  # type: ignore[attr-defined]
         ProductionHOSC8WAPI._normalize_schedule_patch
     )
-    StartProbeHOSC8WAPI.apply_zone_schedule = ProductionHOSC8WAPI.apply_zone_schedule  # type: ignore[attr-defined]
+    StartProbeHOSC8WAPI.apply_zone_schedule = (  # type: ignore[attr-defined]
+        ProductionHOSC8WAPI.apply_zone_schedule
+    )
     _PATCHED = True
 
 
@@ -56,7 +59,9 @@ def _coordinator_for_call(hass: HomeAssistant, call: ServiceCall) -> Any:
     if entry_id:
         coordinator = coordinators.get(entry_id)
         if coordinator is None:
-            raise HomeAssistantError(f"HO-SC-8W config entry {entry_id} is not loaded")
+            raise HomeAssistantError(
+                f"HO-SC-8W config entry {entry_id} is not loaded"
+            )
         return coordinator
     loaded = list(coordinators.values())
     if len(loaded) != 1:
@@ -66,20 +71,21 @@ def _coordinator_for_call(hass: HomeAssistant, call: ServiceCall) -> Any:
     return loaded[0]
 
 
-async def _async_apply_zone_schedule(hass: HomeAssistant, call: ServiceCall) -> None:
+async def _async_apply_zone_schedule(
+    hass: HomeAssistant, call: ServiceCall
+) -> None:
     coordinator = _coordinator_for_call(hass, call)
     zone = int(call.data[ATTR_ZONE])
     schedule = dict(call.data[ATTR_SCHEDULE])
     try:
         async with coordinator._transport_lock:  # noqa: SLF001 - integration-owned service
-            result = await hass.async_add_executor_job(
+            await hass.async_add_executor_job(
                 coordinator.api.apply_zone_schedule,
                 zone,
                 schedule,
             )
             await coordinator.schedule_cache.async_save()
             coordinator.async_set_updated_data(coordinator.api.device)
-            coordinator.api.device.raw_dps["production_schedule_last_result"] = result
     except (PermissionError, RuntimeError, TypeError, ValueError) as exc:
         coordinator.async_set_updated_data(coordinator.api.device)
         raise HomeAssistantError(str(exc)) from exc
