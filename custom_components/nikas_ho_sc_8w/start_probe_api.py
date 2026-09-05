@@ -152,6 +152,10 @@ class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
             raise ValueError(
                 "The guarded Zone 7 weekday probe only allows Tuesday or Tuesday+Thursday"
             )
+        if field_name == "program_enabled":
+            if value != "false":
+                raise ValueError("The guarded Zone 7 program flag probe only allows false")
+            return {"program_enabled": False}
         return NativeManualHOSC8WAPI._zone7_lab_patch_kwargs(field_name, value)
 
     @staticmethod
@@ -239,6 +243,39 @@ class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
         if changes != expected_diff:
             raise ValueError("Unexpected Zone 7 weekday dry-run diff")
 
+    @staticmethod
+    def _validate_zone7_program_enabled_plan(plan: dict[str, Any]) -> None:
+        """Validate fixed program enabled -> disabled byte-19 experiment."""
+        if not isinstance(plan, dict):
+            raise ValueError("Zone 7 program-flag dry-run was not retained")
+        if plan.get("field") != "program_enabled" or plan.get("value") != "false":
+            raise ValueError("Zone 7 program-flag dry-run has an unexpected target")
+        source = bytes.fromhex(str(plan.get("source_read_hex", "")))
+        expected_source = bytes.fromhex(
+            "0711060C17FFFFFF1E2D3BFFFFFF00141A090410"
+        )
+        if source != expected_source:
+            raise ValueError(
+                "Zone 7 must exactly match confirmed Weekly Tuesday+Thursday enabled state before the program-off probe"
+            )
+        expected = bytearray(source)
+        expected[19] = 0x00
+        write = bytearray(expected)
+        write[0] = 0x40
+        if (
+            bytes.fromhex(str(plan.get("write_hex", ""))) != bytes(write)
+            or bytes.fromhex(str(plan.get("expected_read_hex", ""))) != bytes(expected)
+        ):
+            raise ValueError(
+                "Zone 7 program flag probe must change only byte 19: 10 -> 00"
+            )
+        changes = [
+            (item["offset"], item["before"], item["after"])
+            for item in plan.get("diff", [])
+        ]
+        if changes != [(0, "07", "40"), (19, "10", "00")]:
+            raise ValueError("Unexpected Zone 7 program-flag dry-run diff")
+
     def prepare_zone7_lab(self, field: str, value: str) -> dict[str, Any]:
         """Prepare generic lab transaction with strict source-state guards."""
         result = super().prepare_zone7_lab(field, value)
@@ -263,6 +300,21 @@ class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
             plan = getattr(self.device, "zone7_lab_plan", None)
             try:
                 self._validate_zone7_weekday_plan(plan)
+            except (KeyError, TypeError, ValueError) as exc:
+                self.device.zone7_lab_plan = None
+                self.device.zone7_lab_result = {
+                    "status": "blocked",
+                    "field": field_name,
+                    "value": target,
+                    "reason": str(exc),
+                    "source_read_hex": result.get("source_read_hex", ""),
+                }
+                raise RuntimeError(str(exc)) from exc
+            return result
+        if field_name == "program_enabled":
+            plan = getattr(self.device, "zone7_lab_plan", None)
+            try:
+                self._validate_zone7_program_enabled_plan(plan)
             except (KeyError, TypeError, ValueError) as exc:
                 self.device.zone7_lab_plan = None
                 self.device.zone7_lab_result = {
