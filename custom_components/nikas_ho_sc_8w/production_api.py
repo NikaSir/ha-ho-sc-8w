@@ -47,9 +47,8 @@ class ProductionHOSC8WAPI(StartProbeHOSC8WAPI):
             for raw in raw_times:
                 value = str(raw or "").strip()
                 if not value:
-                    # Preserve the physical slot index.  A blank value means
-                    # this exact slot must be encoded as FF/FF; do not compact
-                    # later values into earlier slots.
+                    # Preserve the physical slot index. A blank value means this
+                    # exact slot is FF/FF; later starts must never shift upward.
                     parsed.append(None)
                     continue
                 try:
@@ -171,10 +170,25 @@ class ProductionHOSC8WAPI(StartProbeHOSC8WAPI):
                 )
                 after = self._build_full_dp38_snapshot()
                 actual = bytes.fromhex(str(after[zone]["raw_hex"]))
+
+                # The post-write snapshot is factual controller state even when
+                # it does not equal our expected frame. Publish it before any
+                # mismatch exception so the UI never remains on a stale baseline.
+                for entry in after.values():
+                    if entry.get("valid"):
+                        self.device.ingest_schedule_block(
+                            bytes.fromhex(str(entry["raw_hex"])), source="controller"
+                        )
+
                 verification = verify_dp38_readback(plan, actual)
                 if not verification["verified"]:
+                    mismatch_fields = sorted(
+                        {str(item.get("field", "byte")) for item in verification.get("mismatches", [])}
+                    )
+                    detail = ", ".join(mismatch_fields) or "unknown field"
                     raise RuntimeError(
-                        "DP38 write was sent once but target read-back did not match; do not repeat"
+                        "DP38 write was sent once but target read-back did not match "
+                        f"({detail}); do not repeat"
                     )
 
                 collateral: list[int] = []
@@ -189,12 +203,6 @@ class ProductionHOSC8WAPI(StartProbeHOSC8WAPI):
                         + ", ".join(map(str, collateral))
                         + "; do not repeat"
                     )
-
-                for entry in after.values():
-                    if entry.get("valid"):
-                        self.device.ingest_schedule_block(
-                            bytes.fromhex(str(entry["raw_hex"])), source="controller"
-                        )
 
                 return {
                     "verified": True,
