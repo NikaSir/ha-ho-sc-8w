@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Release wrapper for the existing safety contract.
 
-UI 0.6.88 adds explicit per-slot time clearing, --:-- empty-slot display and
-factual per-field read-back feedback. Integration b006.12 preserves physical
-DP38 start-slot positions and reconciles complete post-write state on mismatch.
+UI 0.6.89 keeps the 0.6.88 time-slot editor and restores the full read-only
+DP38 snapshot laboratory. Integration b006.12 preserves physical DP38 start
+slot positions and reconciles complete post-write state on mismatch.
 """
 from pathlib import Path
 import subprocess
@@ -16,9 +16,9 @@ source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"','EXPECTED_PANEL_VERS
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"','EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"')
 source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.12"')
 source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.12"')
-source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.88"\'')
-source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0688.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
-source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n    "irrigation-panel-v0681.mjs",\n    "irrigation-panel-v0682.mjs",\n    "irrigation-panel-v0683.mjs",\n    "irrigation-panel-v0684.mjs",\n    "irrigation-panel-v0685.mjs",\n    "irrigation-panel-v0686.mjs",\n    "irrigation-panel-v0687.mjs",\n    "irrigation-panel-v0688.mjs",\n]')
+source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.89"\'')
+source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0689.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
+source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n    "irrigation-panel-v0681.mjs",\n    "irrigation-panel-v0682.mjs",\n    "irrigation-panel-v0683.mjs",\n    "irrigation-panel-v0684.mjs",\n    "irrigation-panel-v0685.mjs",\n    "irrigation-panel-v0686.mjs",\n    "irrigation-panel-v0687.mjs",\n    "irrigation-panel-v0688.mjs",\n    "irrigation-panel-v0689.mjs",\n]')
 source = source.replace('require(setup_source, "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI")','require(setup_source, "from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI")')
 source = source.replace('assert "DP_OPERATION_MODE" not in manual_source','assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source')
 source = source.replace('assert snapshot_meta["read_only"] is True','assert snapshot_meta.get("read_only", snapshot_meta.get("read_only_semantics")) is True')
@@ -156,21 +156,28 @@ assert 'zone-flowers-v2.webp' in picker_ui
 assert 'zone-shrubs-v2.webp' in picker_ui
 assert 'zone-greenhouse-v2.webp' in picker_ui
 
-ui_path = component / "frontend" / "irrigation-panel-v0688.mjs"
+editor_patch_path = component / "frontend" / "irrigation-panel-v0688.mjs"
+editor_patch = editor_patch_path.read_text(encoding="utf-8")
+assert 'const UI_VERSION = "0.6.88"' in editor_patch
+assert 'import "./irrigation-panel-v0687.mjs"' in editor_patch
+assert 'data-program-start-clear' in editor_patch
+assert 'programTimeClear' in editor_patch
+assert 'programTimeEmpty' in editor_patch
+assert 'empty.textContent = "--:--"' in editor_patch
+assert 'patch.start_times = Array.from({ length: 6 }' in editor_patch
+assert 'confirmed: [...requestedFields]' in editor_patch
+assert 'remainingPatch' in editor_patch
+assert 'programEditField.confirmed' in editor_patch
+assert 'programEditField.rejected' in editor_patch
+
+ui_path = component / "frontend" / "irrigation-panel-v0689.mjs"
 ui = ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.88"' in ui
-assert 'import "./irrigation-panel-v0687.mjs"' in ui
-assert 'data-program-start-clear' in ui
-assert 'programTimeClear' in ui
-assert 'programTimeEmpty' in ui
-assert 'empty.textContent = "--:--"' in ui
-assert 'patch.start_times = Array.from({ length: 6 }' in ui
-assert 'confirmed: [...requestedFields]' in ui
-assert 'remainingFields' in ui
-assert 'programEditField.confirmed' in ui
-assert 'programEditField.rejected' in ui
-assert '_restoreDp38SnapshotLabV0688' in ui
+assert 'const UI_VERSION = "0.6.89"' in ui
+assert 'import "./irrigation-panel-v0688.mjs"' in ui
+assert '_dp38SnapshotLabV0689' in ui
+assert 'dp38SnapshotLab dp38FullSnapshot' in ui
 assert 'Переснять исходный снимок 1–8' in ui
 assert 'Снять контрольный снимок и сравнить' in ui
+subprocess.run(["node", "--check", str(editor_patch_path)], check=True)
 subprocess.run(["node", "--check", str(ui_path)], check=True)
 subprocess.run([sys.executable, str(root / "scripts" / "check-zone7-anchor-date-probe.py")], check=True)
