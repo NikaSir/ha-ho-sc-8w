@@ -102,10 +102,14 @@ class ProductionHOSC8WAPI(StartProbeHOSC8WAPI):
                 raise ValueError("rain_sensor_follow must be boolean")
             patch["rain_sensor_follow"] = rain
 
-        # Do not expose the ambiguous high nibble of byte 19 in production.
-        # It remains byte-for-byte unchanged by every production edit.
         if "program_enabled" in schedule:
-            raise ValueError("program_enabled is not a production-editable field")
+            enabled = schedule["program_enabled"]
+            if not isinstance(enabled, bool):
+                raise ValueError("program_enabled must be boolean")
+            # The program enable flag is the high nibble of DP38 byte 19.  The
+            # patch builder changes that nibble only and preserves the low
+            # rain-follow nibble byte-for-byte when it is not part of this edit.
+            patch["program_enabled"] = enabled
 
         if not patch:
             raise ValueError("No schedule fields were supplied")
