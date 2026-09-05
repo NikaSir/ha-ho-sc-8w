@@ -1,14 +1,17 @@
-"""Runtime extension for the guarded Zone-7 program enable restore probe."""
+"""Runtime extensions for guarded DP38 research and production editing."""
 
 from __future__ import annotations
 
 from typing import Any
 
+from .coordinator import HOSC8WCoordinator
+from .production_service import setup_production_service
 from .start_probe_api import StartProbeHOSC8WAPI
 
 
 _ORIGINAL_PATCH_KWARGS = StartProbeHOSC8WAPI._zone7_lab_patch_kwargs
 _ORIGINAL_VALIDATE_PROGRAM = StartProbeHOSC8WAPI._validate_zone7_program_enabled_plan
+_ORIGINAL_COORDINATOR_INIT = HOSC8WCoordinator.__init__
 _PATCHED = False
 
 
@@ -59,8 +62,13 @@ def _validate_zone7_program_enabled_plan(plan: dict[str, Any]) -> None:
         raise ValueError("Unexpected Zone 7 program-restore dry-run diff")
 
 
+def _coordinator_init_with_production_service(self: HOSC8WCoordinator, *args: Any, **kwargs: Any) -> None:
+    _ORIGINAL_COORDINATOR_INIT(self, *args, **kwargs)
+    setup_production_service(self.hass)
+
+
 def apply_patch() -> None:
-    """Extend the existing guarded StartProbe class in place."""
+    """Extend the existing guarded runtime in place."""
     global _PATCHED
     if _PATCHED:
         return
@@ -68,4 +76,5 @@ def apply_patch() -> None:
     StartProbeHOSC8WAPI._validate_zone7_program_enabled_plan = staticmethod(
         _validate_zone7_program_enabled_plan
     )
+    HOSC8WCoordinator.__init__ = _coordinator_init_with_production_service
     _PATCHED = True

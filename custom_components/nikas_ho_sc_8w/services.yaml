@@ -51,6 +51,27 @@ set_seasonal_adjustment:
           step: 10
           mode: box
 
+apply_zone_schedule:
+  name: Apply zone schedule
+  description: Applies one confirmed DP38 program draft to one zone. A fresh full 1-8 preflight and full read-back are mandatory; neighbouring zones must remain byte-for-byte unchanged. No retry or automatic rollback is performed.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    zone:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 8
+          step: 1
+          mode: box
+    schedule:
+      required: true
+      selector:
+        object:
+
 probe_zone8_dp38_hex:
   name: Read Zone 8 DP38
   description: Reads the current Zone 8 DP38 block twice without sending any write command.
@@ -160,7 +181,7 @@ prepare_zone7_duration17:
 
 execute_zone7_duration17:
   name: Execute Zone 7 duration=17 probe
-  description: Executes exactly the previously prepared Zone 7 duration=17 DP38 transaction once, then re-reads and compares all eight zones. No retry or automatic rollback.
+  description: Executes exactly the previously prepared Zone 7 duration=17 DP38 transaction once, then re-reads and compares all eight zones. No retry and no automatic rollback.
   fields:
     config_entry_id:
       selector:
