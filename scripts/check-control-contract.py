@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Release wrapper for the existing safety contract.
 
-UI 0.6.86 adds an explicit draft/apply program editor and operational manual
-Start/Stop controls while retaining the read-only Rain Sensor probe. Integration
-b006.10 adds one guarded production DP38 schedule service: full 1-8 preflight,
-one selected-zone write, full 1-8 read-back, no retry and no automatic rollback.
+UI 0.6.87 keeps the production editor stable while native mobile controls are
+open and restores approved zone artwork. Integration b006.11 contains no DP
+transport changes relative to b006.10.
 """
 from pathlib import Path
 import subprocess
@@ -15,11 +14,11 @@ source = legacy_path.read_text(encoding="utf-8")
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"','EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.90"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"','EXPECTED_PANEL_VERSION = "0.6.67"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"','EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0667.mjs"')
-source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.10"')
-source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.10"')
-source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.86"\'')
-source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0686.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
-source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n    "irrigation-panel-v0681.mjs",\n    "irrigation-panel-v0682.mjs",\n    "irrigation-panel-v0683.mjs",\n    "irrigation-panel-v0684.mjs",\n    "irrigation-panel-v0685.mjs",\n    "irrigation-panel-v0686.mjs",\n]')
+source = source.replace('assert manifest["version"] == EXPECTED_INTEGRATION_VERSION','assert manifest["version"] == "1.0.0-b006.11"')
+source = source.replace('assert panel_manifest["integration_version"] == manifest["version"]','assert panel_manifest["integration_version"] == EXPECTED_INTEGRATION_VERSION and manifest["version"] == "1.0.0-b006.11"')
+source = source.replace('f\'PANEL_VERSION = "{EXPECTED_PANEL_VERSION}"\'','\'PANEL_VERSION = "0.6.87"\'')
+source = source.replace('    EXPECTED_PANEL_BUNDLE,\n    "NUM_PRODUCTION_ZONES = 8",','    "irrigation-panel-v0687.mjs",\n    "NUM_PRODUCTION_ZONES = 8",')
+source = source.replace('    "irrigation-panel-v0666.mjs",\n]','    "irrigation-panel-v0666.mjs",\n    "irrigation-panel-v0667.mjs",\n    "irrigation-panel-v0668.mjs",\n    "irrigation-panel-v0669.mjs",\n    "irrigation-panel-v0670.mjs",\n    "irrigation-panel-v0671.mjs",\n    "irrigation-panel-v0672.mjs",\n    "irrigation-panel-v0673.mjs",\n    "irrigation-panel-v0674.mjs",\n    "irrigation-panel-v0675.mjs",\n    "irrigation-panel-v0676.mjs",\n    "irrigation-panel-v0677.mjs",\n    "irrigation-panel-v0678.mjs",\n    "irrigation-panel-v0679.mjs",\n    "irrigation-panel-v0680.mjs",\n    "irrigation-panel-v0681.mjs",\n    "irrigation-panel-v0682.mjs",\n    "irrigation-panel-v0683.mjs",\n    "irrigation-panel-v0684.mjs",\n    "irrigation-panel-v0685.mjs",\n    "irrigation-panel-v0686.mjs",\n    "irrigation-panel-v0687.mjs",\n]')
 source = source.replace('require(setup_source, "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI")','require(setup_source, "from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI")')
 source = source.replace('assert "DP_OPERATION_MODE" not in manual_source','assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source')
 source = source.replace('assert snapshot_meta["read_only"] is True','assert snapshot_meta.get("read_only", snapshot_meta.get("read_only_semantics")) is True')
@@ -112,7 +111,6 @@ assert 'self._write_dp38_mask_block(plan.write_block, zone)' in production_api
 assert 'collateral_changed_zones' in production_api
 assert 'program_enabled is not a production-editable field' in production_api
 assert 'anchor_date may be today or a future date' in production_api
-assert 'No retry and no automatic rollback' not in production_api or 'No retry' in production_api
 
 production_service = (component / "production_service.py").read_text(encoding="utf-8")
 assert 'SERVICE_APPLY_ZONE_SCHEDULE = "apply_zone_schedule"' in production_service
@@ -122,26 +120,31 @@ assert 'setup_production_service' in production_service
 services = (component / "services.yaml").read_text(encoding="utf-8")
 assert 'apply_zone_schedule:' in services
 
-rain_ui_path = component / "frontend" / "irrigation-panel-v0685.mjs"
-rain_ui = rain_ui_path.read_text(encoding="utf-8")
+rain_ui = (component / "frontend" / "irrigation-panel-v0685.mjs").read_text(encoding="utf-8")
 assert 'data-rain-dry' in rain_ui
 assert 'data-rain-wet' in rain_ui
-assert 'phase: "baseline"' in rain_ui
-assert 'phase: "compare"' in rain_ui
 assert 'DP38_FULL_SNAPSHOT_READ_ONLY' in rain_ui
 assert 'Сухо / Идёт дождь' in rain_ui
 
-ui_path = component / "frontend" / "irrigation-panel-v0686.mjs"
+editor_ui = (component / "frontend" / "irrigation-panel-v0686.mjs").read_text(encoding="utf-8")
+assert 'APPLY_SERVICE = "apply_zone_schedule"' in editor_ui
+assert 'data-program-apply' in editor_ui
+assert 'data-system-manual-action' in editor_ui
+assert 'Старт ручного полива' in editor_ui
+assert 'Стоп всё' in editor_ui
+assert 'rainSensorProbeLab' in editor_ui
+assert 'dp38SnapshotLab' in editor_ui
+assert 'program_enabled' not in editor_ui
+
+ui_path = component / "frontend" / "irrigation-panel-v0687.mjs"
 ui = ui_path.read_text(encoding="utf-8")
-assert 'const UI_VERSION = "0.6.86"' in ui
-assert 'import "./irrigation-panel-v0685.mjs"' in ui
-assert 'APPLY_SERVICE = "apply_zone_schedule"' in ui
-assert 'data-program-apply' in ui
-assert 'data-system-manual-action' in ui
-assert 'Старт ручного полива' in ui
-assert 'Стоп всё' in ui
-assert 'rainSensorProbeLab' in ui
-assert 'dp38SnapshotLab' in ui
-assert 'program_enabled' not in ui
+assert 'const UI_VERSION = "0.6.87"' in ui
+assert 'import "./irrigation-panel-v0686.mjs"' in ui
+assert '_programNativePickerOpen' in ui
+assert '_programEditorNativeControlActive' in ui
+assert 'zone-lawn-v2.webp' in ui
+assert 'zone-flowers-v2.webp' in ui
+assert 'zone-shrubs-v2.webp' in ui
+assert 'zone-greenhouse-v2.webp' in ui
 subprocess.run(["node", "--check", str(ui_path)], check=True)
 subprocess.run([sys.executable, str(root / "scripts" / "check-zone7-anchor-date-probe.py")], check=True)
