@@ -31,13 +31,62 @@ class StartProbeHOSC8WAPI(NativeManualHOSC8WAPI):
             )
         if field_name == "cycle_value" and value == "2":
             return {"interval_days": 2}
+        if field_name == "anchor_date":
+            if value != "2026-09-04":
+                raise ValueError("The guarded Zone 7 date probe only allows 2026-09-04")
+            return {"anchor_date": (2026, 9, 4)}
         return NativeManualHOSC8WAPI._zone7_lab_patch_kwargs(field_name, value)
+
+    @staticmethod
+    def _validate_zone7_anchor_date_plan(plan: dict[str, Any]) -> None:
+        """Validate every byte, not just offsets, of the fixed date experiment."""
+        if not isinstance(plan, dict):
+            raise ValueError("Zone 7 date dry-run was not retained")
+        if plan.get("field") != "anchor_date" or plan.get("value") != "2026-09-04":
+            raise ValueError("Zone 7 date dry-run has an unexpected target")
+        source = bytes.fromhex(str(plan.get("source_read_hex", "")))
+        expected_source = bytes.fromhex("0711060C17FFFFFF1E2D3BFFFFFF03021A090310")
+        if source != expected_source:
+            raise ValueError(
+                "Zone 7 must match 17 min / 06:30 / 12:45 / 23:59 / "
+                "interval 2 days / 03.09.2026 / rain off before the date probe"
+            )
+        expected = bytearray(source)
+        expected[18] = 0x04
+        write = bytearray(expected)
+        write[0] = 0x40
+        if (
+            bytes.fromhex(str(plan.get("write_hex", ""))) != bytes(write)
+            or bytes.fromhex(str(plan.get("expected_read_hex", ""))) != bytes(expected)
+        ):
+            raise ValueError("Zone 7 date probe must change only byte 18: 03 -> 04")
+        changes = [
+            (item["offset"], item["before"], item["after"])
+            for item in plan.get("diff", [])
+        ]
+        if changes != [(0, "07", "40"), (18, "03", "04")]:
+            raise ValueError("Unexpected Zone 7 date dry-run diff")
 
     def prepare_zone7_lab(self, field: str, value: str) -> dict[str, Any]:
         """Prepare generic lab transaction with strict source-state guards."""
         result = super().prepare_zone7_lab(field, value)
         field_name = str(field).strip()
         target = str(value).strip()
+        if field_name == "anchor_date":
+            plan = getattr(self.device, "zone7_lab_plan", None)
+            try:
+                self._validate_zone7_anchor_date_plan(plan)
+            except (KeyError, TypeError, ValueError) as exc:
+                self.device.zone7_lab_plan = None
+                self.device.zone7_lab_result = {
+                    "status": "blocked",
+                    "field": field_name,
+                    "value": target,
+                    "reason": str(exc),
+                    "source_read_hex": result.get("source_read_hex", ""),
+                }
+                raise RuntimeError(str(exc)) from exc
+            return result
         if field_name not in {"start_time_1", "cycle_value"}:
             return result
 
