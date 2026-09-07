@@ -62,6 +62,10 @@ jobs:
           node scripts/check-zone7-parity-ui.mjs
           python scripts/check-parity-editor.py
           node scripts/check-parity-editor-ui.mjs
+          python scripts/check-manual-skip-contract.py
+          python scripts/check-manual-session-adapters.py
+          node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0708.mjs
+          node scripts/check-manual-session-ui.mjs
           test -f custom_components/nikas_ho_sc_8w/brand/icon.png
 
           node - <<'NODE'

@@ -106,6 +106,20 @@ _ENTRY_COMMAND_SCHEMA = vol.Schema(
     {vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string}
 )
 
+def _validate_manual_intent_zone(value: object) -> int:
+    """Keep the exact confirmed zone; never truncate a float or accept a bool."""
+    if type(value) is not int or not 1 <= value <= NUM_PRODUCTION_ZONES:
+        raise vol.Invalid(f"expected_zone must be an integer from 1 to {NUM_PRODUCTION_ZONES}")
+    return value
+
+
+_SKIP_MANUAL_SCHEMA = _ENTRY_COMMAND_SCHEMA.extend(
+    {
+        vol.Optional("expected_zone"): _validate_manual_intent_zone,
+        vol.Optional("expected_session_id"): cv.string,
+    }
+)
+
 _SEASONAL_ADJUSTMENT_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
@@ -270,7 +284,9 @@ async def _async_stop_manual(hass: HomeAssistant, call: ServiceCall) -> None:
 async def _async_skip_current_manual(hass: HomeAssistant, call: ServiceCall) -> None:
     coordinator = _coordinator_for_call(hass, call)
     try:
-        await coordinator.async_skip_current_manual()
+        await coordinator.async_skip_current_manual(
+            call.data.get("expected_zone"), call.data.get("expected_session_id")
+        )
     except (RuntimeError, ValueError) as exc:
         raise HomeAssistantError(str(exc)) from exc
 
@@ -436,7 +452,7 @@ async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
             DOMAIN,
             SERVICE_SKIP_CURRENT_MANUAL,
             partial(_async_skip_current_manual, hass),
-            schema=_ENTRY_COMMAND_SCHEMA,
+            schema=_SKIP_MANUAL_SCHEMA,
         )
         hass.services.async_register(
             DOMAIN,

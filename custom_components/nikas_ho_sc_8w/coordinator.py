@@ -97,34 +97,41 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
     ) -> dict[str, object]:
         """Run one validated manual queue command outside the event loop."""
         async with self._transport_lock:
-            result = await self.hass.async_add_executor_job(
-                self.api.start_manual_queue, durations
-            )
-            self.async_set_updated_data(self.api.device)
-            return result
+            try:
+                return await self.hass.async_add_executor_job(
+                    self.api.start_manual_queue, durations
+                )
+            finally:
+                self.async_set_updated_data(self.api.device)
 
     async def async_stop_manual(self) -> dict[str, object]:
         """Stop manual watering and publish the verified state."""
         async with self._transport_lock:
-            result = await self.hass.async_add_executor_job(self.api.stop_manual)
-            self.async_set_updated_data(self.api.device)
-            return result
+            try:
+                return await self.hass.async_add_executor_job(self.api.stop_manual)
+            finally:
+                self.async_set_updated_data(self.api.device)
 
-    async def async_skip_current_manual(self) -> dict[str, object]:
+    async def async_skip_current_manual(
+        self, expected_zone: int | None = None, expected_session_id: str | None = None
+    ) -> dict[str, object]:
         """Skip the active manual zone and publish the verified transition."""
         async with self._transport_lock:
-            result = await self.hass.async_add_executor_job(
-                self.api.skip_current_manual
-            )
-            self.async_set_updated_data(self.api.device)
-            return result
+            try:
+                return await self.hass.async_add_executor_job(
+                    self.api.skip_current_manual, expected_zone, expected_session_id
+                )
+            finally:
+                # A rejected write may have invalidated an old session.
+                self.async_set_updated_data(self.api.device)
 
     async def async_resume_automatic(self) -> dict[str, object]:
         """Return the controller to Auto and publish the verified state."""
         async with self._transport_lock:
-            result = await self.hass.async_add_executor_job(self.api.resume_automatic)
-            self.async_set_updated_data(self.api.device)
-            return result
+            try:
+                return await self.hass.async_add_executor_job(self.api.resume_automatic)
+            finally:
+                self.async_set_updated_data(self.api.device)
 
     async def async_set_seasonal_adjustment(
         self, value: int

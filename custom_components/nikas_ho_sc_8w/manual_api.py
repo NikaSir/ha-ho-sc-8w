@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import time
 from typing import Any
+from uuid import uuid4
 
 from .api import HOSC8WAPI
 from .const import (
@@ -32,6 +33,9 @@ from .const import (
 )
 from .models import decode_dp38, encode_dp45_start_manual, validate_dp38_block
 
+_MANUAL_SAFETY_DPS = (DP_OPERATION_MODE, DP_ACTIVE_ZONE, DP_QUEUED_ZONE)
+_MANUAL_QUEUE_DPS = (*_MANUAL_SAFETY_DPS, DP_IRRIGATION_MODE)
+
 
 class NativeManualHOSC8WAPI(HOSC8WAPI):
     """HO-SC-8W API using native DP45 control and native DP38 refresh."""
@@ -42,6 +46,179 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
         # internal queue works. Keep the last submitted plan so the current
         # station can be removed without guessing from stale DP45 telemetry.
         self._manual_queue_plan: dict[int, int] = {}
+        self._manual_last_zone = 0
+        self._manual_transport = ""
+        self._manual_session_id = ""
+        self._manual_skip_reason = "Нет подтверждённой ручной очереди этой интеграции"
+        self.device.on_dps_update = self._observe_manual_session
+
+    def _invalidate_manual_session(self, reason: str) -> None:
+        """Forget ownership permanently; later matching telemetry cannot restore it."""
+        self._manual_queue_plan = {}
+        self._manual_last_zone = 0
+        self._manual_transport = ""
+        self._manual_session_id = ""
+        self._manual_skip_reason = reason
+
+    @staticmethod
+    def _manual_mask(value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, (int, str)):
+            raise ValueError("Invalid controller zone bitmask")
+        if isinstance(value, str) and not value.isdecimal():
+            raise ValueError("Invalid controller zone bitmask")
+        mask = int(value)
+        if not 0 <= mask < (1 << NUM_ZONES):
+            raise ValueError("Invalid controller zone bitmask")
+        return mask
+
+    def _observe_manual_session(self, dps: dict[str, Any]) -> None:
+        """Consume every observed transition, including partial socket updates.
+
+        Firmware provides no session ID. This tracks uninterrupted ownership
+        established by our verified DP45 start; it cannot identify an external
+        stop/restart that produces no distinguishable observation.
+        """
+        if not self._manual_queue_plan:
+            return
+        if str(DP_OPERATION_MODE) in dps and str(dps[str(DP_OPERATION_MODE)]).lower() != "manual":
+            self._invalidate_manual_session("Контроллер вышел из ручного режима")
+            return
+        if str(DP_IRRIGATION_MODE) in dps and str(dps[str(DP_IRRIGATION_MODE)]).lower() != "order":
+            self._invalidate_manual_session("Последовательный режим очереди изменился")
+            return
+        try:
+            if str(DP_ACTIVE_ZONE) in dps:
+                active = self._manual_mask(dps[str(DP_ACTIVE_ZONE)])
+                if not active or active & (active - 1):
+                    self._invalidate_manual_session("Ручная очередь завершилась или активная зона неоднозначна")
+                    return
+                zone = active.bit_length()
+                if zone not in self._manual_queue_plan or zone < self._manual_last_zone:
+                    self._invalidate_manual_session("Наблюдается другая последовательность полива")
+                    return
+                self._manual_last_zone = zone
+                # Completed zones can never become eligible again.
+                self._manual_queue_plan = {
+                    item: duration for item, duration in self._manual_queue_plan.items()
+                    if item >= zone
+                }
+            if str(DP_QUEUED_ZONE) in dps:
+                queued = self._manual_mask(dps[str(DP_QUEUED_ZONE)])
+                allowed = sum(1 << (zone - 1) for zone in self._manual_queue_plan)
+                if queued & ~allowed:
+                    self._invalidate_manual_session("Контроллер сообщил другую очередь полива")
+        except (TypeError, ValueError):
+            self._invalidate_manual_session("Нет достоверной маски работающих зон")
+
+    @property
+    def manual_skip_status(self) -> dict[str, Any]:
+        """Return cached UI permission without controller I/O or a blocking lock."""
+        if self._command_lock.locked():
+            return {"allowed": False, "reason": "Выполняется команда контроллера"}
+        return self._manual_session_status()
+
+    def _manual_session_status(self) -> dict[str, Any]:
+        # UI reads can overlap the receive thread. Capture scalars once and
+        # reject an invalidation in progress; never wait for its socket lock.
+        zone = self._manual_last_zone
+        session_id = self._manual_session_id
+        if not self._manual_queue_plan:
+            return {"allowed": False, "reason": self._manual_skip_reason}
+        if not 1 <= zone <= NUM_PRODUCTION_ZONES or not session_id:
+            return {"allowed": False, "reason": "Подтверждение ручной очереди обновляется"}
+        if not self.device.online or self.active_transport != self._manual_transport:
+            return {"allowed": False, "reason": "Непрерывность связи с контроллером не подтверждена"}
+        if str(self.device.operation_mode).lower() != "manual":
+            return {"allowed": False, "reason": "Контроллер должен находиться в ручном режиме"}
+        active = self.device.active_zone
+        if active != (1 << (zone - 1)) or session_id != self._manual_session_id:
+            return {"allowed": False, "reason": "Текущая зона ручной очереди не подтверждена"}
+        return {
+            "allowed": True, "reason": "",
+            "session_id": session_id,
+            "active_zone": zone,
+        }
+
+    def _on_transport_error(self) -> None:
+        self._invalidate_manual_session("Связь прерывалась; остаток очереди не подтверждён")
+
+    def _reset_connection(self) -> None:
+        self._on_transport_error()
+        super()._reset_connection()
+
+    def _ensure_connection(self):
+        if not self._tuya or not self._connected:
+            self._on_transport_error()
+        return super()._ensure_connection()
+
+    def _cloud_update(self) -> bool:
+        with self._io_lock:
+            success = super()._cloud_update()
+            if not success:
+                self._on_transport_error()
+            return success
+
+    def _refresh_command_state(self) -> bool:
+        success = super()._refresh_command_state()
+        if not success:
+            self._on_transport_error()
+        return success
+
+    def _write_command_value(self, dp: int, value: Any, **kwargs: Any) -> None:
+        # Inherited resume_automatic holds both command and I/O locks here.
+        # Forget ownership before dispatch, even when the write is unconfirmed.
+        if dp == DP_OPERATION_MODE:
+            self._invalidate_manual_session("Запрошено изменение режима контроллера")
+        try:
+            super()._write_command_value(dp, value, **kwargs)
+        except Exception:
+            self._on_transport_error()
+            raise
+
+    def _require_manual_state(self, required_dps: tuple[int, ...] = _MANUAL_SAFETY_DPS) -> None:
+        """Require each safety DP to be observed in this successful fresh read."""
+        before = dict(self.device.dps_revisions)
+        if not self._refresh_command_state() or any(
+            self.device.dps_revisions.get(str(dp), 0) <= before.get(str(dp), 0)
+            for dp in required_dps
+        ):
+            self._invalidate_manual_session("Не получены свежие данные режима и работающих зон")
+            raise RuntimeError(
+                "Cannot read fresh " + "/".join(f"DP{dp}" for dp in required_dps)
+                + " before the manual command"
+            )
+        try:
+            if str(self.device.raw_dps[str(DP_OPERATION_MODE)]).lower() not in {"auto", "manual", "off"}:
+                raise ValueError("Invalid operation mode")
+            self._manual_mask(self.device.raw_dps[str(DP_ACTIVE_ZONE)])
+            self._manual_mask(self.device.raw_dps[str(DP_QUEUED_ZONE)])
+        except (KeyError, TypeError, ValueError) as exc:
+            self._invalidate_manual_session("Нет достоверных данных режима и работающих зон")
+            raise RuntimeError("Controller returned invalid manual safety state") from exc
+
+    def _wait_for_manual_readback(
+        self, predicate, timeout_seconds: float = 8.0,
+        *, required_dps: tuple[int, ...] = _MANUAL_SAFETY_DPS,
+    ) -> bool:
+        """Never confirm a write using cached DPs or an unsuccessful status call."""
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
+            try:
+                self._require_manual_state(required_dps)
+            except RuntimeError:
+                pass
+            else:
+                if predicate():
+                    return True
+            time.sleep(0.35)
+        return False
+
+    def _confirm_manual_session(self, plan: dict[int, int]) -> None:
+        self._manual_queue_plan = dict(plan)
+        self._manual_last_zone = min(plan)
+        self._manual_transport = self.active_transport
+        self._manual_session_id = uuid4().hex
+        self._manual_skip_reason = ""
 
     def _collect_native_dp38_round(
         self,
@@ -273,9 +450,11 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
             raise RuntimeError("Another controller write is still in progress")
         try:
             with self._io_lock:
-                self._require_fresh_command_state()
-                if self.device.active_zone:
+                self._require_manual_state(_MANUAL_QUEUE_DPS)
+                if self.device.active_zone or self.device.queued_zone:
                     raise RuntimeError("Cannot replace a running watering operation")
+
+                self._invalidate_manual_session("Ожидается подтверждение новой ручной очереди")
 
                 if str(self.device.irrigation_mode).lower() != "order":
                     self._write_command_value(
@@ -284,18 +463,32 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
                         cloud_code="irrigation_mode",
                     )
                     time.sleep(0.35)
+                    self._require_manual_state(_MANUAL_QUEUE_DPS)
+                    if str(self.device.irrigation_mode).lower() != "order":
+                        raise RuntimeError("DP44 did not confirm sequential manual watering")
+                    if self.device.active_zone or self.device.queued_zone:
+                        raise RuntimeError("Watering started before the manual queue write")
 
                 self._write_dp45_manual_payload(normalized)
-                self._manual_queue_plan = dict(normalized)
                 time.sleep(0.6)
 
                 first_zone = min(normalized)
                 first_zone_mask = 1 << (first_zone - 1)
 
                 def _native_queue_confirmed() -> bool:
-                    return bool(self.device.active_zone & first_zone_mask)
+                    return (
+                        str(self.device.operation_mode).lower() == "manual"
+                        and str(self.device.irrigation_mode).lower() == "order"
+                        and self.device.active_zone == first_zone_mask
+                        and not self.device.queued_zone & ~sum(
+                            1 << (zone - 1) for zone in normalized
+                        )
+                    )
 
-                if not self._wait_for_readback(_native_queue_confirmed, timeout_seconds=8.0):
+                if not self._wait_for_manual_readback(
+                    _native_queue_confirmed, timeout_seconds=8.0,
+                    required_dps=_MANUAL_QUEUE_DPS,
+                ):
                     observed = (
                         f"mode={self.device.operation_mode}, "
                         f"active={self.device.active_zone}, "
@@ -305,6 +498,8 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
                         "DP45 manual queue was sent but DP107 did not confirm "
                         f"the first selected zone {first_zone} ({observed})"
                     )
+
+                self._confirm_manual_session(normalized)
 
                 return {
                     "verified": True,
@@ -321,13 +516,23 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
         finally:
             self._command_lock.release()
 
-    def skip_current_manual(self) -> dict[str, Any]:
+    def skip_current_manual(
+        self,
+        expected_zone: int | None = None,
+        expected_session_id: str | None = None,
+    ) -> dict[str, Any]:
         """Remove the active zone and restart only the stored remainder."""
         if not self._command_lock.acquire(blocking=False):
             raise RuntimeError("Another controller write is still in progress")
         try:
             with self._io_lock:
-                self._require_fresh_command_state()
+                self._require_manual_state(_MANUAL_QUEUE_DPS)
+                status = self._manual_session_status()
+                if not status["allowed"]:
+                    raise RuntimeError(
+                        "Cannot skip without a current verified manual session; "
+                        + str(status["reason"]) + "; use Stop All instead"
+                    )
                 active_mask = int(self.device.active_zone or 0)
                 active_zones = [
                     zone
@@ -339,31 +544,37 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
                         "Cannot skip current zone: DP107 must confirm exactly one active zone"
                     )
                 current_zone = active_zones[0]
-                if current_zone not in self._manual_queue_plan:
-                    raise RuntimeError(
-                        "Cannot preserve the remaining queue after an integration restart; "
-                        "use Stop All instead"
-                    )
+                if expected_zone is not None and expected_zone != current_zone:
+                    raise RuntimeError("The active zone changed; confirm the current zone again")
+                if expected_session_id is not None and expected_session_id != self._manual_session_id:
+                    raise RuntimeError("The manual queue changed; confirm the current queue again")
 
                 remaining = {
                     zone: duration
                     for zone, duration in self._manual_queue_plan.items()
                     if zone > current_zone
                 }
+                self._invalidate_manual_session("Ожидается подтверждение перехода ручной очереди")
                 self._write_dp45_manual_payload(remaining)
                 time.sleep(0.6)
 
                 if remaining:
                     next_zone = min(remaining)
                     next_mask = 1 << (next_zone - 1)
-                    confirmed = self._wait_for_readback(
-                        lambda: bool(self.device.active_zone & next_mask),
+                    confirmed = self._wait_for_manual_readback(
+                        lambda: str(self.device.operation_mode).lower() == "manual"
+                        and str(self.device.irrigation_mode).lower() == "order"
+                        and self.device.active_zone == next_mask
+                        and not self.device.queued_zone & ~sum(
+                            1 << (zone - 1) for zone in remaining
+                        ),
                         timeout_seconds=8.0,
+                        required_dps=_MANUAL_QUEUE_DPS,
                     )
                 else:
                     next_zone = None
-                    confirmed = self._wait_for_readback(
-                        lambda: self.device.active_zone == 0,
+                    confirmed = self._wait_for_manual_readback(
+                        lambda: self.device.active_zone == 0 and self.device.queued_zone == 0,
                         timeout_seconds=8.0,
                     )
                 if not confirmed:
@@ -373,7 +584,10 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
                         f"current={current_zone}, next={next_zone})"
                     )
 
-                self._manual_queue_plan = dict(remaining)
+                if remaining:
+                    self._confirm_manual_session(remaining)
+                else:
+                    self._invalidate_manual_session("Ручная очередь завершена")
                 return {
                     "verified": True,
                     "skipped_zone": current_zone,
@@ -391,9 +605,9 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
             raise RuntimeError("Another controller write is still in progress")
         try:
             with self._io_lock:
-                self._require_fresh_command_state()
-                if self.device.active_zone == 0:
-                    self._manual_queue_plan = {}
+                self._invalidate_manual_session("Запрошена остановка ручной очереди")
+                self._require_manual_state()
+                if self.device.active_zone == 0 and self.device.queued_zone == 0:
                     return {
                         "verified": True,
                         "changed": False,
@@ -403,8 +617,8 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
 
                 self._write_dp45_manual_payload({})
                 time.sleep(0.6)
-                if not self._wait_for_readback(
-                    lambda: self.device.active_zone == 0,
+                if not self._wait_for_manual_readback(
+                    lambda: self.device.active_zone == 0 and self.device.queued_zone == 0,
                     timeout_seconds=8.0,
                 ):
                     raise RuntimeError(
@@ -413,7 +627,6 @@ class NativeManualHOSC8WAPI(HOSC8WAPI):
                         f"active={self.device.active_zone}, queued={self.device.queued_zone})"
                     )
 
-                self._manual_queue_plan = {}
                 return {
                     "verified": True,
                     "changed": True,

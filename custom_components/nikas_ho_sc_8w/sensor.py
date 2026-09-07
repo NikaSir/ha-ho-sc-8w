@@ -345,6 +345,7 @@ class HOSC8WActiveZones(HOSC8WEntity, SensorEntity):
             str(zone): int(device.zone_countdown.get(zone, 0) or 0)
             for zone in range(1, NUM_ZONES + 1)
         }
+        manual = getattr(self.coordinator.api, "manual_skip_status", {})
         return {
             "bitmask": bitmask,
             "source": source,
@@ -352,6 +353,10 @@ class HOSC8WActiveZones(HOSC8WEntity, SensorEntity):
             "dp45_remaining_minutes": dp45_remaining,
             "dp45_unconfirmed": bitmask == 0 and any(dp45_remaining.values()),
             "operation_mode": device.operation_mode,
+            "manual_skip_allowed": manual.get("allowed") is True,
+            "manual_skip_reason": manual.get("reason", "No confirmed manual session"),
+            "manual_session_id": manual.get("session_id", ""),
+            "manual_skip_zone": manual.get("active_zone"),
         }
 
 
