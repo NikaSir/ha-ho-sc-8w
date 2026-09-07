@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0-b006.27` / panel `0.7.06`: add an isolated Zone 7 Odd/Even diagnostic probe using the native APK command format. Read-only preparation produces a two-minute immutable plan; execution checks all eight zones again, sends once, and requires exact full read-back. Uncertain dispatch or mismatches stop further parity probes. The panel exports both tests and all-zone snapshots as JSON. Production Odd/Even editing remains blocked pending physical validation.
+
 - `1.0.0-b005.82` / panel `0.6.62`: move explanatory copy from the top of Zones and Manual to compact footnotes below their zone lists. Use the free System workspace for a wide artwork-backed active/next-zone status card, return operation mode to the compact grid, and anchor the white Settings action as the final row immediately above the Bottom Tab Bar.
 - `1.0.0-b005.81` / panel `0.6.61`: let Settings, Zones and Manual expand the native work canvas to their real content height so the central viewport scrolls reliably while Header and Bottom Tab Bar remain fixed. Replace the cramped Manual play action with a full-width text-only `Старт полива` button below the instructions.
 - `1.0.0-b005.80` / panel `0.6.60`: restore native vertical scrolling on System Settings, Zones and Manual after the move to variable physical-zone counts; keep the Program zone selector pinned to the top of its scrolling workspace; move the System settings action closer to the bottom tab bar; fit complete zone artwork into Settings thumbnails without cropping it.

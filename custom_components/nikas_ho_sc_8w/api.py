@@ -119,6 +119,9 @@ class HOSC8WDevice:
         self.dp38_snapshot_baseline_at = ""
         self.dp38_snapshot_current_at = ""
         self.dp38_snapshot_trace: dict[str, Any] = {}
+        self.zone7_parity_probe: dict[str, Any] = {
+            "status": "idle", "zone": 7, "locked": False, "history": [],
+        }
         self.zone8_mask_write_test_status = "idle"
         self.zone8_mask_write_test_detail = ""
         self.zone8_mask_write_test_attempted = False

@@ -10,7 +10,9 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
-The current runtime exposes only verified controller actions through integration-owned services. Schedule telemetry is decoded from the verified HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
+The current runtime separates the production editor from diagnostic field probes. Schedule telemetry is decoded from the HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
+
+UI **0.7.06** / integration **1.0.0-b006.27** adds an isolated **Zone 7 Odd/Even probe** under Diagnostics. Preparation only reads all eight zones. A separate confirmed action sends one prepared command and checks all eight zones again. Production Odd/Even editing remains blocked until the physical test is complete. See the [test procedure](docs/HO_SC_8W_ODD_EVEN_TEST_2026-09-07.md) and [APK evidence](docs/HO_SC_8W_ODD_EVEN_APK_EVIDENCE_2026-09-07.md).
 
 ## Installation with HACS
 
@@ -36,7 +38,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.6.64** (the approved visual design remains based on 0.6.30).
+Current panel version: **0.7.06** (the approved layout is preserved).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 

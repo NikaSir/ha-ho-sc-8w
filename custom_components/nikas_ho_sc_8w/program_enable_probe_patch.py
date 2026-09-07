@@ -6,6 +6,7 @@ from typing import Any
 
 from .coordinator import HOSC8WCoordinator
 from .production_service import setup_production_service
+from .parity_probe_service import setup_parity_probe_services
 from .start_probe_api import StartProbeHOSC8WAPI
 
 
@@ -65,6 +66,7 @@ def _validate_zone7_program_enabled_plan(plan: dict[str, Any]) -> None:
 def _coordinator_init_with_production_service(self: HOSC8WCoordinator, *args: Any, **kwargs: Any) -> None:
     _ORIGINAL_COORDINATOR_INIT(self, *args, **kwargs)
     setup_production_service(self.hass)
+    setup_parity_probe_services(self.hass)
 
 
 def apply_patch() -> None:
