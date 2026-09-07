@@ -12,7 +12,7 @@ The repository contains the standalone Home Assistant integration under the stab
 
 The current runtime separates the production editor from diagnostic field probes. Schedule telemetry is decoded from the HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
-UI **0.7.06** / integration **1.0.0-b006.27** adds an isolated **Zone 7 Odd/Even probe** under Diagnostics. Preparation only reads all eight zones. A separate confirmed action sends one prepared command and checks all eight zones again. Production Odd/Even editing remains blocked until the physical test is complete. See the [test procedure](docs/HO_SC_8W_ODD_EVEN_TEST_2026-09-07.md) and [APK evidence](docs/HO_SC_8W_ODD_EVEN_APK_EVIDENCE_2026-09-07.md).
+UI **0.7.07** / integration **1.0.0-b006.28** enables **Odd/Even days** in the normal zone editor after both modes passed a physical Zone 7 test with exact all-eight-zone read-back. The repeat selector uses Russian labels; the interval anchor date is shown only for interval schedules. Every confirmed edit reads all eight zones, sends the selected zone once, and checks all eight again. See the [field results](docs/HO_SC_8W_ODD_EVEN_FIELD_RESULTS_2026-09-07.md) and [APK evidence](docs/HO_SC_8W_ODD_EVEN_APK_EVIDENCE_2026-09-07.md).
 
 ## Installation with HACS
 
@@ -38,7 +38,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.7.06** (the approved layout is preserved).
+Current panel version: **0.7.07** (the approved layout is preserved).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -76,7 +76,7 @@ The primary Bottom Tab Bar is:
 Система · Зоны · Программа · Ручной · Диагн.
 ```
 
-The `Программа` tab shows the complete decoded DP38 schedule for the physical zones selected in `Система → Настройки`. The same settings screen assigns a bundled illustration or neutral gray tile to each selected zone; both visibility and artwork choices are stored only in the browser. Production schedule editing is not exposed. In Diagnostics, the Zone 8 editor decodes its duration, all six start slots, cycle mode/value, anchor date and rain flag directly from the latest repeated valid raw Zone 8 DP38 response; stale drafts cannot replace those factual values. Generic field editing, restoration and every production-zone schedule write remain disabled. The raw observer continues to expose every returned valid or invalid block with request/response counts and the observed DP set. The fixed Zone 8 experiment requires local transport, physical Auto/ON, idle state and a fresh complete baseline; it then sends one masked 20-byte block and requires a separate all-zone control snapshot. Production-zone recovery remains disabled.
+The `Программа` tab shows decoded DP38 facts for the zones selected in `Система → Настройки`. Edit a zone from `Зоны → зона`: duration, six positional start slots, weekly/interval/odd/even repetition, interval anchor date, rain rule and program enable flag. A draft is sent only after Apply and confirmation. A fresh complete 1–8 snapshot precedes the one-zone masked write, followed by an exact all-zone comparison. Uncertain writes or mismatches stop further production schedule writes for the API session; there is no automatic retry or rollback. The isolated Zone 7 parity diagnostic and its JSON export remain available for reviewing field tests. Historical Zone 8 recovery is disabled.
 
 ### Full-field Overview v0.4.3
 

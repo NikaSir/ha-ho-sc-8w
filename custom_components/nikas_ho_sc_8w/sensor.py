@@ -122,7 +122,14 @@ class HOSC8WScheduleZone(HOSC8WEntity, SensorEntity):
             "raw_hex": block.hex().upper() if block else "",
             "cache_source": device.schedule_sources.get(self._zone, "missing"),
             "complete_zone_cache": len(device.schedule_blocks) == NUM_ZONES,
+            "dp38_schedule_write_locked": bool(
+                getattr(self.coordinator.api, "_production_schedule_locked", False)
+                or getattr(self.coordinator.api, "_zone7_parity_locked", False)
+            ),
         }
+        result = getattr(device, "production_schedule_result", {})
+        if result.get("zone") == self._zone:
+            attrs["production_schedule_result"] = result
         if self._zone == 7:
             attrs["zone7_parity_probe"] = getattr(device, "zone7_parity_probe", {})
             attrs["zone7_lab_plan"] = getattr(device, "zone7_lab_plan", None)

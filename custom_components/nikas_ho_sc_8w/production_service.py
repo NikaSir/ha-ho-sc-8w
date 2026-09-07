@@ -17,7 +17,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, NUM_ZONES
-from .production_api import ProductionHOSC8WAPI
+from .production_api import ProductionHOSC8WAPI, _integer
 from .start_probe_api import StartProbeHOSC8WAPI
 
 SERVICE_APPLY_ZONE_SCHEDULE = "apply_zone_schedule"
@@ -25,12 +25,18 @@ ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 ATTR_ZONE = "zone"
 ATTR_SCHEDULE = "schedule"
 
+
+def _schedule_zone(value: Any) -> int:
+    try:
+        return _integer(value, "zone", 1, NUM_ZONES)
+    except ValueError as exc:
+        raise vol.Invalid(str(exc)) from exc
+
+
 _APPLY_ZONE_SCHEDULE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
-        vol.Required(ATTR_ZONE): vol.All(
-            vol.Coerce(int), vol.Range(min=1, max=NUM_ZONES)
-        ),
+        vol.Required(ATTR_ZONE): _schedule_zone,
         vol.Required(ATTR_SCHEDULE): dict,
     },
     extra=vol.PREVENT_EXTRA,
@@ -75,23 +81,22 @@ async def _async_apply_zone_schedule(
     hass: HomeAssistant, call: ServiceCall
 ) -> None:
     coordinator = _coordinator_for_call(hass, call)
-    zone = int(call.data[ATTR_ZONE])
+    zone = _schedule_zone(call.data[ATTR_ZONE])
     schedule = dict(call.data[ATTR_SCHEDULE])
     try:
         async with coordinator._transport_lock:  # noqa: SLF001 - integration-owned service
-            await hass.async_add_executor_job(
-                coordinator.api.apply_zone_schedule,
-                zone,
-                schedule,
-            )
-            await coordinator.schedule_cache.async_save()
-            coordinator.async_set_updated_data(coordinator.api.device)
-    except (PermissionError, RuntimeError, TypeError, ValueError) as exc:
-        # apply_zone_schedule publishes any complete factual post-write DP38
-        # snapshot before raising a mismatch. Persist that reconciled state too;
-        # an error must not leave the panel/cache on the pre-write baseline.
-        await coordinator.schedule_cache.async_save()
-        coordinator.async_set_updated_data(coordinator.api.device)
+            try:
+                await hass.async_add_executor_job(
+                    coordinator.api.apply_zone_schedule,
+                    zone,
+                    schedule,
+                )
+            finally:
+                # Keep factual complete or partial read-back on every failure,
+                # including an OSError after transport dispatch.
+                coordinator.async_set_updated_data(coordinator.api.device)
+                await coordinator.schedule_cache.async_save()
+    except Exception as exc:
         raise HomeAssistantError(str(exc)) from exc
 
 
