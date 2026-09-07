@@ -460,15 +460,19 @@ class Zone7ParityProbeTests(unittest.TestCase):
         self.assertEqual(api._write_dp38_mask_block.call_count, 2)
         self.assertEqual(api.test_snapshot[7]["raw_hex"], EXPECTED["even"].hex().upper())
 
-    def test_production_odd_even_remain_blocked(self) -> None:
-        for zone in range(1, 9):
-            for mode in ("odd", "even"):
-                with self.subTest(zone=zone, mode=mode):
-                    api = make_api()
-                    api._normalize_schedule_patch = Production._normalize_schedule_patch
-                    with self.assertRaisesRegex(ValueError, "field verification"):
-                        Production.apply_zone_schedule(api, zone, {"cycle_mode": mode})
-                    self.assert_no_write(api)
+    def test_unknown_production_mode_is_rejected_without_write(self) -> None:
+        api = make_api()
+        api._normalize_schedule_patch = Production._normalize_schedule_patch
+        with self.assertRaisesRegex(ValueError, "Unsupported cycle_mode"):
+            Production.apply_zone_schedule(api, 7, {"cycle_mode": "unsupported"})
+        self.assert_no_write(api)
+
+    def test_production_lock_prevents_diagnostic_write_path(self) -> None:
+        api = make_api()
+        api._production_schedule_locked = True
+        with self.assertRaises(RuntimeError):
+            prepare(api)
+        self.assert_no_write(api)
 
 
 if __name__ == "__main__":

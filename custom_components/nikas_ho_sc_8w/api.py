@@ -122,6 +122,9 @@ class HOSC8WDevice:
         self.zone7_parity_probe: dict[str, Any] = {
             "status": "idle", "zone": 7, "locked": False, "history": [],
         }
+        self.production_schedule_result: dict[str, Any] = {
+            "status": "idle", "locked": False,
+        }
         self.zone8_mask_write_test_status = "idle"
         self.zone8_mask_write_test_detail = ""
         self.zone8_mask_write_test_attempted = False

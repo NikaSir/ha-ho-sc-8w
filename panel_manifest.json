@@ -1,8 +1,8 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.7.06",
-  "integration_version": "1.0.0-b006.27",
+  "panel_version": "0.7.07",
+  "integration_version": "1.0.0-b006.28",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
@@ -20,6 +20,19 @@
   "control_actions": {
     "policy": "draft_explicit_apply_confirmation_write_readback",
     "frontend_raw_dp_writes": false,
+    "schedule_editor": {
+      "view": "zones_zone_detail",
+      "modes": ["weekly", "interval", "odd", "even"],
+      "anchor_date": "interval_only",
+      "start_slots": "six_positional_slots",
+      "confirmation": true,
+      "preflight_zones": [1, 2, 3, 4, 5, 6, 7, 8],
+      "readback_zones": [1, 2, 3, 4, 5, 6, 7, 8],
+      "maximum_dispatch_attempts": 1,
+      "automatic_retry": false,
+      "automatic_rollback": false,
+      "parity_field_evidence": "docs/HO_SC_8W_ODD_EVEN_FIELD_RESULTS_2026-09-07.md"
+    },
     "manual_queue": {
       "zones": [1, 2, 3, 4, 5, 6, 7, 8],
       "per_zone_duration_minutes": [1, 120],
@@ -177,7 +190,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0706.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0707.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",

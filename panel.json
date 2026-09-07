@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.7.06",
+    "dashboard_version": "0.7.07",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0706.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0707.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "physical_bundle_version",
@@ -52,6 +52,19 @@
     "control_actions": {
       "policy": "draft_explicit_apply_confirmation_write_readback",
       "frontend_raw_dp_writes": false,
+      "schedule_editor": {
+        "view": "zones_zone_detail",
+        "modes": ["weekly", "interval", "odd", "even"],
+        "anchor_date": "interval_only",
+        "start_slots": "six_positional_slots",
+        "confirmation": true,
+        "preflight_zones": [1, 2, 3, 4, 5, 6, 7, 8],
+        "readback_zones": [1, 2, 3, 4, 5, 6, 7, 8],
+        "maximum_dispatch_attempts": 1,
+        "automatic_retry": false,
+        "automatic_rollback": false,
+        "parity_field_evidence": "docs/HO_SC_8W_ODD_EVEN_FIELD_RESULTS_2026-09-07.md"
+      },
       "manual_queue": {
         "production_zones": [1, 2, 3, 4, 5, 6, 7, 8],
         "per_zone_duration_minutes": [1, 120],

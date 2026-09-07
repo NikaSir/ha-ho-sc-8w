@@ -1,4 +1,4 @@
-"""Isolated Zone 7 Odd/Even experiment; no production schedule unlock.
+"""Isolated Zone 7 Odd/Even verification and a single-attempt DP38 transport.
 
 The AddPlan path in INKBIRD 2.1.11 writes mode 1/2 and clears the unused
 period/date bytes. This probe reproduces that format while preserving every
@@ -29,6 +29,31 @@ ZONE7_PARITY_PLAN_TTL = 120.0
 _ZONES = frozenset(range(1, NUM_ZONES + 1))
 
 
+def dispatch_dp38_once(api: Any, block: bytes, zone: int) -> None:
+    """Send one single-zone block with TinyTuya's internal resends disabled.
+
+    Preflight must have opened the local socket. Losing that connection fails
+    closed instead of reconnecting while dispatching a schedule command.
+    """
+    validate_dp38_write_block(block, expected_zone=zone)
+    transport = api._ensure_connection()
+    if (
+        transport is None
+        or getattr(transport, "socket", None) is None
+        or not hasattr(transport, "socketRetryLimit")
+        or not hasattr(transport, "retry")
+    ):
+        raise RuntimeError("A connected local transport with controllable retry policy is required")
+    retry_limit, retry = transport.socketRetryLimit, transport.retry
+    try:
+        transport.socketRetryLimit = 0
+        transport.retry = False
+        api._write_dp38_mask_block(block, zone=zone)
+    finally:
+        transport.socketRetryLimit = retry_limit
+        transport.retry = retry
+
+
 @dataclass(frozen=True)
 class _ParityPlan:
     """Private immutable authority; the sensor's preview is never trusted."""
@@ -52,7 +77,7 @@ class Zone7ParityProbeMixin:
         return state
 
     def _parity_require_available(self) -> None:
-        if getattr(self, "_zone7_parity_locked", False):
+        if getattr(self, "_zone7_parity_locked", False) or getattr(self, "_production_schedule_locked", False):
             raise RuntimeError(
                 "Zone 7 Odd/Even probes are locked after an unverified write; inspect the recorded result"
             )
@@ -147,29 +172,8 @@ class Zone7ParityProbeMixin:
         ]
 
     def _parity_dispatch_once(self, block: bytes) -> None:
-        """Suppress TinyTuya's internal resends for this experimental write.
-
-        TinyTuya retries set_value on timeout/network errors by default. A
-        single Python call is therefore not a single transport attempt unless
-        its retry limit is zero. The fresh preflight already opened the socket;
-        losing that socket must fail closed instead of reconnecting here.
-        """
-        transport = self._ensure_connection()
-        if (
-            transport is None
-            or getattr(transport, "socket", None) is None
-            or not hasattr(transport, "socketRetryLimit")
-            or not hasattr(transport, "retry")
-        ):
-            raise RuntimeError("A connected local transport with controllable retry policy is required")
-        retry_limit, retry = transport.socketRetryLimit, transport.retry
-        try:
-            transport.socketRetryLimit = 0
-            transport.retry = False
-            self._write_dp38_mask_block(block, zone=7)
-        finally:
-            transport.socketRetryLimit = retry_limit
-            transport.retry = retry
+        """Use the same single-attempt transport as the production editor."""
+        dispatch_dp38_once(self, block, zone=7)
 
     def _parity_finish(self) -> dict[str, Any]:
         state = self._parity_state()

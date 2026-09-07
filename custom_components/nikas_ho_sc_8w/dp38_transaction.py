@@ -101,6 +101,15 @@ def build_dp38_transaction(read_block: bytes, **patch: Any) -> DP38TransactionPl
     validate_dp38_block(read_block)
     zone = read_block[0]
     write_block = build_dp38_patch(read_block, **patch)
+    # The verified Android AddPlan representation has no period or anchor
+    # date for Odd/Even. Normalize only an explicitly requested parity mode;
+    # unrelated edits preserve every existing calendar byte verbatim.
+    if patch.get("cycle_mode") in {1, 2}:
+        if any(patch.get(field) is not None for field in ("weekdays", "interval_days", "anchor_date")):
+            raise ValueError("Odd/even mode does not accept weekdays, interval or anchor_date")
+        normalized = bytearray(write_block)
+        normalized[15:19] = b"\x00\x00\x00\x00"
+        write_block = bytes(normalized)
     validate_dp38_write_block(write_block, expected_zone=zone)
     expected = expected_readback(write_block)
 

@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0-b006.28` / panel `0.7.07`: enable Odd/Even repetition in the normal zone editor after successful field tests of both modes. Use Russian mode names and interval-only anchor dates; preserve six positional starts and flags. Require valid positive-duration parity programs, a fresh all-zone preflight, one transport dispatch, and exact all-zone read-back. Record the verified field evidence.
+
 - `1.0.0-b006.27` / panel `0.7.06`: add an isolated Zone 7 Odd/Even diagnostic probe using the native APK command format. Read-only preparation produces a two-minute immutable plan; execution checks all eight zones again, sends once, and requires exact full read-back. Uncertain dispatch or mismatches stop further parity probes. The panel exports both tests and all-zone snapshots as JSON. Production Odd/Even editing remains blocked pending physical validation.
 
 - `1.0.0-b005.82` / panel `0.6.62`: move explanatory copy from the top of Zones and Manual to compact footnotes below their zone lists. Use the free System workspace for a wide artwork-backed active/next-zone status card, return operation mode to the compact grid, and anchor the white Settings action as the final row immediately above the Bottom Tab Bar.
