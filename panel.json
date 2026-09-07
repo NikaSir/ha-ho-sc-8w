@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "0.7.08",
+    "dashboard_version": "0.7.09",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -32,7 +32,7 @@
     },
     "frontend": {
       "bundle": "integration_owned_local_assets",
-      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0708.mjs",
+      "module_url": "/nikas-ho-sc-8w/irrigation-panel-v0709.mjs",
       "static_url": "/nikas-ho-sc-8w/",
       "asset_manifest": "panel_manifest.json",
       "cache_busting": "physical_bundle_version",
@@ -76,10 +76,12 @@
         "stop_confirmation": true,
         "resume_auto_confirmation": true,
         "write_dp": 45,
-        "readback": [107],
+        "readback": [44, 101, 107, 108],
+        "stop_readback_dps": [101, 107, 108],
         "operation_mode_dp101_write": false,
         "stop_all": "dp45_command_1_all_zero_durations",
-        "skip_current": "dp45_revised_queue_from_integration_runtime_plan",
+        "skip_current": "dp45_remainder_from_confirmed_manual_session",
+        "session_guard": "fresh_mode_zone_order_and_optional_expected_intent",
         "ui": "browser_selected_physical_zone_cards_with_per_zone_duration_and_switches"
       },
       "seasonal_adjustment": {

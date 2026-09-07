@@ -75,6 +75,10 @@ class HOSC8WDevice:
     def __init__(self) -> None:
         self.online = False
         self.raw_dps: dict[str, Any] = {}
+        # Per-DP observations let guarded manual commands distinguish a fresh
+        # safety reading from unrelated updates merged into this cache.
+        self.dps_revisions: dict[str, int] = {}
+        self.on_dps_update = None
         self.operation_mode = "OFF"
         self.mode = "OFF"
         self.irrigation_mode = "order"
@@ -142,6 +146,9 @@ class HOSC8WDevice:
 
     def update_from_dps(self, dps: dict[str, Any]) -> None:
         """Merge a full or partial Tuya DP update into cached device state."""
+        dps = {str(key): value for key, value in dps.items()}
+        if self.on_dps_update is not None:
+            self.on_dps_update(dps)
         self.raw_dps.update(dps)
         if str(DP_OPERATION_MODE) in dps:
             self.operation_mode = str(dps[str(DP_OPERATION_MODE)])
@@ -178,6 +185,8 @@ class HOSC8WDevice:
             self.timeerror_alarm = bool(dps[str(DP_TIMEERROR_ALARM)])
         if str(DP_CANCEL_ALARM_VOICE) in dps:
             self.cancel_alarm_voice = bool(dps[str(DP_CANCEL_ALARM_VOICE)])
+        for key in dps:
+            self.dps_revisions[key] = self.dps_revisions.get(key, 0) + 1
 
     def ingest_schedule_raw(self, raw: bytes, source: str) -> int:
         """Merge one or more validated DP38 blocks into the in-memory cache."""
@@ -1776,14 +1785,21 @@ class HOSC8WAPI:
                 now = time.monotonic()
                 if now - self._last_heartbeat >= self._heartbeat_interval:
                     try:
-                        self._tuya.heartbeat()
+                        heartbeat = self._tuya.heartbeat()
+                        if isinstance(heartbeat, dict) and any(
+                            heartbeat.get(key) for key in ("Err", "Error", "error")
+                        ):
+                            self._on_transport_error()
                         self._last_heartbeat = now
                     except Exception as exc:  # noqa: BLE001
                         _LOGGER.debug("HO-SC-8W local heartbeat failed: %s", exc)
                         self._reset_connection()
                         self.device.online = False
                 return False
-            if not isinstance(response, dict) or "Err" in response:
+            if not isinstance(response, dict) or any(
+                response.get(key) for key in ("Err", "Error", "error")
+            ):
+                self._on_transport_error()
                 return False
             dps = response.get("dps")
             if not isinstance(dps, dict) or not dps:
@@ -1792,6 +1808,9 @@ class HOSC8WAPI:
             self.device.online = True
             self.device.update_from_dps(dps)
             return True
+
+    def _on_transport_error(self) -> None:
+        """Allow an API specialization to invalidate command ownership."""
 
     def close(self) -> None:
         with self._io_lock:

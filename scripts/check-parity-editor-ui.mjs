@@ -6,7 +6,7 @@ import vm from "node:vm";
 
 const frontend = new URL("../custom_components/nikas_ho_sc_8w/frontend/", import.meta.url);
 const versions = [...Array.from({ length: 14 }, (_, i) => `06${86 + i}`),
-  ...Array.from({ length: 8 }, (_, i) => `070${i}`)];
+  ...Array.from({ length: 7 }, (_, i) => `070${i}`), "0709"];
 const TODAY = "2026-09-07";
 const clean = (value) => JSON.parse(JSON.stringify(value));
 

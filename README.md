@@ -12,9 +12,11 @@ The repository contains the standalone Home Assistant integration under the stab
 
 The current runtime separates the production editor from diagnostic field probes. Schedule telemetry is decoded from the HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
+UI **0.7.09** / integration **1.0.0-b006.30** binds Skip Current to a confirmed manual queue started by this integration. Fresh controller state is mandatory; Auto mode, an old queue, an observed completion or a connection gap revoke permission. The panel passes the confirmed zone and session token so a stale confirmation cannot skip a different queue. It also preserves the neutral controller card accepted in UI 0.7.08. See [manual session safety and verification limits](docs/HO_SC_8W_MANUAL_SESSION_SAFETY.md).
+
 UI **0.7.08** / integration **1.0.0-b006.29** keeps the controller card neutral in normal operation, while pressure retains its green indication and warning/alarm colours remain unchanged.
 
-UI **0.7.07** / integration **1.0.0-b006.28** enables **Odd/Even days** in the normal zone editor after both modes passed a physical Zone 7 test with exact all-eight-zone read-back. The repeat selector uses Russian labels; the interval anchor date is shown only for interval schedules. Every confirmed edit reads all eight zones, sends the selected zone once, and checks all eight again. See the [field results](docs/HO_SC_8W_ODD_EVEN_FIELD_RESULTS_2026-09-07.md) and [APK evidence](docs/HO_SC_8W_ODD_EVEN_APK_EVIDENCE_2026-09-07.md).
+UI **0.7.07** / integration **1.0.0-b006.28** enabled **Odd/Even days** in the normal zone editor after both modes passed a physical Zone 7 test with exact all-eight-zone read-back. The repeat selector uses Russian labels; the interval anchor date is shown only for interval schedules. Every confirmed edit reads all eight zones, sends the selected zone once, and checks all eight again. See the [field results](docs/HO_SC_8W_ODD_EVEN_FIELD_RESULTS_2026-09-07.md) and [APK evidence](docs/HO_SC_8W_ODD_EVEN_APK_EVIDENCE_2026-09-07.md).
 
 ## Installation with HACS
 
@@ -40,7 +42,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.7.08** (the approved layout is preserved).
+Current panel version: **0.7.09** (the approved layout is preserved).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
