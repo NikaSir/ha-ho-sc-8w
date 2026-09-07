@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Release safety contract for HO-SC-8W UI 0.7.09 / integration b006.30."""
+"""Release safety contract for HO-SC-8W UI 0.7.10 / integration b006.31."""
 from pathlib import Path
 import subprocess
 import sys
@@ -11,15 +11,15 @@ source = legacy_path.read_text(encoding="utf-8")
 # Keep the historical behavioral contract, but require all active release
 # metadata to agree instead of explicitly accepting obsolete version numbers.
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-                        'EXPECTED_INTEGRATION_VERSION = "1.0.0-b006.30"')
+                        'EXPECTED_INTEGRATION_VERSION = "1.0.0-b006.31"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"',
-                        'EXPECTED_PANEL_VERSION = "0.7.09"')
+                        'EXPECTED_PANEL_VERSION = "0.7.10"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
-                        'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0709.mjs"')
+                        'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0710.mjs"')
 wrapper_tail = '    "irrigation-panel-v0666.mjs",' + chr(10) + ']'
 assert wrapper_tail in source, "Historical wrapper list changed"
 extra_wrappers = ''.join(
-    f'    "irrigation-panel-v{n:04d}.mjs",' + chr(10) for n in range(667, 710)
+    f'    "irrigation-panel-v{n:04d}.mjs",' + chr(10) for n in range(667, 711)
 )
 source = source.replace(
     wrapper_tail, '    "irrigation-panel-v0666.mjs",' + chr(10) + extra_wrappers + ']'
@@ -36,9 +36,9 @@ exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "
 
 manifest = (component / "manifest.json").read_text(encoding="utf-8")
 const = (component / "const.py").read_text(encoding="utf-8")
-assert '"version": "1.0.0-b006.30"' in manifest
-assert 'PANEL_VERSION = "0.7.09"' in const
-assert 'irrigation-panel-v0709.mjs' in const
+assert '"version": "1.0.0-b006.31"' in manifest
+assert 'PANEL_VERSION = "0.7.10"' in const
+assert 'irrigation-panel-v0710.mjs' in const
 
 production_api = (component / "production_api.py").read_text(encoding="utf-8")
 assert 'dispatch_dp38_once(self, plan.write_block, zone)' in production_api
@@ -48,7 +48,7 @@ assert 'transport.retry = False' in transport
 assert 'required_zones=set(range(1, NUM_ZONES + 1))' in production_api
 assert 'No retry and no automatic rollback' in production_api
 
-ui_paths = [component / "frontend" / f"irrigation-panel-v{n:04d}.mjs" for n in range(688, 710)]
+ui_paths = [component / "frontend" / f"irrigation-panel-v{n:04d}.mjs" for n in range(688, 711)]
 for path in ui_paths:
     assert path.exists(), path
     subprocess.run(["node", "--check", str(path)], check=True)

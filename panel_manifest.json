@@ -1,14 +1,22 @@
 {
   "panel": "nikas-ho-sc-8w",
   "rule_set": "1.17",
-  "panel_version": "0.7.09",
-  "integration_version": "1.0.0-b006.30",
+  "panel_version": "0.7.10",
+  "integration_version": "1.0.0-b006.31",
   "rendering": {
     "stable_shell_dom": true,
     "shadow_root_inner_html": "initial_mount_only",
     "telemetry_updates": "patch_existing_nodes",
     "view_switching": "lazy_dom_cache_and_reattach",
-    "preserve_on_update": ["header", "zoom_viewport", "scroll", "bottom_tab_bar"]
+    "preserve_on_update": ["header", "zoom_viewport", "scroll", "bottom_tab_bar"],
+    "header_refresh_feedback": {
+      "busy_animation": "rotate",
+      "minimum_visible_ms": 900,
+      "duplicate_activation": "blocked",
+      "aria_busy": true,
+      "failure_notification": true,
+      "reduced_motion": "static_busy_surface"
+    }
   },
   "system_settings": {
     "entry": "white_gear_action_immediately_above_system_tab_bar",
@@ -192,7 +200,7 @@
     "stable_dom": true
   },
   "static_url": "/nikas-ho-sc-8w/",
-  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0709.mjs",
+  "bundle": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0710.mjs",
   "asset_policy": {
     "delivery": "integration_owned_static_files",
     "cache_busting": "query_string_version",
