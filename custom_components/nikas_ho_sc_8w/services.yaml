@@ -194,3 +194,40 @@ execute_zone7_duration17:
         select:
           options:
             - WRITE_ZONE7_DURATION_17_ONCE
+
+prepare_zone7_parity:
+  name: Подготовить нечётные или чётные дни зоны 7
+  description: Только чтение. Получает свежие программы всех восьми зон, сохраняет неизменяемый план на 120 секунд и показывает точный пакет и изменения. Требуются локальная связь, Auto без полива и длительность зоны 7 от 1 минуты.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    mode:
+      required: true
+      selector:
+        select:
+          options:
+            - label: Нечётные дни
+              value: odd
+            - label: Чётные дни
+              value: even
+
+execute_zone7_parity:
+  name: Однократно записать подготовленный режим зоны 7
+  description: Повторно читает все восемь зон и проверяет исходный снимок и срок плана. Записывает только зону 7 один раз и сравнивает полный ответ без нормализации. При неопределённом результате дальнейшие пробы блокируются и требуется разбор результата; автоматического повтора и отката нет.
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: nikas_ho_sc_8w
+    plan_id:
+      required: true
+      selector:
+        text:
+    confirmation:
+      required: true
+      selector:
+        select:
+          options:
+            - WRITE_ZONE7_PARITY_ONCE
