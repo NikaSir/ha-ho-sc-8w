@@ -16,12 +16,13 @@ source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"',
                         'EXPECTED_PANEL_VERSION = "0.7.06"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
                         'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0706.mjs"')
+wrapper_tail = '    "irrigation-panel-v0666.mjs",' + chr(10) + ']'
+assert wrapper_tail in source, "Historical wrapper list changed"
+extra_wrappers = ''.join(
+    f'    "irrigation-panel-v{n:04d}.mjs",' + chr(10) for n in range(667, 707)
+)
 source = source.replace(
-    '    "irrigation-panel-v0666.mjs",\\n]',
-    '    "irrigation-panel-v0666.mjs",\\n'
-    + ''.join(f'    "irrigation-panel-v{n:04d}.mjs",\\n'
-              for n in list(range(667, 700)) + list(range(700, 707)))
-    + ']',
+    wrapper_tail, '    "irrigation-panel-v0666.mjs",' + chr(10) + extra_wrappers + ']'
 )
 source = source.replace('require(setup_source, "from .manual_api import NativeManualHOSC8WAPI as HOSC8WAPI")','require(setup_source, "from .start_probe_api import StartProbeHOSC8WAPI as HOSC8WAPI")')
 source = source.replace('assert "DP_OPERATION_MODE" not in manual_source','assert "_write_command_value(\\n                        DP_OPERATION_MODE" not in manual_source\nassert "_write_command_value(DP_OPERATION_MODE" not in manual_source')
