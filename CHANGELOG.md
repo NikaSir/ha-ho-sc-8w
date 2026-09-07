@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0-b006.29` / panel `0.7.08`: remove the normal green fill and border from the controller card, preserving the pressure indicator and warning/alarm colours through incremental updates. Record confirmed rain-sensor behaviour and the native-app indication audit.
+
 - `1.0.0-b006.28` / panel `0.7.07`: enable Odd/Even repetition in the normal zone editor after successful field tests of both modes. Use Russian mode names and interval-only anchor dates; preserve six positional starts and flags. Require valid positive-duration parity programs, a fresh all-zone preflight, one transport dispatch, and exact all-zone read-back. Record the verified field evidence.
 
 - `1.0.0-b006.27` / panel `0.7.06`: add an isolated Zone 7 Odd/Even diagnostic probe using the native APK command format. Read-only preparation produces a two-minute immutable plan; execution checks all eight zones again, sends once, and requires exact full read-back. Uncertain dispatch or mismatches stop further parity probes. The panel exports both tests and all-zone snapshots as JSON. Production Odd/Even editing remains blocked pending physical validation.
