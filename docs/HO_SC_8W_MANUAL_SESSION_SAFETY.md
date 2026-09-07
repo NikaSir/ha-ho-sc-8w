@@ -1,4 +1,4 @@
-# Manual session safety — b006.29 / UI 0.7.08
+# Manual session safety — b006.29 / UI 0.7.09
 
 ## Problem and behavior
 
