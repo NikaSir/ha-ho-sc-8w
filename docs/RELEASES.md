@@ -4,8 +4,10 @@
 
 - `main` is the canonical source branch.
 - HACS installs and updates the integration from the custom repository's default `main` branch.
-- HACS releases are created automatically from the integration version after a reviewed change reaches `main`.
-- Every published state is traceable to its reviewed commit and matching GitHub release tag.
+- A stable integration version in the exact `X.Y.Z` form creates a GitHub Release automatically after a reviewed change reaches `main`.
+- A prerelease version with a suffix (`X.Y.Z-bNNN`, `X.Y.Z-beta.N`, `X.Y.Z-rc.N` and similar) never creates a GitHub Release and therefore does not appear in the public Releases list.
+- Prerelease work remains traceable through its reviewed Git commits; historical prerelease tags are preserved when obsolete Release objects are removed.
+- Every published stable state is traceable to its reviewed commit and matching GitHub release tag.
 
 ## Version lineage
 
