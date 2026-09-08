@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.1` / panel `1.0.1`: show a green check for 1.4 seconds after a successful HA refresh request, or a red error icon on failure, then restore the arrow. Preserve the result during live updates and clear it when another request starts.
+
 - `1.0.0` / panel `1.0.0`: publish the first stable operational release without changing the accepted screen layout or controller behaviour. Consolidate the active UI 0.7.11 runtime into the single autonomous `irrigation-panel.js` production bundle, retain the complete Diagnostics Laboratory with all existing guards, and allow the HACS publication workflow to create stable semantic-version releases.
 
 - `1.0.0-b006.32` / panel `0.7.11`: add the approved pale-blue corner accent to the first System card, matching the vacuum panel reference. No controls or behaviour changed.

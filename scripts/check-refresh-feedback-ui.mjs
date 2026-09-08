@@ -51,6 +51,9 @@ function buttonFixture() {
   const classes = new Set();
   const attributes = new Map([["aria-label", "Обновить"]]);
   return {
+    querySelector: () => ({
+      setAttribute: (name, value) => attributes.set("icon:" + name, value),
+    }),
     disabled: false,
     classList: {
       toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name),
@@ -124,6 +127,14 @@ async function settleToTimer(expectedDelay = 900) {
   assert.equal(h.button.classList.contains("busy"), false);
   assert.equal(h.button.getAttribute("aria-busy"), null);
   assert.equal(h.button.getAttribute("aria-disabled"), null);
+  assert.equal(h.button.getAttribute("aria-label"), "Запрос обновления выполнен");
+  assert.equal(h.button.getAttribute("icon:icon"), "mdi:check");
+  assert.equal(h.button.classList.contains("refresh-success"), true);
+  h.panel._setRefreshFeedbackV0710(false);
+  assert.equal(h.button.getAttribute("icon:icon"), "mdi:check", "HA repaint must preserve the result");
+  assert.equal(timers[0].delay, 1400);
+  timers.shift().callback();
+  assert.equal(h.button.getAttribute("icon:icon"), "mdi:refresh");
   assert.equal(h.button.getAttribute("aria-label"), "Обновить");
 }
 
@@ -133,6 +144,10 @@ for (const options of [{ service: "failure" }, { service: "missing" }, { entitie
   await settleToTimer();
   assert.equal(await pending, false);
   assert.deepEqual(h.notices, ["Не удалось обновить данные"]);
+  assert.equal(h.button.getAttribute("icon:icon"), "mdi:alert-circle-outline");
+  assert.equal(h.button.classList.contains("refresh-error"), true);
+  timers.shift().callback();
+  assert.equal(h.button.getAttribute("icon:icon"), "mdi:refresh");
   assert.equal(h.button.disabled, false);
   assert.equal(h.button.classList.contains("busy"), false);
 }

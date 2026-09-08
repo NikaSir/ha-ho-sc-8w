@@ -12,9 +12,9 @@ source = legacy_path.read_text(encoding="utf-8")
 # Keep the historical behavioral contract, but require all active release
 # metadata to agree instead of explicitly accepting obsolete version numbers.
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-                        'EXPECTED_INTEGRATION_VERSION = "1.0.0"')
+                        'EXPECTED_INTEGRATION_VERSION = "1.0.1"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"',
-                        'EXPECTED_PANEL_VERSION = "1.0.0"')
+                        'EXPECTED_PANEL_VERSION = "1.0.1"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
                         'EXPECTED_PANEL_BUNDLE = "irrigation-panel.js"')
 wrapper_tail = '    "irrigation-panel-v0666.mjs",' + chr(10) + ']'
@@ -37,8 +37,8 @@ exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "
 
 manifest = (component / "manifest.json").read_text(encoding="utf-8")
 const = (component / "const.py").read_text(encoding="utf-8")
-assert '"version": "1.0.0"' in manifest
-assert 'PANEL_VERSION = "1.0.0"' in const
+assert '"version": "1.0.1"' in manifest
+assert 'PANEL_VERSION = "1.0.1"' in const
 assert 'irrigation-panel.js' in const
 
 production_ui = (component / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")

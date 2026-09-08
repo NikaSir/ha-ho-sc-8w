@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.0";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.0.1";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -10983,10 +10983,14 @@ const previousRenderV0710 = p._render;
 const previousStylesV0710 = p.styles;
 
 p._setRefreshFeedbackV0710 = function setRefreshFeedbackV0710(busy) {
+  const result = busy ? null : this._refreshResult;
   const buttons = this.shadowRoot?.querySelectorAll?.("[data-refresh]") || [];
   for (const button of buttons) {
     button.disabled = busy;
     button.classList.toggle("busy", busy);
+    button.classList.toggle("refresh-success", result === "success");
+    button.classList.toggle("refresh-error", result === "error");
+    button.querySelector("ha-icon")?.setAttribute("icon", result === "success" ? "mdi:check" : result === "error" ? "mdi:alert-circle-outline" : "mdi:refresh");
     if (busy) {
       button.setAttribute("aria-busy", "true");
       button.setAttribute("aria-disabled", "true");
@@ -10994,13 +10998,15 @@ p._setRefreshFeedbackV0710 = function setRefreshFeedbackV0710(busy) {
     } else {
       button.removeAttribute("aria-busy");
       button.removeAttribute("aria-disabled");
-      button.setAttribute("aria-label", "Обновить");
+      button.setAttribute("aria-label", result === "success" ? "Запрос обновления выполнен" : result === "error" ? "Не удалось обновить данные" : "Обновить");
     }
   }
 };
 
 p.refreshNow = async function refreshNowV0710() {
   if (this._refreshBusy) return false;
+  clearTimeout(this._refreshResultTimer);
+  this._refreshResult = null;
   const startedAt = Date.now();
   this._refreshBusy = true;
   this._setRefreshFeedbackV0710(true);
@@ -11022,7 +11028,12 @@ p.refreshNow = async function refreshNowV0710() {
     const remaining = REFRESH_FEEDBACK_MIN_MS - (Date.now() - startedAt);
     if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
     this._refreshBusy = false;
+    this._refreshResult = updated ? "success" : "error";
     this._setRefreshFeedbackV0710(false);
+    this._refreshResultTimer = setTimeout(() => {
+      this._refreshResult = null;
+      this._setRefreshFeedbackV0710(Boolean(this._refreshBusy));
+    }, 1400);
   }
   return updated;
 };
@@ -11032,6 +11043,7 @@ p.styles = function stylesV0710() {
     /* UI v0.7.10 — unambiguous feedback for the global refresh action. */
     .refreshButton.busy{cursor:wait;background:color-mix(in srgb,var(--a) 11%,var(--card));border-color:color-mix(in srgb,var(--a) 38%,var(--line))}
     .refreshButton.busy ha-icon{animation:nikasRefreshSpin .9s linear infinite;transform-origin:center}
+    .refreshButton.refresh-success{color:#43a047}.refreshButton.refresh-error{color:#e53935}
     @keyframes nikasRefreshSpin{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){.refreshButton.busy ha-icon{animation:none;opacity:.45}}
   `;
@@ -11072,7 +11084,7 @@ p._render = function renderV0711() {
 
 // Stable UI release identity.
 {
-  const UI_VERSION = "1.0.0";
+  const UI_VERSION = "1.0.1";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
