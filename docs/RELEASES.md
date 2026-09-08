@@ -4,8 +4,8 @@
 
 - `main` is the canonical source branch.
 - HACS installs and updates the integration from the custom repository's default `main` branch.
-- GitHub Releases and automatic release tags are not used.
-- Every published state must be traceable to a reviewed commit in `main`.
+- HACS releases are created automatically from the integration version after a reviewed change reaches `main`.
+- Every published state is traceable to its reviewed commit and matching GitHub release tag.
 
 ## Version lineage
 

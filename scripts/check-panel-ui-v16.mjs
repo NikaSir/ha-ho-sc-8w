@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "0.6.30"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.0"',
   '<strong>Автополив</strong>',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",

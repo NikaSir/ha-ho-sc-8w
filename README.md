@@ -12,7 +12,7 @@ The repository contains the standalone Home Assistant integration under the stab
 
 The current runtime separates the production editor from diagnostic field probes. Schedule telemetry is decoded from the HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
-UI **0.7.11** / integration **1.0.0-b006.32** adds the approved pale-blue corner accent to the first System card. All controls and behaviour remain as in UI 0.7.10.
+UI **1.0.0** / integration **1.0.0** is the first stable operational release. It preserves the accepted UI 0.7.11 layout and controls, including the pale-blue first-card accent, verified schedule editing, guarded manual watering, refresh feedback and controller read-back. The complete Laboratory remains available under Diagnostics as an isolated engineering workspace with its existing confirmations, preconditions and write lockouts.
 
 UI **0.7.10** / integration **1.0.0-b006.31** makes the global refresh action visibly busy for at least one 900 ms rotation, blocks duplicate activation, exposes `aria-busy`, preserves a distinct reduced-motion state and reports refresh failure. The executable product guard also supplies the acceptance case proposed for NikaS Specialized Panel UI Standard v2.2.
 
@@ -46,7 +46,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.7.11** (the approved layout is preserved).
+Current panel version: **1.0.0** (first stable release; the approved layout is preserved).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -74,7 +74,7 @@ The user-facing application model is domain-oriented rather than protocol-orient
 - **Зоны** — only the browser-selected physical zones 1–8, with a complete read-only program drill-down: base duration, all six start slots, cycle mode/value and weekly days, cycle start date, seasonal adjustment, calculated next start and rain handling;
 - **Программа** — direct switching between the selected physical zones below the Header and the complete decoded read-only automatic program for the selected zone;
 - **Ручной** — confirmed manual queue for the selected physical zones 1–8 with an independent 1–120 minute duration per zone;
-- **Диагн.** — integration health, decoded Zone 8 state, full read-only snapshots of zones 1–8 and one guarded Zone 8 mask-write test. Generic DP38 schedule writes remain disabled.
+- **Диагн.** — integration health and the retained Laboratory: decoded Zone 8 state, full read-only snapshots of zones 1–8 and one guarded Zone 8 mask-write test. Generic DP38 schedule writes remain disabled.
 
 The only enabled DP38 schedule write is a fixed field experiment based on the controller's separate read/write selectors. A read report starts with the plain zone number (`08` for Zone 8), while a write starts with a one-hot bitmask (`80` for Zone 8). The experiment requires a fresh exact baseline for all eight zones with Zone 8 at `2026-09-04`, sends one 20-byte block as 40 uppercase ASCII-HEX characters, and changes only byte 18 from `04` to `05`. It sends once, never retries or rolls back, and remains unverified until a new full control snapshot confirms Zones 1–7 unchanged and Zone 8 exactly at `2026-09-05`.
 
@@ -148,7 +148,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=0.6.30
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.0
       ↓
 <nikas-ho-sc-8w-panel>
 ```

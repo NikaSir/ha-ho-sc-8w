@@ -29,11 +29,12 @@ jobs:
         run: |
           version="$(python3 - <<'PY'
           import json
+          import re
           from pathlib import Path
 
           manifest = json.loads(Path('custom_components/nikas_ho_sc_8w/manifest.json').read_text(encoding='utf-8'))
           value = manifest.get('version')
-          if not isinstance(value, str) or not value.startswith('1.0.0-b'):
+          if not isinstance(value, str) or re.fullmatch(r'\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?', value) is None:
               raise SystemExit(f'Unexpected manifest version: {value!r}')
           print(value)
           PY

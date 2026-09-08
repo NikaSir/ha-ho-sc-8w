@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Release safety contract for HO-SC-8W UI 0.7.11 / integration b006.32."""
+"""Release safety contract for stable HO-SC-8W UI/integration 1.0.0."""
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -11,11 +12,11 @@ source = legacy_path.read_text(encoding="utf-8")
 # Keep the historical behavioral contract, but require all active release
 # metadata to agree instead of explicitly accepting obsolete version numbers.
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-                        'EXPECTED_INTEGRATION_VERSION = "1.0.0-b006.32"')
+                        'EXPECTED_INTEGRATION_VERSION = "1.0.0"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"',
-                        'EXPECTED_PANEL_VERSION = "0.7.11"')
+                        'EXPECTED_PANEL_VERSION = "1.0.0"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
-                        'EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0711.mjs"')
+                        'EXPECTED_PANEL_BUNDLE = "irrigation-panel.js"')
 wrapper_tail = '    "irrigation-panel-v0666.mjs",' + chr(10) + ']'
 assert wrapper_tail in source, "Historical wrapper list changed"
 extra_wrappers = ''.join(
@@ -36,9 +37,21 @@ exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "
 
 manifest = (component / "manifest.json").read_text(encoding="utf-8")
 const = (component / "const.py").read_text(encoding="utf-8")
-assert '"version": "1.0.0-b006.32"' in manifest
-assert 'PANEL_VERSION = "0.7.11"' in const
-assert 'irrigation-panel-v0711.mjs' in const
+assert '"version": "1.0.0"' in manifest
+assert 'PANEL_VERSION = "1.0.0"' in const
+assert 'irrigation-panel.js' in const
+
+production_ui = (component / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")
+assert re.search(r"^\s*(?:import|export)\b", production_ui, re.MULTILINE) is None
+for laboratory_marker in (
+    'class="lab dp38SnapshotLab dp38FullSnapshot"',
+    'class="lab zone7ParityLab"',
+    'data-dp38-snapshot-phase="baseline"',
+    'data-zone7-parity-prepare',
+    'data-zone7-parity-execute',
+    'ho-sc-8w-zone7-parity-report.json',
+):
+    assert laboratory_marker in production_ui, laboratory_marker
 
 production_api = (component / "production_api.py").read_text(encoding="utf-8")
 assert 'dispatch_dp38_once(self, plan.write_block, zone)' in production_api
