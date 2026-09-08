@@ -64,6 +64,7 @@ jobs:
           node scripts/check-parity-editor-ui.mjs
           python scripts/check-manual-skip-contract.py
           python scripts/check-manual-session-adapters.py
+          python scripts/check-local-transport-recovery.py
           node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel-v0708.mjs
           node scripts/check-manual-session-ui.mjs
           node scripts/check-refresh-feedback-ui.mjs
