@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0-b006.32` / panel `0.7.11`: add the approved pale-blue corner accent to the first System card, matching the vacuum panel reference. No controls or behaviour changed.
+
 - `1.0.0-b006.31` / panel `0.7.10`: restore unambiguous feedback for the global Header refresh action. Rotate the icon for at least 900 ms, publish busy/disabled ARIA state, block duplicate refresh calls, retain a distinct reduced-motion surface and report unavailable/failed refreshes without inventing success. Add an executable regression check and record the acceptance case proposed for the canonical NikaS Specialized Panel UI Standard v2.2.
 
 - `1.0.0-b006.30` / panel `0.7.09`: bind Skip Current to a confirmed uninterrupted manual session created by this integration. Require fresh DP44/101/107/108 evidence, verify the current zone and session intent immediately before writing, and revoke old plans on completion, mode/queue changes, connection gaps or uncertain commands. Preserve the accepted neutral controller card from UI 0.7.08. Add backend, Home Assistant adapter and production UI regressions; remove automatic GitHub Release creation in favour of the agreed main/HACS path. Physical acceptance of the new guard remains pending.
