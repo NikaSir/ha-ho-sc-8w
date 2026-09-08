@@ -68,6 +68,8 @@ from .models import (
 
 _LOGGER = logging.getLogger(__name__)
 
+LOCAL_TRANSPORT_ERROR_LIMIT = 3
+
 
 class HOSC8WDevice:
     """Current cached state of one HO-SC-8W controller."""
@@ -1786,28 +1788,51 @@ class HOSC8WAPI:
                 if now - self._last_heartbeat >= self._heartbeat_interval:
                     try:
                         heartbeat = self._tuya.heartbeat()
-                        if isinstance(heartbeat, dict) and any(
-                            heartbeat.get(key) for key in ("Err", "Error", "error")
-                        ):
-                            self._on_transport_error()
+                        if self._is_transport_error(heartbeat):
+                            self._record_transport_error(heartbeat)
+                        else:
+                            self._fail_count = 0
                         self._last_heartbeat = now
                     except Exception as exc:  # noqa: BLE001
                         _LOGGER.debug("HO-SC-8W local heartbeat failed: %s", exc)
                         self._reset_connection()
                         self.device.online = False
                 return False
-            if not isinstance(response, dict) or any(
-                response.get(key) for key in ("Err", "Error", "error")
-            ):
-                self._on_transport_error()
+            if not isinstance(response, dict) or self._is_transport_error(response):
+                self._record_transport_error(response)
                 return False
             dps = response.get("dps")
             if not isinstance(dps, dict) or not dps:
                 return False
             _LOGGER.debug("HO-SC-8W RAW PUSH DPs from %s: %s", self._device_ip, dps)
+            self._fail_count = 0
             self.device.online = True
             self.device.update_from_dps(dps)
             return True
+
+    @staticmethod
+    def _is_transport_error(response: Any) -> bool:
+        """Identify TinyTuya wire errors without treating an empty push as failure."""
+        if not isinstance(response, dict):
+            return response is not None
+        return any(
+            key in response and response[key] not in (None, False, 0, "")
+            for key in ("Err", "Error", "error")
+        )
+
+    def _record_transport_error(self, response: Any) -> None:
+        """Drop a persistently failing local socket after a bounded threshold."""
+        self._fail_count += 1
+        self._on_transport_error()
+        if self._fail_count < LOCAL_TRANSPORT_ERROR_LIMIT:
+            return
+        _LOGGER.warning(
+            "HO-SC-8W local transport failed %s consecutive times: %s",
+            self._fail_count,
+            response,
+        )
+        self._reset_connection()
+        self.device.online = False
 
     def _on_transport_error(self) -> None:
         """Allow an API specialization to invalidate command ownership."""

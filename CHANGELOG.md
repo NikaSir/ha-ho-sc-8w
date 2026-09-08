@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.2` / panel `1.0.1`: recover the persistent local TinyTuya transport after three consecutive wire errors. Treat `Err`/`Error` replies separately from legitimate empty pushes, validate periodic heartbeats, publish the offline state immediately, and let the coordinator retry with its existing bounded backoff. Valid DPS data clears the failure streak. No controller commands, UI, or laboratory behaviour changed.
+
 - `1.0.1` / panel `1.0.1`: show a green check for 1.4 seconds after a successful HA refresh request, or a red error icon on failure, then restore the arrow. Preserve the result during live updates and clear it when another request starts.
 
 - `1.0.0` / panel `1.0.0`: publish the first stable operational release without changing the accepted screen layout or controller behaviour. Consolidate the active UI 0.7.11 runtime into the single autonomous `irrigation-panel.js` production bundle, retain the complete Diagnostics Laboratory with all existing guards, and allow the HACS publication workflow to create stable semantic-version releases.

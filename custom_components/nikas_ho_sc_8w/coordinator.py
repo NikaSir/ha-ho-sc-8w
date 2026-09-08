@@ -328,6 +328,7 @@ class HOSC8WCoordinator(DataUpdateCoordinator[HOSC8WDevice]):
                     continue
                 if self.api.active_transport == CONNECTION_MODE_LOCAL:
                     continue
+                self.async_set_updated_data(self.api.device)
                 next_local_attempt = time.monotonic() + local_failure_delay
                 continue
 
