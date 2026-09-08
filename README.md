@@ -8,6 +8,8 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
+UI / integration **1.0.1** adds a green check for 1.4 seconds after a successful HA refresh request, a red error icon on failure, and then restores the arrow. The result confirms the HA request, not independent device telemetry.
+
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
 The current runtime separates the production editor from diagnostic field probes. Schedule telemetry is decoded from the HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
@@ -46,7 +48,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **1.0.0** (first stable release; the approved layout is preserved).
+Current panel version: **1.0.1**.
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
@@ -148,7 +150,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.0
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.1
       ↓
 <nikas-ho-sc-8w-panel>
 ```
