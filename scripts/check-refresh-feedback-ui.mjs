@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const component = path.join(root, "custom_components/nikas_ho_sc_8w");
 const constSource = fs.readFileSync(path.join(component, "const.py"), "utf8");
-const bundle = constSource.match(/^PANEL_JS_URL\s*=.*\/(irrigation-panel-v\d+\.mjs)/m)?.[1];
+const bundle = constSource.match(/^PANEL_JS_URL\s*=.*\/(irrigation-panel(?:-v\d+\.mjs|\.js))/m)?.[1];
 assert.ok(bundle, "The registered production entrypoint must be discoverable");
 
 let now = 10_000;

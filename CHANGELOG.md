@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.0` / panel `1.0.0`: publish the first stable operational release without changing the accepted screen layout or controller behaviour. Consolidate the active UI 0.7.11 runtime into the single autonomous `irrigation-panel.js` production bundle, retain the complete Diagnostics Laboratory with all existing guards, and allow the HACS publication workflow to create stable semantic-version releases.
+
 - `1.0.0-b006.32` / panel `0.7.11`: add the approved pale-blue corner accent to the first System card, matching the vacuum panel reference. No controls or behaviour changed.
 
 - `1.0.0-b006.31` / panel `0.7.10`: restore unambiguous feedback for the global Header refresh action. Rotate the icon for at least 900 ms, publish busy/disabled ARIA state, block duplicate refresh calls, retain a distinct reduced-motion surface and report unavailable/failed refreshes without inventing success. Add an executable regression check and record the acceptance case proposed for the canonical NikaS Specialized Panel UI Standard v2.2.

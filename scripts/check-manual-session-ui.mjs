@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Load the registered production import graph. All HA/device calls are stubs.
+// Load the registered autonomous production bundle. All HA/device calls are stubs.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const component = path.join(root, "custom_components/nikas_ho_sc_8w");
 const constSource = fs.readFileSync(path.join(component, "const.py"), "utf8");
-const bundle = constSource.match(/^PANEL_JS_URL\s*=.*\/(irrigation-panel-v\d+\.mjs)/m)?.[1];
+const bundle = constSource.match(/^PANEL_JS_URL\s*=.*\/(irrigation-panel(?:-v\d+\.mjs|\.js))/m)?.[1];
 assert.ok(bundle, "The registered production entrypoint must be discoverable");
 const registry = new Map();
 const storage = { getItem: () => null, setItem() {}, removeItem() {} };
