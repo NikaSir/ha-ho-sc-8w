@@ -40,9 +40,16 @@ jobs:
           PY
           )"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Publishing candidate: $version"
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "publish_release=true" >> "$GITHUB_OUTPUT"
+            echo "Stable release candidate: $version"
+          else
+            echo "publish_release=false" >> "$GITHUB_OUTPUT"
+            echo "Prerelease version $version validated; GitHub Release publication is skipped."
+          fi
 
       - name: Create missing GitHub Release
+        if: steps.version.outputs.publish_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
