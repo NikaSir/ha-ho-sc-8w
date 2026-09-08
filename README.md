@@ -12,6 +12,8 @@ The repository contains the standalone Home Assistant integration under the stab
 
 The current runtime separates the production editor from diagnostic field probes. Schedule telemetry is decoded from the HO-SC-8W DP model; no frontend code writes raw Tuya DPs.
 
+UI **0.7.11** / integration **1.0.0-b006.32** adds the approved pale-blue corner accent to the first System card. All controls and behaviour remain as in UI 0.7.10.
+
 UI **0.7.10** / integration **1.0.0-b006.31** makes the global refresh action visibly busy for at least one 900 ms rotation, blocks duplicate activation, exposes `aria-busy`, preserves a distinct reduced-motion state and reports refresh failure. The executable product guard also supplies the acceptance case proposed for NikaS Specialized Panel UI Standard v2.2.
 
 UI **0.7.09** / integration **1.0.0-b006.30** binds Skip Current to a confirmed manual queue started by this integration. Fresh controller state is mandatory; Auto mode, an old queue, an observed completion or a connection gap revoke permission. The panel passes the confirmed zone and session token so a stale confirmation cannot skip a different queue. It also preserves the neutral controller card accepted in UI 0.7.08. See [manual session safety and verification limits](docs/HO_SC_8W_MANUAL_SESSION_SAFETY.md).
@@ -44,7 +46,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **0.7.10** (the approved layout is preserved).
+Current panel version: **0.7.11** (the approved layout is preserved).
 
 The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
 
