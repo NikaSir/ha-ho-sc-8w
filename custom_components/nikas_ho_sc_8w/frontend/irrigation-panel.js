@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.1";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.0.2";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -37,7 +37,8 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     try {
       const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
       if (url.origin !== window.location.origin) return null;
-      if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) return "/dashboard-house-v11/home";
+      if (url.pathname === "/dashboard-house-v13" || url.pathname.startsWith("/dashboard-house-v13/")) return "/dashboard-house-v13/home";
+      if (url.pathname === "/dashboard-rooms-v11" || url.pathname.startsWith("/dashboard-rooms-v11/")) return "/dashboard-rooms-v11/rooms";
       if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) return "/dashboard-actions/home";
       if (url.pathname === "/dashboard-infrastructure" || url.pathname.startsWith("/dashboard-infrastructure/")) return "/dashboard-infrastructure/overview";
       return null;
@@ -11082,15 +11083,31 @@ p._render = function renderV0711() {
 };
 }
 
-// Stable UI release identity.
+// Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.0.1";
+  const UI_VERSION = "1.0.2";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
-  const previousRenderV1000 = p._render;
-  p._render = function renderV1000() {
-    previousRenderV1000.call(this);
+  const previousRenderV1002 = p._render;
+  const previousStylesV1002 = p.styles;
+
+  p.styles = function stylesV1002() {
+    return `${previousStylesV1002.call(this)}
+      /* UI v1.0.2 — exact NikaS UI Standard v2.2 chrome and decoration tokens. */
+      .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
+      .bottomNav button ha-icon{--mdc-icon-size:26px}
+      .systemOverview>.connectionWrap{position:absolute;top:13px;right:13px;width:168px;min-width:168px;max-width:168px}
+      .systemOverview .systemConnection{box-sizing:border-box;width:168px;min-width:168px;max-width:168px;height:58px;min-height:58px;padding:11px 12px;border-radius:18px;grid-template-columns:10px minmax(0,1fr);column-gap:9px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+      .systemOverview .systemConnectionCopy{gap:3px}
+      .systemOverview .systemConnectionCopy b{font-size:16px;font-weight:700;line-height:17px}
+      .systemOverview .systemConnectionCopy .freshness{font-size:13px!important;font-weight:600;line-height:14px}
+      .systemOverview::before{top:-92px;right:-70px;width:205px;height:205px;border-radius:50%;background:rgba(3,169,217,0.07);opacity:1;pointer-events:none}
+    `;
+  };
+
+  p._render = function renderV1002() {
+    previousRenderV1002.call(this);
     const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
     if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
   };

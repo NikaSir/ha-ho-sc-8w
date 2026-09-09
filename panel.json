@@ -8,7 +8,7 @@
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "1.0.1",
+    "dashboard_version": "1.0.2",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -31,7 +31,7 @@
       "header_narrow_subtitle_px": 13,
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
-      "bottom_tab_icon_px": 28,
+      "bottom_tab_icon_px": 26,
       "bottom_tab_label_px": 12,
       "bottom_tab_label_weight": 700,
       "bottom_tab_active_primary_percent": 11,
@@ -231,16 +231,17 @@
       "typography": {"meaningful_min_px": 12, "meaningful_max_px": 25, "schematic_redundant_annotation_px": 10},
       "connection_indicator": {
         "reference": "NikaS Specialized Panel UI Standard v2.2 / S8 OMNI",
+        "contract_version": "1.1",
         "two_level_indicator_enabled": true,
         "policy": "explicit_product_request",
         "transport": ["Локально", "Облако", "Резерв", "Нет связи", "Нет данных"],
         "freshness": ["Данные актуальны", "Данные устарели", "Нет данных"],
         "state_invariant_width_px": 168,
-        "min_height_px": 58,
-        "padding_px": [12, 14],
+        "height_px": 58,
+        "padding_px": [11, 12],
         "radius_px": 18,
         "lamp_px": 10,
-        "column_gap_px": 11,
+        "column_gap_px": 9,
         "main_font": "16px/700",
         "freshness_font": "13px/600",
         "success_background_mix_percent": 11,
@@ -300,9 +301,9 @@
       "program_selected_zone_status": "inside_zone_form"
     },
     "parent_route": "/dashboard-actions/home",
-    "allowed_source_roots": ["/dashboard-house-v11", "/dashboard-actions", "/dashboard-infrastructure"],
-    "standard": "NIKAS Specialized Panel UI Standard v1.9",
-    "rule_set": "1.17"
+    "allowed_source_roots": ["/dashboard-house-v13", "/dashboard-rooms-v11", "/dashboard-actions", "/dashboard-infrastructure"],
+    "standard": "NIKAS Specialized Panel UI Standard v2.2",
+    "rule_set": "2.2"
   },
   "ownership": {
     "direct_tuya_dp_writes_from_ui": false,
@@ -312,7 +313,7 @@
     "unknown_unavailable_are_healthy": false
   },
   "standards": {
-    "specialized_panel_ui": "1.9",
+    "specialized_panel_ui": "2.2",
     "integration_panel_template": "NikaS specialized panel variant",
     "header": "ha_sidebar_menu_contextual_title_or_zone_selector_refresh_or_zone_status"
   }
