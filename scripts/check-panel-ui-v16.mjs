@@ -5,7 +5,7 @@ const source = fs.readFileSync(panelPath, "utf8");
 
 const count = (pattern) => [...source.matchAll(pattern)].length;
 const requireMarker = (marker) => {
-  if (!source.includes(marker)) throw new Error(`Missing UI v1.9 marker: ${marker}`);
+  if (!source.includes(marker)) throw new Error(`Missing UI v2.2 marker: ${marker}`);
 };
 
 if (count(/shadowRoot\.innerHTML\s*=/g) !== 1) {
@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.1"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.2"',
   '<strong>Автополив</strong>',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
@@ -33,7 +33,7 @@ for (const marker of [
   "font-size:14px",
   "font-size:21px",
   "font-size:13px",
-  "--mdc-icon-size:28px",
+  ".bottomNav button ha-icon{--mdc-icon-size:26px}",
   "font-size:12px!important;font-weight:700",
   "VIEW_SCALE_MIN = 0.75",
   "VIEW_SCALE_MAX = 2",
@@ -96,7 +96,7 @@ for (const marker of [
   "zoneLink",
   "Запустить ручной полив?",
   "Первый запуск",
-  "min-width:min(290px,100%)",
+  "width:min(360px,100%);height:52px;min-height:52px",
   "padding:5px 14px",
   "color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8))",
   "color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff))",
@@ -116,6 +116,16 @@ for (const marker of [
   "viewport-locked chrome",
   "max-width:1280px",
   "grid-template-columns:repeat(3,minmax(15px,1fr))",
+  'return "/dashboard-house-v13/home"',
+  'return "/dashboard-rooms-v11/rooms"',
+  "position:absolute;top:13px;right:13px;width:168px",
+  "height:58px;min-height:58px;padding:11px 12px",
+  "column-gap:9px",
+  'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif',
+  "line-height:17px",
+  "line-height:14px",
+  "top:-92px;right:-70px;width:205px;height:205px",
+  "background:rgba(3,169,217,0.07)",
 ]) requireMarker(marker);
 
 for (const forbidden of [
@@ -126,6 +136,7 @@ for (const forbidden of [
   "Следующий полив",
   '${starts[0]} +${starts.length - 1}',
   "const singleStart =",
+  "/dashboard-house-v11",
 ]) {
   if (source.includes(forbidden)) throw new Error(`Forbidden unfinished UI copy: ${forbidden}`);
 }
@@ -134,7 +145,7 @@ if (source.includes('"Онлайн"')) {
   throw new Error("Local transport must be labelled Локально, not Онлайн");
 }
 
-console.log("HO-SC-8W UI standard v1.9 contract verified");
+console.log("HO-SC-8W UI standard v2.2 contract verified");
 
 if (source.includes("${this.nodes(e)}")) {
   throw new Error("Status strip must not be rendered on the status view");

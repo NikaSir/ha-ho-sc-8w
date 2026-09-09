@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NikaS Specialized Panel UI Standard v1.9 and NikaS Panel Navigation and Return Contract v1.1
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v0.6.30
-**Manifest:** integration `1.0.0-b005.48`
+**Audit target:** NikaS Specialized Panel UI Standard v2.2 and NikaS Panel Navigation Contract v1.2
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v1.0.2
+**Manifest:** integration `1.0.3`
 
 ## Compliance
 
@@ -20,13 +20,15 @@
 | Lazy work-view DOM cache | PASS | Visited tab and zone structure nodes are cached by structural key, reattached on return and point-patched before display; shell and zoom owners are never replaced. |
 | Fixed UPS Header | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, 44×44 radius-16 bordered plaques, 25 px MDI icons, 23/14 typography (21/13 narrow); menu and Refresh use theme text/primary colours. The centered title returns to the configured parent panel without adding a Header Back arrow. |
 | Permanent left system menu | PASS | Header always emits composed/bubbling `hass-toggle-menu`; no Header Back action. |
-| Fixed UPS Bottom Tab Bar | PASS | Shell grid row outside viewport, safe-area padding, equal tabs, minimum 52 px, `ha-icon` 28 px, labels 12/700, theme-derived 11% active background. |
+| Fixed UPS Bottom Tab Bar | PASS | Shell grid row outside viewport, safe-area padding, equal tabs, minimum 52 px, `ha-icon` 26 px, labels 12/700, theme-derived 11% active background. |
 | Meaningful typography 12–25 px | PASS | Final v0.6.13 rules raise semantic labels and values to 12 px or more and cap primary headings at 25 px; only the redundant control-wire caption remains 10 px. |
-| Optional two-level indicator | PASS | Explicitly enabled for HO-SC-8W: canonical transport/freshness vocabulary, 16/13 typography, status tint, stable subtree and point-patched updates. |
+| Optional two-level indicator | PASS (static) | Explicitly enabled for HO-SC-8W: canonical transport/freshness vocabulary, fixed 168×58 geometry, 11×12 padding, 9 px column gap, 16/13 typography, status tint, stable subtree and point-patched updates. Browser measurement remains required below. |
 | Machine-readable contract agrees | PASS | `panel.json` and registration declare native scroll at 100, fixed origin, >100-only axis pan, resize clamp and tab-top reset. |
 | Data truth and command safety | PASS | Values come from integration-owned entities/state; missing, unknown and unavailable values stay explicit. Writes use registered `nikas_ho_sc_8w` services with confirmation, busy/error handling and factual controller read-back. |
 | Strict source hand-off | PASS | The title consumes route and timestamp only as a complete pair and rejects invalid, expired or future timestamps before applying saved/configured fallbacks. |
 | Repository validation | PASS | Local syntax, JSON, Python and asset checks pass; CI now runs the repository contract guard, HACS Action and Home Assistant Hassfest for every pull request. |
+| Locked geometry in a production browser | GAP | CSS tokens are exact, but 430×932, 932×430, 768×1024, 1024×768 and 1440×900 rendered measurements and zero state-layout delta require browser evidence. |
+| Panel lifecycle and unavailable bootstrap | GAP | The normative lifecycle companion is present and checked; registration-before-I/O, offline bootstrap and retry recovery still require targeted integration tests and HA acceptance. |
 | Approved icon source preserved | PASS | Existing 256×256 RGBA `custom_components/nikas_ho_sc_8w/brand/icon.png` is unchanged and now shown in README. |
 | Integration icon visible through supported HA Brands path | GAP | Repository-local brand art alone cannot publish the HA integration icon. Submit the approved source as `icon.png` and `icon@2x.png` for domain `nikas_ho_sc_8w` through Home Assistant Brands; add dark variants only if required. |
 | GitHub social preview/avatar | GAP | Repository settings are external to this code PR. Reuse the approved icon; do not redraw it. |

@@ -12,9 +12,9 @@ source = legacy_path.read_text(encoding="utf-8")
 # Keep the historical behavioral contract, but require all active release
 # metadata to agree instead of explicitly accepting obsolete version numbers.
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-                        'EXPECTED_INTEGRATION_VERSION = "1.0.2"')
+                        'EXPECTED_INTEGRATION_VERSION = "1.0.3"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"',
-                        'EXPECTED_PANEL_VERSION = "1.0.1"')
+                        'EXPECTED_PANEL_VERSION = "1.0.2"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
                         'EXPECTED_PANEL_BUNDLE = "irrigation-panel.js"')
 wrapper_tail = '    "irrigation-panel-v0666.mjs",' + chr(10) + ']'
@@ -33,12 +33,19 @@ source = source.replace('assert manual_meta["readback"] == [107]',
                         'assert manual_meta["readback"] == [44, 101, 107, 108]')
 source = source.replace('assert manifest_manual_meta["readback_dps"] == [107]',
                         'assert manifest_manual_meta["readback_dps"] == [44, 101, 107, 108]')
+source = source.replace('"min_height_px": 58,', '"height_px": 58,')
+source = source.replace('"padding_px": [12, 14],', '"padding_px": [11, 12],')
+source = source.replace('"column_gap_px": 11,', '"column_gap_px": 9,')
+source = source.replace('assert panel["panel"]["rule_set"] == "1.17"',
+                        'assert panel["panel"]["rule_set"] == "2.2"')
+source = source.replace('assert panel_manifest["rule_set"] == "1.17"',
+                        'assert panel_manifest["rule_set"] == "2.2"')
 exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "__name__": "__main__"})
 
 manifest = (component / "manifest.json").read_text(encoding="utf-8")
 const = (component / "const.py").read_text(encoding="utf-8")
-assert '"version": "1.0.2"' in manifest
-assert 'PANEL_VERSION = "1.0.1"' in const
+assert '"version": "1.0.3"' in manifest
+assert 'PANEL_VERSION = "1.0.2"' in const
 assert 'irrigation-panel.js' in const
 
 production_ui = (component / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")

@@ -8,7 +8,9 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
-UI / integration **1.0.1** adds a green check for 1.4 seconds after a successful HA refresh request, a red error icon on failure, and then restores the arrow. The result confirms the HA request, not independent device telemetry.
+UI **1.0.2** / integration **1.0.3** adopts the canonical NikaS UI Standard v2.2 and Navigation Contract v1.2. It uses the current House v13 and Rooms v11 return routes and locks the title, Bottom Tab Bar, connection plaque and blue corner to the reviewed geometry. Irrigation commands and controller behavior are unchanged.
+
+UI **1.0.1** / integration **1.0.2** adds a green check for 1.4 seconds after a successful HA refresh request, a red error icon on failure, and then restores the arrow. The result confirms the HA request, not independent device telemetry. Integration 1.0.2 also restores local transport after repeated TinyTuya wire errors.
 
 The repository contains the standalone Home Assistant integration under the stable domain `nikas_ho_sc_8w` and an integration-owned irrigation panel.
 
@@ -48,11 +50,11 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **1.0.1**.
+Current panel version: **1.0.2**.
 
-The panel follows **NikaS Specialized Panel UI Standard v1.9** and the mandatory navigation/return contract:
+The panel follows **NikaS Specialized Panel UI Standard v2.2** and **NikaS Panel Navigation Contract v1.2**:
 
-It also conforms to **NikaS Integration Panel Template v1.9**.
+The normative declaration, companion contracts and production entrypoint are checked together in CI. Browser behavior and HA/iPhone acceptance remain separate evidence.
 
 - compact symmetric Header with the native Home Assistant `☰` menu;
 - viewport-centered title and one global refresh action;
@@ -128,7 +130,7 @@ The incoming water path now runs from the pressure gauge vertically upward and t
 
 ### Actual HO-SC-8W controller and readable type v0.5.8
 
-The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v1.9 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
+The schematic now uses the real wide turquoise INKBIRD / HiOazo HO-SC-8W enclosure with its LCD, eight-zone marking and Wi-Fi-capable product identity instead of the incorrect tall white cabinet. Its proportions are preserved with `contain` rendering. Current v2.2 typography keeps meaningful mobile copy at 12 px or larger; only the redundant control-wire caption may use 10 px.
 
 ### Shared-axis irrigation schematic v0.6.0
 
@@ -150,7 +152,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.1
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.2
       ↓
 <nikas-ho-sc-8w-panel>
 ```
