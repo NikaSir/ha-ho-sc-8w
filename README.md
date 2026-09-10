@@ -8,6 +8,8 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
+UI **1.0.3** / integration **1.0.4** shows each zone's decoded schedule directly in its card: daily, interval, selected weekdays, odd/even days or a disabled program. The line sits between duration and start times; controller commands and the detailed zone screen are unchanged.
+
 UI **1.0.2** / integration **1.0.3** adopts the canonical NikaS UI Standard v2.2 and Navigation Contract v1.2. It uses the current House v13 and Rooms v11 return routes and locks the title, Bottom Tab Bar, connection plaque and blue corner to the reviewed geometry. Irrigation commands and controller behavior are unchanged.
 
 UI **1.0.1** / integration **1.0.2** adds a green check for 1.4 seconds after a successful HA refresh request, a red error icon on failure, and then restores the arrow. The result confirms the HA request, not independent device telemetry. Integration 1.0.2 also restores local transport after repeated TinyTuya wire errors.
@@ -50,7 +52,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **1.0.2**.
+Current panel version: **1.0.3**.
 
 The panel follows **NikaS Specialized Panel UI Standard v2.2** and **NikaS Panel Navigation Contract v1.2**:
 
@@ -152,7 +154,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.2
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.3
       ↓
 <nikas-ho-sc-8w-panel>
 ```
