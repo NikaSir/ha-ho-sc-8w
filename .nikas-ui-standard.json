@@ -33,7 +33,7 @@
   ],
   "production_entrypoint": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "build_source_files": [],
-  "ui_version": "1.0.2",
+  "ui_version": "1.0.3",
   "web_component": "nikas-ho-sc-8w-panel",
   "bundle_contract": {
     "autonomous": true,

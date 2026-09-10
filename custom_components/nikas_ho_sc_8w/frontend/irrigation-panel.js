@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.2";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.0.3";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -618,6 +618,35 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       if (mode === "weekly") return "По дням недели";
       if (mode === "disabled") return "Выключено";
       return String(mode);
+    }
+    zoneScheduleSummary(attrs = {}) {
+      if (attrs.program_enabled === false) return "Расписание выключено";
+      const mode = String(attrs.calendar_mode || attrs.cycle_mode || "").toLowerCase();
+      if (mode === "disabled") return "Расписание выключено";
+      if (mode === "daily") return "Ежедневно";
+      if (mode === "odd") return "Нечётные дни";
+      if (mode === "even") return "Чётные дни";
+      if (mode === "interval") {
+        const days = Number(attrs.interval_days ?? attrs.cycle_value);
+        if (days === 1) return "Ежедневно";
+        if (Number.isInteger(days) && days > 1) {
+          const remainder10 = days % 10;
+          const remainder100 = days % 100;
+          const word = remainder10 >= 2 && remainder10 <= 4 && !(remainder100 >= 12 && remainder100 <= 14)
+            ? "дня" : "дней";
+          return `Каждые ${days} ${word}`;
+        }
+      }
+      if (mode === "weekly") {
+        const weekdayLabels = { sun: "Вс", mon: "Пн", tue: "Вт", wed: "Ср", thu: "Чт", fri: "Пт", sat: "Сб" };
+        const weekdays = Array.isArray(attrs.weekdays)
+          ? attrs.weekdays.map((day) => weekdayLabels[String(day).toLowerCase()]).filter(Boolean)
+          : [];
+        if (new Set(weekdays).size === 7) return "Ежедневно";
+        if (weekdays.length) return weekdays.join(" · ");
+        return "Дни не заданы";
+      }
+      return "Нет данных";
     }
     updatedAge(entityId) {
       const obj = entityId ? this.states()[entityId] : null;
@@ -4833,8 +4862,9 @@ p.zonesView = function zonesViewV0659(entities) {
     const startTimes = runtime.starts.length
       ? `<span class="zoneCardTimes">${this.esc(runtime.start)}</span>`
       : '<span class="zoneCardTimes muted">Нет запусков</span>';
+    const scheduleSummary = `<span class="zoneCardSchedule">${this.esc(this.zoneScheduleSummary(runtime.attrs))}</span>`;
     const entity = runtime.q.schedule ? ` data-entity="${this.esc(runtime.q.schedule)}"` : "";
-    return `<button class="zoneCard ${runtime.tone}" data-zone="${zone}"${entity}><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(runtime.label)}</b><em>${this.esc(runtime.duration)} мин</em>${startTimes}</span>${this._zoneIndicators(runtime)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
+    return `<button class="zoneCard ${runtime.tone}" data-zone="${zone}"${entity}><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(runtime.label)}</b><em>${this.esc(runtime.duration)} мин</em>${scheduleSummary}${startTimes}</span>${this._zoneIndicators(runtime)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
   }).join("");
   return `<div class="pageIntro"><small>ИСПОЛЬЗУЕМЫЕ ЗОНЫ · ${zones.length}</small><h2>Рабочие зоны</h2><p>Фактическое состояние и программа каждого подключённого канала.</p></div><div class="zoneCards">${cards}</div>`;
 };
@@ -11085,7 +11115,7 @@ p._render = function renderV0711() {
 
 // Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.0.2";
+  const UI_VERSION = "1.0.3";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
@@ -11094,7 +11124,7 @@ p._render = function renderV0711() {
 
   p.styles = function stylesV1002() {
     return `${previousStylesV1002.call(this)}
-      /* UI v1.0.2 — exact NikaS UI Standard v2.2 chrome and decoration tokens. */
+      /* UI v1.0.3 — NikaS UI Standard v2.2 geometry and zone schedule summaries. */
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
       .bottomNav button ha-icon{--mdc-icon-size:26px}
       .systemOverview>.connectionWrap{position:absolute;top:13px;right:13px;width:168px;min-width:168px;max-width:168px}
@@ -11103,6 +11133,7 @@ p._render = function renderV0711() {
       .systemOverview .systemConnectionCopy b{font-size:16px;font-weight:700;line-height:17px}
       .systemOverview .systemConnectionCopy .freshness{font-size:13px!important;font-weight:600;line-height:14px}
       .systemOverview::before{top:-92px;right:-70px;width:205px;height:205px;border-radius:50%;background:rgba(3,169,217,0.07);opacity:1;pointer-events:none}
+      .zoneCardSchedule{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:650;line-height:1.2;white-space:normal}
     `;
   };
 
