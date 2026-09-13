@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.5"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.6"',
   '<strong>Автополив</strong>',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
@@ -52,9 +52,6 @@ for (const marker of [
   'viewport.addEventListener("touchmove"',
   "event.touches[0].clientY - nativeTouchY",
   "{ passive: false }",
-  "handedOffRaw !== null",
-  "handedOffAtRaw !== null",
-  "handedOffAge >= 0",
   "integrationServiceAvailable(service)",
   "controllerStateAvailable()",
   "rejectUnavailableCommand(service)",
@@ -113,6 +110,7 @@ for (const marker of [
   'class="zoneCardTimes"',
   'class="programSeasonEditor',
   'class="programSeasonControls"',
+  'const path = "/home/overview";',
   "viewport-locked chrome",
   "max-width:1280px",
   "grid-template-columns:repeat(3,minmax(15px,1fr))",

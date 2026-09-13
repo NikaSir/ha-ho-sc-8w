@@ -54,6 +54,7 @@ jobs:
           test -f "$bundle"
           node --check "$bundle"
           python scripts/check_nikas_ui_standard.py
+          node tests/test_title_parent.cjs
           node scripts/check-panel-ui-v16.mjs
           node scripts/check-zone-schedule-summary-ui.mjs
           node scripts/check-responsive-zone-card-layout.mjs

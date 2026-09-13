@@ -1,3 +1,7 @@
+## 1.0.7 / UI 1.0.6
+
+- Return the main panel title to `/home/overview` independently of browser navigation history and saved routes.
+
 # Changelog
 
 - `1.0.6` / panel `1.0.5`: restore bundled default artwork for Zones 1–6 when a browser has no saved image choice. Preserve every explicit browser-local selection, including `Без картинки`, and add a regression that exercises the production artwork state and applied CSS variables. Keep the approved three-row, two-column zone facts and controller behaviour unchanged.
