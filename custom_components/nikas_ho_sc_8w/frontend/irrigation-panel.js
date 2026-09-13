@@ -4864,7 +4864,7 @@ p.zonesView = function zonesViewV0659(entities) {
       : '<span class="zoneCardTimes muted">Нет запусков</span>';
     const scheduleSummary = `<span class="zoneCardSchedule">${this.esc(this.zoneScheduleSummary(runtime.attrs))}</span>`;
     const entity = runtime.q.schedule ? ` data-entity="${this.esc(runtime.q.schedule)}"` : "";
-    return `<button class="zoneCard ${runtime.tone}" data-zone="${zone}"${entity}><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small>ЗОНА ${zone}</small><b>${this.esc(runtime.label)}</b><em>${this.esc(runtime.duration)} мин</em>${scheduleSummary}${startTimes}</span>${this._zoneIndicators(runtime)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
+    return `<button class="zoneCard ${runtime.tone}" data-zone="${zone}"${entity}><span class="scene scene${zone}" aria-hidden="true"></span><span class="zoneCardText"><small class="zoneCardNumber">ЗОНА ${zone}</small><b class="zoneCardStatus">${this.esc(runtime.label)}</b>${scheduleSummary}<em class="zoneCardDuration">${this.esc(runtime.duration)} мин</em>${startTimes}</span>${this._zoneIndicators(runtime)}<ha-icon class="zoneChevron" icon="mdi:chevron-right"></ha-icon></button>`;
   }).join("");
   return `<div class="pageIntro"><small>ИСПОЛЬЗУЕМЫЕ ЗОНЫ · ${zones.length}</small><h2>Рабочие зоны</h2><p>Фактическое состояние и программа каждого подключённого канала.</p></div><div class="zoneCards">${cards}</div>`;
 };
@@ -11115,7 +11115,7 @@ p._render = function renderV0711() {
 
 // Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.0.3";
+  const UI_VERSION = "1.0.4";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
@@ -11124,7 +11124,9 @@ p._render = function renderV0711() {
 
   p.styles = function stylesV1002() {
     return `${previousStylesV1002.call(this)}
-      /* UI v1.0.3 — NikaS UI Standard v2.2 geometry and zone schedule summaries. */
+      /* UI v1.0.4 — host-bound shell and compact two-column mobile zone facts. */
+      :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size}
+      .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
       .bottomNav button ha-icon{--mdc-icon-size:26px}
       .systemOverview>.connectionWrap{position:absolute;top:13px;right:13px;width:168px;min-width:168px;max-width:168px}
@@ -11133,27 +11135,17 @@ p._render = function renderV0711() {
       .systemOverview .systemConnectionCopy b{font-size:16px;font-weight:700;line-height:17px}
       .systemOverview .systemConnectionCopy .freshness{font-size:13px!important;font-weight:600;line-height:14px}
       .systemOverview::before{top:-92px;right:-70px;width:205px;height:205px;border-radius:50%;background:rgba(3,169,217,0.07);opacity:1;pointer-events:none}
-      .zoneCardSchedule{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:650;line-height:1.2;white-space:normal}
+      .zoneCardText{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;column-gap:10px;row-gap:3px;min-width:0}
+      .zoneCardNumber{grid-column:1 / -1;grid-row:1;min-width:0}
+      .zoneCardStatus{grid-column:1;grid-row:2;min-width:0;margin-top:0!important}
+      .zoneCardSchedule{display:block;grid-column:2;grid-row:2;min-width:0;margin-top:0;color:var(--muted);font-size:12px;font-weight:650;line-height:1.2;text-align:right;white-space:normal}
+      .zoneCardDuration{grid-column:1;grid-row:3;min-width:0;margin-top:0!important}
+      .zoneCardTimes{grid-column:2;grid-row:3;min-width:0;margin-top:0;text-align:right}
     `;
   };
 
   p._render = function renderV1002() {
     previousRenderV1002.call(this);
-    const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
-    if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
-  };
-}
-
-// UI v1.0.4 — bind the fixed-chrome shell to the Home Assistant panel host.
-{
-  const UI_VERSION = "1.0.4";
-  const Panel = customElements.get("nikas-ho-sc-8w-panel");
-  if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
-  const p = Panel.prototype;
-  const previousRenderV1004 = p._render;
-
-  p._render = function renderV1004() {
-    previousRenderV1004.call(this);
     const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
     if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
   };

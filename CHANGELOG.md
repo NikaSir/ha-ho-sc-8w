@@ -1,6 +1,6 @@
 # Changelog
 
-- `1.0.5` / panel `1.0.4`: bind the fixed Header/work viewport/Bottom Tab Bar shell to the actual Home Assistant panel host instead of the browser viewport. Desktop layouts now center the 1280 px work area after the expanded or collapsed HA sidebar without rendering underneath it. Add a 2048×1152 browser regression for the supplied PC layout; mobile geometry and controller behaviour are unchanged.
+- `1.0.5` / panel `1.0.4`: bind the fixed Header/work viewport/Bottom Tab Bar shell to the actual Home Assistant panel host instead of the browser viewport. Desktop layouts now center the 1280 px work area after the expanded or collapsed HA sidebar without rendering underneath it. Recompose phone zone cards as three rows: zone number; status plus schedule; duration plus start time. Add desktop-browser and mobile-card regressions; controller behaviour is unchanged.
 
 - `1.0.4` / panel `1.0.3`: add a readable schedule line to every card on the Zones screen. Show daily, interval, selected-weekday, odd-day, even-day and disabled-program states directly between duration and start times, using the already decoded DP38 attributes without changing controller writes or the zone detail screen.
 
