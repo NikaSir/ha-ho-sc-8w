@@ -41,7 +41,7 @@ for (const marker of [
   "VIEW_SCALE_SNAP_MAX = 1.03",
   "this._suppressClicksUntil = Date.now() + 500",
   'this._showScaleToast("Масштаб 100%")',
-  ":host{position:fixed;inset:0",
+  ":host{position:relative;display:block;width:100%;height:100%",
   ".app{position:absolute;inset:0",
   "overscroll-behavior:none",
   ".appHeader{position:relative;top:auto;z-index:60;touch-action:none}",
