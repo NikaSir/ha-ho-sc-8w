@@ -8,7 +8,7 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
-UI **1.0.4** / integration **1.0.5** binds the fixed-chrome panel shell to the actual Home Assistant content host. On desktop the expanded or collapsed sidebar now resizes the available panel area naturally; the centered 1280 px work area and Bottom Tab Bar no longer extend underneath it. Mobile geometry and irrigation behaviour are unchanged.
+UI **1.0.4** / integration **1.0.5** binds the fixed-chrome panel shell to the actual Home Assistant content host. On desktop the expanded or collapsed sidebar resizes the available panel area naturally; the centered 1280 px work area and Bottom Tab Bar no longer extend underneath it. On phones, zone facts use three compact rows: zone number; status plus schedule; duration plus start time. Controller commands and the detailed zone screen are unchanged.
 
 UI **1.0.3** / integration **1.0.4** shows each zone's decoded schedule directly in its card: daily, interval, selected weekdays, odd/even days or a disabled program. The line sits between duration and start times; controller commands and the detailed zone screen are unchanged.
 
