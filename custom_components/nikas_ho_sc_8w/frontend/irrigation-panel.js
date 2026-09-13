@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.3";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.0.4";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -11139,6 +11139,21 @@ p._render = function renderV0711() {
 
   p._render = function renderV1002() {
     previousRenderV1002.call(this);
+    const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
+    if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
+  };
+}
+
+// UI v1.0.4 — bind the fixed-chrome shell to the Home Assistant panel host.
+{
+  const UI_VERSION = "1.0.4";
+  const Panel = customElements.get("nikas-ho-sc-8w-panel");
+  if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
+  const p = Panel.prototype;
+  const previousRenderV1004 = p._render;
+
+  p._render = function renderV1004() {
+    previousRenderV1004.call(this);
     const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
     if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
   };
