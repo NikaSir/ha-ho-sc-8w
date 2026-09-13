@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.1.0";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.1.1";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -30,7 +30,7 @@ const NIKAS_HO_SC_8W_UI_VERSION = "1.1.0";
 const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
   const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
   const RETURN_ROUTE_KEY = "nikas.ho_sc_8w.return_route.v1";
-  const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
+  const SAFE_DEFAULT_ROUTE = "/home/overview";
 
   function safeReturnRoute(value) {
     if (!value) return null;
@@ -47,30 +47,8 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
     }
   }
 
-  function resolveReturnRoute(panel) {
-    const current = new URL(window.location.href);
-    const explicit = safeReturnRoute(current.searchParams.get("return_to")) || safeReturnRoute(current.searchParams.get("from"));
-    let handedOff = null;
-    let saved = null;
-    try {
-      const handedOffRaw = sessionStorage.getItem(SOURCE_ROUTE_KEY);
-      const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
-      const handedOffAt = Number(handedOffAtRaw);
-      const handedOffAge = Date.now() - handedOffAt;
-      const handedOffFresh = handedOffRaw !== null
-        && handedOffAtRaw !== null
-        && Number.isFinite(handedOffAt)
-        && handedOffAge >= 0
-        && handedOffAge <= 30_000;
-      handedOff = handedOffFresh ? safeReturnRoute(handedOffRaw) : null;
-      sessionStorage.removeItem(SOURCE_ROUTE_KEY);
-      sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
-      saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
-    } catch (_error) {}
-    const configured = safeReturnRoute(panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path);
-    const route = explicit || handedOff || saved || safeReturnRoute(document.referrer) || configured || SAFE_DEFAULT_ROUTE;
-    try { sessionStorage.setItem(RETURN_ROUTE_KEY, route); } catch (_error) {}
-    return route;
+  function resolveReturnRoute() {
+    return "/home/overview";
   }
 
     class HOSC8WPanel extends HTMLElement {
@@ -341,7 +319,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
       }));
     }
     navigateParent() {
-      const path = this._panel?.config?.parent_path || "/dashboard-actions";
+      const path = "/home/overview";
       if (window.location.pathname === path) return;
       window.history.pushState(null, "", path);
       window.dispatchEvent(new Event("location-changed"));
@@ -11120,7 +11098,7 @@ p._render = function renderV0711() {
 
 // Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.1.0";
+  const UI_VERSION = "1.1.1";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
@@ -11129,7 +11107,7 @@ p._render = function renderV0711() {
 
   p.styles = function stylesV1002() {
     return `${previousStylesV1002.call(this)}
-      /* UI v1.1.0 — host-bound shell, compact zone facts, artwork and HA theme inheritance. */
+      /* UI v1.1.1 — host-bound shell, compact zone facts, artwork and HA theme inheritance. */
       :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size;--a:var(--primary-color,#078fe8);--green:var(--success-color,#08a52b);--orange:var(--warning-color,#e89a12);--danger:var(--error-color,#d84040);--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#f7f8fa);--text:var(--primary-text-color,#111317);--muted:var(--secondary-text-color,#626a73);--line:var(--divider-color,color-mix(in srgb,var(--text) 14%,transparent));--soft:color-mix(in srgb,var(--card) 92%,var(--text) 8%);--surface:var(--card);--diagram:var(--card);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger-soft:color-mix(in srgb,var(--card) 86%,var(--danger) 14%);color-scheme:light dark}
       .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}

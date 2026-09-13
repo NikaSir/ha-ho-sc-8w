@@ -1,10 +1,10 @@
 {
   "version": "2.2",
-  "navigation_contract_version": "1.2",
+  "navigation_contract_version": "1.3",
   "standard_path": "docs/NIKAS_SPECIALIZED_PANEL_UI_STANDARD.md",
-  "standard_sha256": "2a15e5c2483f0fa959faff54cd29144ddb8c392e6da4546bd4c5034bf652c2c7",
+  "standard_sha256": "e150c4ce087635c0cbc25031a6ce1b8489ba0902da3745335af88457484963dc",
   "navigation_contract_path": "docs/NIKAS_PANEL_NAVIGATION_CONTRACT.md",
-  "navigation_contract_sha256": "79923d2de82ef59ab76e37491f75ba7eb7e7c4c23e62d75142744159cae64229",
+  "navigation_contract_sha256": "04c81cb498de3bd9ac35b7e70ed8a90fa4376ed3a31bcedb1fe5cc3cb53e05a6",
   "role": "specialized",
   "shell_contract": {
     "version": "2.1",
@@ -33,7 +33,7 @@
   ],
   "production_entrypoint": "custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js",
   "build_source_files": [],
-  "ui_version": "1.1.0",
+  "ui_version": "1.1.1",
   "web_component": "nikas-ho-sc-8w-panel",
   "bundle_contract": {
     "autonomous": true,
@@ -55,11 +55,7 @@
     "button_marker": "data-parent-nav",
     "version_marker": "<small data-ui-version>UI v${NIKAS_HO_SC_8W_UI_VERSION}</small>",
     "focus_marker": ".headerTitle:focus-visible",
-    "pressed_marker": ".headerTitle:active",
-    "explicit_precedence_marker": "safeReturnRoute(current.searchParams.get(\"return_to\")) || safeReturnRoute(current.searchParams.get(\"from\"))",
-    "capture_once_marker": "this._returnRoute = resolveReturnRoute(this)",
-    "timestamp_required_marker": "handedOffRaw !== null",
-    "future_timestamp_rejection_marker": "handedOffAge >= 0"
+    "pressed_marker": ".headerTitle:active"
   },
   "header_reference": {
     "implementation": "S8 OMNI",
@@ -271,5 +267,11 @@
     "geometry_overrides_allowed": false,
     "pointer_events": "none",
     "aria_hidden": true
+  },
+  "header_navigation": {
+    "contract_version": "1.3",
+    "mode": "declared-parent",
+    "main_parent_route": "/home/overview",
+    "ambient_return_authority": false
   }
 }

@@ -3,12 +3,12 @@
     "id": "irrigation",
     "title": "Автополив",
     "path": "/dashboard-irrigation",
-    "parent_path": "/dashboard-actions/home",
+    "parent_path": "/home/overview",
     "icon": "mdi:sprinkler",
     "owner": "ha-ho-sc-8w",
     "expose_in_generated_ui": true,
     "preferred_view": "status",
-    "dashboard_version": "1.1.0",
+    "dashboard_version": "1.1.1",
     "navigation": {
       "header_left": "home_assistant_sidebar_menu",
       "header_center": "parent_panel_return_title",
@@ -300,8 +300,8 @@
       "program_zone_selector": "button_row_below_header",
       "program_selected_zone_status": "inside_zone_form"
     },
-    "parent_route": "/dashboard-actions/home",
-    "allowed_source_roots": ["/dashboard-house-v13", "/dashboard-rooms-v11", "/dashboard-actions", "/dashboard-infrastructure"],
+    "parent_route": "/home/overview",
+    "title_parent": "/home/overview",
     "standard": "NIKAS Specialized Panel UI Standard v2.2",
     "rule_set": "2.2"
   },
