@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v2.2 and NikaS Panel Navigation Contract v1.2
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v1.0.5
-**Manifest:** integration `1.0.6`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v1.1.0
+**Manifest:** integration `1.1.0`
 
 ## Compliance
 

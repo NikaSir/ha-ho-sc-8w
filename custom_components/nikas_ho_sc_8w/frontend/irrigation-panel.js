@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.5";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.1.0";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -11120,7 +11120,7 @@ p._render = function renderV0711() {
 
 // Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.0.5";
+  const UI_VERSION = "1.1.0";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
@@ -11129,8 +11129,8 @@ p._render = function renderV0711() {
 
   p.styles = function stylesV1002() {
     return `${previousStylesV1002.call(this)}
-      /* UI v1.0.5 — host-bound shell, two-column zone facts and restored default artwork. */
-      :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size}
+      /* UI v1.1.0 — host-bound shell, compact zone facts, artwork and HA theme inheritance. */
+      :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size;--a:var(--primary-color,#078fe8);--green:var(--success-color,#08a52b);--orange:var(--warning-color,#e89a12);--danger:var(--error-color,#d84040);--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#f7f8fa);--text:var(--primary-text-color,#111317);--muted:var(--secondary-text-color,#626a73);--line:var(--divider-color,color-mix(in srgb,var(--text) 14%,transparent));--soft:color-mix(in srgb,var(--card) 92%,var(--text) 8%);--surface:var(--card);--diagram:var(--card);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger-soft:color-mix(in srgb,var(--card) 86%,var(--danger) 14%);color-scheme:light dark}
       .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
       .bottomNav button ha-icon{--mdc-icon-size:26px}
@@ -11146,6 +11146,23 @@ p._render = function renderV0711() {
       .zoneCardSchedule{display:block;grid-column:2;grid-row:2;min-width:0;margin-top:0;color:var(--muted);font-size:12px;font-weight:650;line-height:1.2;text-align:right;white-space:normal}
       .zoneCardDuration{grid-column:1;grid-row:3;min-width:0;margin-top:0!important}
       .zoneCardTimes{grid-column:2;grid-row:3;min-width:0;margin-top:0;text-align:right}
+      /* Follow Home Assistant's active theme. These final tokens intentionally
+         replace the legacy fixed-light layer without changing panel geometry. */
+      .appHeader{background:color-mix(in srgb,var(--bg) 94%,transparent);border-bottom-color:var(--line)}
+      .headerButton,.hero,.sectionCard,.detailCard,.zoneCard,.programList,.summaryGrid,.manualCard,.diagList,.lab,.metric,.node,.mode,.inlineBack,.programRow,.diagList button,.manualDuration,.manualTimeButton{background:var(--card);color:var(--text);border-color:var(--line)}
+      .bottomNav{background:color-mix(in srgb,var(--bg) 94%,transparent);border-top-color:var(--line)}
+      .systemDiagram{background:var(--card)}
+      .zoneRow .diagramZone,.schemaGrid .diagramZone{background:var(--card);color:var(--text);border-color:var(--line)}
+      .manifold,.rainSensor{background-color:var(--card)}
+      .controlLabel,.mainlineLabel,.heroPressure,.controlBus span,.valveNumber{background:color-mix(in srgb,var(--card) 94%,transparent);color:var(--muted);border-color:var(--line)}
+      .heroHead h1,.zoneRow .zoneText b,.zoneRow .duration,.schemaGrid .zoneText b,.schemaGrid .duration,.statusesHead .sectionTitle,.statusesCard .node>small{color:var(--text)}
+      .heroHead p,.zoneRow .zoneText small,.zoneRow .duration small,.schemaGrid .zoneText small,.schemaGrid .duration small,.statusesHead>span{color:var(--muted)}
+      .schemaGrid .diagramZone.running{background:color-mix(in srgb,var(--a) 10%,var(--card))!important;border-color:color-mix(in srgb,var(--a) 65%,var(--line))!important}
+      .bottomNav button.active,.mode.active,.manualZone.active{background:var(--accent-soft)}
+      .zoneArtworkEdit,.systemManualActionIcon{background:color-mix(in srgb,var(--card) 92%,transparent)}
+      .dp38SnapshotState.changed,.dp38SnapshotState.waiting,.dp38DiffResult.changed{background:var(--orange-soft);color:var(--orange)}
+      :host([data-zone-artwork-1-none]) .scene1,:host([data-zone-artwork-2-none]) .scene2,:host([data-zone-artwork-3-none]) .scene3,:host([data-zone-artwork-4-none]) .scene4,:host([data-zone-artwork-5-none]) .scene5,:host([data-zone-artwork-6-none]) .scene6,:host([data-zone-artwork-7-none]) .scene7,:host([data-zone-artwork-8-none]) .scene8,.zoneArtworkPreview.empty{background-color:var(--soft)!important}
+      .manualTimeButton:disabled{background:var(--soft);color:var(--muted)}
     `;
   };
 
