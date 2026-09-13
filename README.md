@@ -8,7 +8,9 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
-UI **1.0.6** / integration **1.0.7** returns the panel title to `/home/overview`, independently of the entry route and saved browser state.
+The panel title opens `/home/overview`, independent of opening source or saved browser state.
+
+UI **1.1.1** / integration **1.1.1** automatically follows the active Home Assistant light or dark theme. Panel, card, text, divider, navigation and control surfaces update live from Home Assistant theme variables while the approved geometry and zone photographs stay unchanged.
 
 UI **1.0.5** / integration **1.0.6** restores the bundled default pictures for Zones 1–6 when a browser has no saved artwork choice. An explicit per-zone selection, including `Без картинки`, remains authoritative. Zone facts retain the compact three-row, two-column layout introduced in UI 1.0.4; controller commands and the detailed zone screen are unchanged.
 
@@ -58,7 +60,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **1.0.6**.
+Current panel version: **1.1.1**.
 
 The panel follows **NikaS Specialized Panel UI Standard v2.2** and **NikaS Panel Navigation Contract v1.2**:
 
@@ -124,9 +126,9 @@ Water never enters or exits the controller in the diagram. Every valve is placed
 
 The iPhone layout restores the accepted compact first-screen composition. The header, system diagram, KPI row, core nodes and current-mode controls use reduced mobile geometry; the six valve centers remain aligned with the six zone cards, and the corrected hydraulic/electrical topology is unchanged.
 
-### Approved light visual composition v0.5.5
+### Approved visual composition and HA themes
 
-The status screen now treats the approved light render as the visual source of truth. It restores the full-width realistic manifold, the physical controller and rain-sensor presentation, photographic zone thumbnails, the larger diagram field and the original white-card hierarchy. The light surface is isolated from Home Assistant dark-theme text variables so a dark host theme cannot produce white text on white cards. A dedicated dark visual treatment is intentionally deferred until it can preserve this approved geometry instead of replacing it.
+The status screen keeps the approved light render as its geometric source of truth: the full-width realistic manifold, physical controller and rain-sensor presentation, photographic zone thumbnails and larger diagram field are unchanged. Its surfaces, text, borders and controls now inherit Home Assistant theme variables, so switching HA between light and dark updates the panel live without a separate panel toggle or reload.
 
 ### Undistorted equipment and live pressure v0.5.6
 
@@ -160,7 +162,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.6
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.1.1
       ↓
 <nikas-ho-sc-8w-panel>
 ```

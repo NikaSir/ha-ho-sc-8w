@@ -1,8 +1,14 @@
+## 1.1.1 / UI 1.1.1
+
+- The title returns to `/home/overview`; preserve automatic Home Assistant theme support from 1.1.0.
+
 ## 1.0.7 / UI 1.0.6
 
 - Return the main panel title to `/home/overview` independently of browser navigation history and saved routes.
 
 # Changelog
+
+- `1.1.0` / panel `1.1.0`: automatically inherit the active Home Assistant light or dark theme. Theme the panel background, cards, text, dividers, navigation, diagram and interactive surfaces while preserving the approved geometry and zone artwork. Add static cascade protection and a Chromium regression that switches HA theme variables live without reloading the panel.
 
 - `1.0.6` / panel `1.0.5`: restore bundled default artwork for Zones 1–6 when a browser has no saved image choice. Preserve every explicit browser-local selection, including `Без картинки`, and add a regression that exercises the production artwork state and applied CSS variables. Keep the approved three-row, two-column zone facts and controller behaviour unchanged.
 

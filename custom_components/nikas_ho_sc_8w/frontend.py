@@ -218,7 +218,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "rain_sensor_semantics": "dp102_follow_enabled_or_bypassed_current_wet_contact_not_exposed",
                 "manifold_layout": "removed_from_status_view",
                 "mainline_pressure_presentation": "text_only_two_decimal_bar_value_below_connection_status",
-                "theme_strategy": "fixed_light_reference_dark_theme_deferred",
+                "theme_strategy": "home_assistant_theme_inherited_light_dark",
                 "production_zones": [1, 2, 3, 4, 5, 6, 7, 8],
                 "mainline_state_source_verified": True,
                 "mainline_entity_resolution": "sensor.nikas_h2000_pro_voda_na_poliv_2_then_bar_fallback",
