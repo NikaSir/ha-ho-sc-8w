@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.3";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.0.4";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -1356,7 +1356,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
           .quickActions .modeGrid{gap:5px}.quickActions .mode{min-height:100px;padding:7px}.quickActions .mode ha-icon{--mdc-icon-size:31px}
           .statusesCard{margin-top:7px;padding:9px}.statusesHead{margin-bottom:6px}.statusesCard .nodeGrid{gap:5px}.statusesCard .node{grid-template-rows:auto 42px auto;min-height:132px;padding:7px 4px;border-radius:15px}.statusesCard .node:nth-child(1)::before,.statusesCard .node:nth-child(2)::before,.statusesCard .node:nth-child(4)::before{width:46px;height:42px}.statusesCard .node>ha-icon{--mdc-icon-size:34px}.statusesCard .node b{font-size:13px}
         }
-        :host{position:fixed;inset:0;display:block;width:auto;height:auto;min-width:0;min-height:0;overflow:hidden;overscroll-behavior:none}
+        :host{position:relative;display:block;width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;overscroll-behavior:none}
         .app{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-width:920px;height:auto;min-height:0;margin:0 auto;padding:0 14px;overflow:hidden;overscroll-behavior:none}
         .appHeader{position:relative;top:auto;z-index:60;touch-action:none}
         .workViewport{position:relative;min-width:0;min-height:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--bg)}
@@ -11139,6 +11139,21 @@ p._render = function renderV0711() {
 
   p._render = function renderV1002() {
     previousRenderV1002.call(this);
+    const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
+    if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
+  };
+}
+
+// UI v1.0.4 — bind the fixed-chrome shell to the Home Assistant panel host.
+{
+  const UI_VERSION = "1.0.4";
+  const Panel = customElements.get("nikas-ho-sc-8w-panel");
+  if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
+  const p = Panel.prototype;
+  const previousRenderV1004 = p._render;
+
+  p._render = function renderV1004() {
+    previousRenderV1004.call(this);
     const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
     if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
   };

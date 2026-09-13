@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NikaS Specialized Panel UI Standard v2.2 and NikaS Panel Navigation Contract v1.2
-**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v1.0.2
-**Manifest:** integration `1.0.3`
+**Runtime:** `custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js` v1.0.4
+**Manifest:** integration `1.0.5`
 
 ## Compliance
 
@@ -11,7 +11,7 @@
 | One autonomous production bundle and one viewport/canvas | PASS | One `irrigation-panel.js`, one `.workViewport` and one `.workCanvas`; `module_url` points directly to the versioned bundle. |
 | 75–200% focal pinch, 97–103 snap, two-finger reset toast, persistence | PASS | Scale constants, midpoint content coordinates, `_resetTransform()` and per-panel/view localStorage. |
 | Native vertical scroll at 100%; x/y zero; no horizontal or one-finger transform pan | PASS | `isNative` uses `overflow-y:auto`, `overflow-x:hidden`, `touch-action:pan-y`; clamp returns x/y zero at scale <=1; the first pointer enters `native`, not `pan`. |
-| Viewport-locked chrome and scroll boundary | PASS | The host is fixed to `inset:0`, the app is an absolute three-row shell, Header/Bottom Tab Bar use `touch-action:none`, and native pointer movement is cancelled when it would chain past the work viewport's top or bottom edge. |
+| Host-bound fixed chrome and scroll boundary | PASS | The root uses the Home Assistant host as its containing block, the app is an absolute three-row shell, Header/Bottom Tab Bar use `touch-action:none`, and native pointer movement is cancelled when it would chain past the work viewport's top or bottom edge. |
 | Pan only above 100% and only overflowing axes | PASS | Pan starts only when `scale > 1`; independent minX/minY are derived from real scaled dimensions. |
 | Clamp after gesture/render/resize | PASS | `_clampAndApplyTransform()` runs after gestures, render and real/visual viewport resize. |
 | Tab transition returns to top, saved scale retained | PASS | `_switchView()` restores scale, resets x/y and pending native scroll to zero. |
@@ -27,7 +27,7 @@
 | Data truth and command safety | PASS | Values come from integration-owned entities/state; missing, unknown and unavailable values stay explicit. Writes use registered `nikas_ho_sc_8w` services with confirmation, busy/error handling and factual controller read-back. |
 | Strict source hand-off | PASS | The title consumes route and timestamp only as a complete pair and rejects invalid, expired or future timestamps before applying saved/configured fallbacks. |
 | Repository validation | PASS | Local syntax, JSON, Python and asset checks pass; CI now runs the repository contract guard, HACS Action and Home Assistant Hassfest for every pull request. |
-| Locked geometry in a production browser | GAP | CSS tokens are exact, but 430×932, 932×430, 768×1024, 1024×768 and 1440×900 rendered measurements and zero state-layout delta require browser evidence. |
+| Locked geometry in a production browser | PARTIAL | The 2048×1152 desktop host/sidebar regression is executable in CI. Phone/tablet rendered measurements and zero state-layout delta still require their existing acceptance evidence. |
 | Panel lifecycle and unavailable bootstrap | GAP | The normative lifecycle companion is present and checked; registration-before-I/O, offline bootstrap and retry recovery still require targeted integration tests and HA acceptance. |
 | Approved icon source preserved | PASS | Existing 256×256 RGBA `custom_components/nikas_ho_sc_8w/brand/icon.png` is unchanged and now shown in README. |
 | Integration icon visible through supported HA Brands path | GAP | Repository-local brand art alone cannot publish the HA integration icon. Submit the approved source as `icon.png` and `icon@2x.png` for domain `nikas_ho_sc_8w` through Home Assistant Brands; add dark variants only if required. |
@@ -41,7 +41,7 @@ At 100% verify native scrolling on Diagnostics, no horizontal/top displacement a
 ## UI 0.6.30 shell and identity delta
 
 - The specialized panel and Home Assistant sidebar use the approved user-facing name `Автополив`; `HO-SC-8W` remains the controller model and repository identity.
-- The host is locked to the real viewport and the app fills it as an absolute three-row shell, so Header and Bottom Tab Bar cannot be dragged with the outer Home Assistant document.
+- The host is bound to the real Home Assistant panel content box and the app fills it as an absolute three-row shell, so Header and Bottom Tab Bar remain fixed without extending beneath the desktop sidebar.
 - Native vertical scrolling remains inside the work viewport. Boundary-direction pointer movement is cancelled at its top and bottom edges to prevent iOS scroll chaining/bounce into the HA shell.
 - Header and Bottom Tab Bar explicitly reject scroll gestures while preserving their click actions. Stable DOM, pinch/pan and telemetry point-patching remain unchanged.
 

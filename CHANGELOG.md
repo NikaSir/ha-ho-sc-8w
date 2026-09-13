@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.5` / panel `1.0.4`: bind the fixed Header/work viewport/Bottom Tab Bar shell to the actual Home Assistant panel host instead of the browser viewport. Desktop layouts now center the 1280 px work area after the expanded or collapsed HA sidebar without rendering underneath it. Add a 2048×1152 browser regression for the supplied PC layout; mobile geometry and controller behaviour are unchanged.
+
 - `1.0.4` / panel `1.0.3`: add a readable schedule line to every card on the Zones screen. Show daily, interval, selected-weekday, odd-day, even-day and disabled-program states directly between duration and start times, using the already decoded DP38 attributes without changing controller writes or the zone detail screen.
 
 - `1.0.3` / panel `1.0.2`: adopt NikaS Specialized Panel UI Standard v2.2 and Navigation Contract v1.2 from canonical revision `4d229f38`. Return only to current House v13, Rooms v11, Actions or Infrastructure routes; lock the title plaque, 26 px Bottom Tab Bar icons, 168×58 connection plaque and 205×205 blue corner to the canonical tokens. Add the lifecycle, connection-decoration, refresh, HACS-publication and engineering companion documents and enforce them with the current validator. Runtime command and irrigation behavior are unchanged; HA/iPhone geometry acceptance remains separate.

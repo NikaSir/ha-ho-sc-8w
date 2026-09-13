@@ -16,7 +16,7 @@ if (count(/class="workViewport /g) !== 1 || count(/class="workCanvas"/g) !== 1) 
 }
 
 for (const marker of [
-  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.3"',
+  'const NIKAS_HO_SC_8W_UI_VERSION = "1.0.4"',
   '<strong>Автополив</strong>',
   "this._viewNodeCache = new Map()",
   "_reuseWorkContent(content, structureKey)",
@@ -41,7 +41,7 @@ for (const marker of [
   "VIEW_SCALE_SNAP_MAX = 1.03",
   "this._suppressClicksUntil = Date.now() + 500",
   'this._showScaleToast("Масштаб 100%")',
-  ":host{position:fixed;inset:0",
+  ":host{position:relative;display:block;width:100%;height:100%",
   ".app{position:absolute;inset:0",
   "overscroll-behavior:none",
   ".appHeader{position:relative;top:auto;z-index:60;touch-action:none}",

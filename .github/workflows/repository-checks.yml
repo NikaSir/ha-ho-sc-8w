@@ -137,6 +137,14 @@ jobs:
 
           echo 'OK production frontend bundle and integration-owned assets'
 
+      - name: Install desktop browser test runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify desktop Home Assistant host boundary
+        run: node scripts/check-desktop-host-boundary.mjs
+
       - name: Reject tracked credential/key files
         shell: bash
         run: |
