@@ -35,7 +35,6 @@ try {
             inset: 0 0 0 386px;
             overflow: hidden;
           }
-          nikas-ho-sc-8w-panel { width: 100%; height: 100%; }
         </style>
       </head>
       <body>
@@ -51,7 +50,7 @@ try {
     return Boolean(panel?.shadowRoot?.querySelector(".app"));
   });
 
-  const geometry = await page.evaluate(() => {
+  const readGeometry = () => page.evaluate(() => {
     const panel = document.querySelector("nikas-ho-sc-8w-panel");
     const host = document.querySelector(".ha-panel-host");
     const app = panel.shadowRoot.querySelector(".app");
@@ -75,17 +74,36 @@ try {
     };
   });
 
-  assert.deepEqual(
-    geometry.panel,
-    geometry.host,
-    "The specialized panel must use the Home Assistant content box, not the browser viewport",
-  );
-  assert.equal(geometry.app.width, 1280, "Desktop work area must retain its 1280 px maximum width");
-  assert.equal(geometry.app.left, 577, "Desktop work area must be centered inside the HA content box");
-  assert.equal(geometry.bottomNav.left, geometry.app.left, "Bottom navigation must stay inside the centered app shell");
-  assert.equal(geometry.bottomNav.right, geometry.app.right, "Bottom navigation must not extend under the HA sidebar");
+  const verifyGeometry = (geometry, label) => {
+    assert.deepEqual(
+      geometry.panel,
+      geometry.host,
+      `${label}: the specialized panel must use the Home Assistant content box`,
+    );
+    const expectedWidth = Math.min(geometry.host.width, 1280);
+    const expectedLeft = geometry.host.left + (geometry.host.width - expectedWidth) / 2;
+    assert.equal(geometry.app.width, expectedWidth, `${label}: work area width must respect its 1280 px maximum`);
+    assert.equal(geometry.app.left, expectedLeft, `${label}: work area must be centered inside the HA content box`);
+    assert.equal(geometry.bottomNav.left, geometry.app.left, `${label}: Bottom Tab Bar must stay inside the app shell`);
+    assert.equal(geometry.bottomNav.right, geometry.app.right, `${label}: Bottom Tab Bar must stay out from under HA chrome`);
+  };
 
-  console.log("HO-SC-8W desktop Home Assistant host boundary verified");
+  const expanded = await readGeometry();
+  verifyGeometry(expanded, "Expanded sidebar");
+  assert.equal(expanded.host.left, 386, "The supplied desktop fixture must retain the measured 386 px sidebar");
+  assert.equal(expanded.app.left, 577, "The supplied desktop fixture must center the app at x=577");
+
+  await page.evaluate(() => {
+    document.querySelector(".ha-panel-host").style.left = "0";
+  });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+  const collapsed = await readGeometry();
+  verifyGeometry(collapsed, "Collapsed sidebar");
+  assert.equal(collapsed.host.left, 0, "Collapsed sidebar must release the complete browser width");
+  assert.equal(collapsed.app.left, 384, "Collapsed desktop fixture must recenter the 1280 px app shell");
+
+  console.log("HO-SC-8W desktop Home Assistant host boundary verified for expanded and collapsed sidebars");
 } finally {
   await browser.close();
 }
