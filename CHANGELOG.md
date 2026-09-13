@@ -1,5 +1,7 @@
 # Changelog
 
+- `1.0.6` / panel `1.0.5`: restore bundled default artwork for Zones 1–6 when a browser has no saved image choice. Preserve every explicit browser-local selection, including `Без картинки`, and add a regression that exercises the production artwork state and applied CSS variables. Keep the approved three-row, two-column zone facts and controller behaviour unchanged.
+
 - `1.0.5` / panel `1.0.4`: bind the fixed Header/work viewport/Bottom Tab Bar shell to the actual Home Assistant panel host instead of the browser viewport. Desktop layouts now center the 1280 px work area after the expanded or collapsed HA sidebar without rendering underneath it. Recompose phone zone cards as three rows: zone number; status plus schedule; duration plus start time. Add desktop-browser and mobile-card regressions; controller behaviour is unchanged.
 
 - `1.0.4` / panel `1.0.3`: add a readable schedule line to every card on the Zones screen. Show daily, interval, selected-weekday, odd-day, even-day and disabled-program states directly between duration and start times, using the already decoded DP38 attributes without changing controller writes or the zone detail screen.

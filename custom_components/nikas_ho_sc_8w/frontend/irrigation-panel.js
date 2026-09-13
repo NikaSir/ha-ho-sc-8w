@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.0.4";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.0.5";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -9561,6 +9561,10 @@ p.styles = function stylesV0693() {
 {
 const UI_VERSION = "0.6.94";
 const ARTWORK_STORAGE_KEY = "nikas_ho_sc_8w.zone_artwork.v1";
+const DEFAULT_ARTWORKS = Object.freeze({
+  1: "lawn", 2: "lawn", 3: "lawn", 4: "flowers",
+  5: "shrubs", 6: "greenhouse", 7: "none", 8: "none",
+});
 const Panel = customElements.get("nikas-ho-sc-8w-panel");
 if (!Panel) throw new Error("HO-SC-8W v0693 panel is not registered");
 const p = Panel.prototype;
@@ -9573,7 +9577,7 @@ p._zoneArtworkState = function zoneArtworkStateV0694() {
   try { saved = JSON.parse(window.localStorage.getItem(ARTWORK_STORAGE_KEY) || "{}"); } catch (_error) {}
   this.__zoneArtworkState = Object.fromEntries(Array.from({ length: 8 }, (_, index) => {
     const zone = index + 1;
-    const choice = ["lawn", "flowers", "shrubs", "greenhouse", "none"].includes(saved?.[zone]) ? saved[zone] : "none";
+    const choice = ["lawn", "flowers", "shrubs", "greenhouse", "none"].includes(saved?.[zone]) ? saved[zone] : DEFAULT_ARTWORKS[zone];
     return [zone, choice];
   }));
   return this.__zoneArtworkState;
@@ -9582,7 +9586,8 @@ p._zoneArtworkState = function zoneArtworkStateV0694() {
 p._render = function renderV0694() {
   previousRender.call(this);
   // Re-apply the browser-local artwork state after every render. Explicit
-  // Settings choices are authoritative; zones without a saved choice are gray.
+  // Settings choices are authoritative; zones without a saved choice use the
+  // bundled defaults so a fresh browser does not lose the zone illustrations.
   this._applyZoneArtwork?.();
   const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
   if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
@@ -9590,7 +9595,7 @@ p._render = function renderV0694() {
 
 p.styles = function stylesV0694() {
   return `${previousStyles.call(this)}
-    /* UI 0.6.94 — browser-selected artwork is authoritative; unsaved zones are neutral gray. */
+    /* UI 0.6.94 — browser-selected artwork is authoritative; unsaved zones use bundled defaults. */
     .scene1{background-image:var(--zone-artwork-1)!important}
     .scene2{background-image:var(--zone-artwork-2)!important}
     .scene3{background-image:var(--zone-artwork-3)!important}
@@ -11115,7 +11120,7 @@ p._render = function renderV0711() {
 
 // Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.0.4";
+  const UI_VERSION = "1.0.5";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
@@ -11124,7 +11129,7 @@ p._render = function renderV0711() {
 
   p.styles = function stylesV1002() {
     return `${previousStylesV1002.call(this)}
-      /* UI v1.0.4 — host-bound shell and compact two-column mobile zone facts. */
+      /* UI v1.0.5 — host-bound shell, two-column zone facts and restored default artwork. */
       :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size}
       .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
