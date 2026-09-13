@@ -52,7 +52,14 @@ try {
   await page.evaluate(() => {
     const probe = document.createElement("div");
     probe.className = "schemaGrid themeRegressionProbe";
-    probe.innerHTML = '<button class="diagramZone running"><span class="zoneText"><b>ЗОНА 1</b><small>Каждые 2 дня</small></span><span class="duration">10 мин</span></button>';
+    probe.innerHTML = `
+      <section class="systemOverview"><p>Готова</p></section>
+      <button class="systemCompactItem">Режим</button>
+      <section class="hero"><div class="heroHead"><p>Поддерживающий текст</p></div></section>
+      <button class="metric">Параметр</button>
+      <div class="systemDiagram"></div>
+      <button class="diagramZone running"><span class="zoneText"><b>ЗОНА 1</b><small>Каждые 2 дня</small></span><span class="duration">10 мин</span></button>
+    `;
     document.querySelector("nikas-ho-sc-8w-panel").shadowRoot.append(probe);
   });
 
@@ -117,16 +124,20 @@ try {
   const readTheme = () => page.evaluate(() => {
     const panel = document.querySelector("nikas-ho-sc-8w-panel");
     const root = panel.shadowRoot;
-    const style = (selector) => getComputedStyle(root.querySelector(selector));
+    const style = (selector) => {
+      const element = root.querySelector(selector);
+      if (!element) throw new Error(`Missing browser theme probe: ${selector}`);
+      return getComputedStyle(element);
+    };
     const hostStyle = getComputedStyle(panel);
     return {
       cardToken: hostStyle.getPropertyValue("--card").trim(),
       backgroundToken: hostStyle.getPropertyValue("--bg").trim(),
       textToken: hostStyle.getPropertyValue("--text").trim(),
       colorScheme: hostStyle.colorScheme,
-      overviewBackground: style(".systemOverview").backgroundColor,
-      overviewText: style(".systemOverview").color,
-      factBackground: style(".systemCompactItem").backgroundColor,
+      overviewBackground: style(".themeRegressionProbe .systemOverview").backgroundColor,
+      overviewText: style(".themeRegressionProbe .systemOverview").color,
+      factBackground: style(".themeRegressionProbe .systemCompactItem").backgroundColor,
       activeZoneBackground: style(".themeRegressionProbe .diagramZone.running").backgroundColor,
       activeZoneText: style(".themeRegressionProbe .zoneText b").color,
       headerBackground: style(".appHeader").backgroundColor,
