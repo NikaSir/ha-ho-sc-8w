@@ -8,6 +8,8 @@ Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigati
 
 ## Status
 
+UI **1.0.5** / integration **1.0.6** restores the bundled default pictures for Zones 1–6 when a browser has no saved artwork choice. An explicit per-zone selection, including `Без картинки`, remains authoritative. Zone facts retain the compact three-row, two-column layout introduced in UI 1.0.4; controller commands and the detailed zone screen are unchanged.
+
 UI **1.0.4** / integration **1.0.5** binds the fixed-chrome panel shell to the actual Home Assistant content host. On desktop the expanded or collapsed sidebar resizes the available panel area naturally; the centered 1280 px work area and Bottom Tab Bar no longer extend underneath it. On phones, zone facts use three compact rows: zone number; status plus schedule; duration plus start time. Controller commands and the detailed zone screen are unchanged.
 
 UI **1.0.3** / integration **1.0.4** shows each zone's decoded schedule directly in its card: daily, interval, selected weekdays, odd/even days or a disabled program. The line sits between duration and start times; controller commands and the detailed zone screen are unchanged.
@@ -54,7 +56,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **1.0.4**.
+Current panel version: **1.0.5**.
 
 The panel follows **NikaS Specialized Panel UI Standard v2.2** and **NikaS Panel Navigation Contract v1.2**:
 
@@ -156,7 +158,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.4
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.0.5
       ↓
 <nikas-ho-sc-8w-panel>
 ```
