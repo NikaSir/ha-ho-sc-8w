@@ -123,7 +123,7 @@ for (const marker of [
   "line-height:17px",
   "line-height:14px",
   "top:-92px;right:-70px;width:205px;height:205px",
-  "background:rgba(3,169,217,0.07)",
+  "background:color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--card-background-color,#fff))",
 ]) requireMarker(marker);
 
 for (const forbidden of [
