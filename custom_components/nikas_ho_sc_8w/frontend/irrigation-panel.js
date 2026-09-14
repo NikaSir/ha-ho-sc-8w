@@ -2729,7 +2729,7 @@ p._zone8HexProbeStatusText = function zone8HexProbeStatusTextV0644(status) {
   return {
     idle: "Тест ещё не запускался",
     reading_before: "Двойное чтение текущего блока зоны 8",
-    verified: "Текущий блок зоны 8 прочитан без записи",
+    verified: "Те��ущий блок зоны 8 прочитан без записи",
     failed: "Чтение не выполнено",
   }[status] || String(status || "Нет данных");
 };
@@ -3181,7 +3181,7 @@ p.commandBusy = function commandBusyV0650() {
 
 p._zone8AnchorDateTestStatusText = function zone8AnchorDateTestStatusText(status) {
   return {
-    idle: "Запись ещё не выполнялась",
+    idle: "Запись ��щё не выполнялась",
     reading_before: "Проверяю точный исходный блок",
     writing_once: "Отправлена единственная запись",
     reading_after: "Проверяю новую дату чтением",
@@ -10482,7 +10482,7 @@ function blockSummary(hex) {
   const slots = Array.from({ length: 6 }, (_, i) => bytes[i + 2] === 255 && bytes[i + 8] === 255
     ? "--:--" : `${pad(bytes[i + 2])}:${pad(bytes[i + 8])}`);
   const repeat = ["По дням недели", "Нечётные дни", "Чётные дни", `Каждые ${bytes[15]} дн.`][bytes[14]] || "Неизвестный режим";
-  return `${bytes[1]} мин · ${repeat} · программа ${bytes[19] >> 4 ? "включена" : "выключена"} · дождь ${bytes[19] & 15 ? "учитывается" : "не учитывается"} · ${slots.join(" / ")}`;
+  return `${bytes[1]} мин · ${repeat} · программа ${bytes[19] >> 4 ? "включена" : "выключена"} · дожд�� ${bytes[19] & 15 ? "учитывается" : "не учитывается"} · ${slots.join(" / ")}`;
 }
 
 p._zone7ParityState = function zone7ParityState() {
@@ -11111,6 +11111,7 @@ p._render = function renderV0711() {
       :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size;--a:var(--primary-color,#078fe8);--green:var(--success-color,#08a52b);--orange:var(--warning-color,#e89a12);--danger:var(--error-color,#d84040);--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#f7f8fa);--text:var(--primary-text-color,#111317);--muted:var(--secondary-text-color,#626a73);--line:var(--divider-color,color-mix(in srgb,var(--text) 14%,transparent));--soft:color-mix(in srgb,var(--card) 92%,var(--text) 8%);--surface:var(--card);--diagram:var(--card);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger-soft:color-mix(in srgb,var(--card) 86%,var(--danger) 14%);color-scheme:light dark}
       .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
+      .refreshButton{color:var(--text)!important}
       .bottomNav button ha-icon{--mdc-icon-size:26px}
       .systemOverview>.connectionWrap{position:absolute;top:13px;right:13px;width:168px;min-width:168px;max-width:168px}
       .systemOverview .systemConnection{box-sizing:border-box;width:168px;min-width:168px;max-width:168px;height:58px;min-height:58px;padding:11px 12px;border-radius:18px;grid-template-columns:10px minmax(0,1fr);column-gap:9px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
