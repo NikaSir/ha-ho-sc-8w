@@ -11118,7 +11118,7 @@ p._render = function renderV0711() {
       .systemOverview .systemConnectionCopy{gap:3px}
       .systemOverview .systemConnectionCopy b{font-size:16px;font-weight:700;line-height:17px}
       .systemOverview .systemConnectionCopy .freshness{font-size:13px!important;font-weight:600;line-height:14px}
-      .systemOverview::before{top:-92px;right:-70px;width:205px;height:205px;border-radius:50%;background:rgba(3,169,217,0.07);opacity:1;pointer-events:none}
+      .systemOverview::before{top:-92px;right:-70px;width:205px;height:205px;border-radius:50%;background:color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--card-background-color,#fff));opacity:1;pointer-events:none}
       .zoneCardText{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;column-gap:10px;row-gap:3px;min-width:0}
       .zoneCardNumber{grid-column:1 / -1;grid-row:1;min-width:0}
       .zoneCardStatus{grid-column:1;grid-row:2;min-width:0;margin-top:0!important}
