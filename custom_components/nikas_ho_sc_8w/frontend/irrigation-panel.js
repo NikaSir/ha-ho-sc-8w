@@ -427,7 +427,7 @@ const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
         duration_minutes: this._manualDurations[zone],
       }));
       const summary = zones.map((item) => `Зона ${item.zone} — ${item.duration_minutes} мин`).join("\n");
-      if (!window.confirm(`Запустить ручной полив?\n\n${summary}\n\nКонтроллер перейдёт в ручной режим.`)) return;
+      if (!window.confirm(`Запустит�� ручной полив?\n\n${summary}\n\nКонтроллер перейдёт в ручной режим.`)) return;
       this._manualBusy = true;
       this.render();
       try {
@@ -2633,7 +2633,7 @@ p.diagnosticsView = function diagnosticsViewV0642(entities) {
         <span><small>DP38 · КОНТРОЛЬНЫЙ ТЕСТ</small><h3>HEX-запись зоны 8</h3></span>
         <b class="${operationOff ? "ready" : "blocked"}">${operationOff ? "Контроллер OFF" : "Нужен режим OFF"}</b>
       </div>
-      <p>Три защищённых шага: запись без изменения, один бит зоны 8, точный возврат. На каждом шаге сравниваются все восемь зон.</p>
+      <p>Три защищённых шага: запись без изменени��, один бит зоны 8, точный возврат. На каждом шаге сравниваются все восемь зон.</p>
       <div class="zone8ProbeResult ${tone}" role="status" aria-live="polite">
         <small>Результат</small>
         <b>${this.esc(this._zone8HexProbeStatusText(status))}</b>
@@ -3407,7 +3407,7 @@ p.diagnosticsView = function diagnosticsViewV0651(entities) {
         <span><small>DP38 · БЕЗОПАСНОСТЬ</small><h3>Запись расписаний отключена</h3></span>
         <b class="blocked">Только чтение</b>
       </div>
-      <p>Одиночный блок с идентификатором зоны 8 не оказался изолированным: зона 8 осталась без изменений, а контроллер применил нулевую длительность, пустые старты и дату теста к зоне 4, одновременно заменив ежедневный период недельной маской.</p>
+      <p>О��иночный блок с идентификатором зоны 8 не оказался изолированным: зона 8 осталась без изменений, а контроллер применил нулевую длительность, пустые старты и дату теста к зоне 4, одновременно заменив ежедневный период недельной маской.</p>
       <div class="zone8IncidentFacts">
         <span><small>Зона 8</small><b>Не изменилась</b></span>
         <span><small>Зона 4</small><b>Затронута тестом</b></span>
@@ -4348,7 +4348,7 @@ p.diagnosticsView = function diagnosticsViewV0656(entities) {
       : ["comparison_mismatch", "dispatch_unknown", "blocked"].includes(status) ? "error" : "";
   const card = `<section class="lab dp38MaskWriteTest">
     <div class="zone8ProbeHead"><span><small>DP38 · МАСКА ЗОНЫ</small><h3>Дата зоны 8: 04 → 05 сентября</h3></span><b class="${allowed ? "ready" : "blocked"}">${status === "awaiting_compare" ? "Нужна проверка" : "Одна запись"}</b></div>
-    <p>Передаётся один блок 20 байт. При чтении первый байт <code>08</code> — номер зоны; при записи <code>80</code> — битовая маска зоны 8.</p>
+    <p>Передаётся один блок 20 байт. При чтении первый байт <code>08</code> — номе�� зоны; при записи <code>80</code> — битовая маска зоны 8.</p>
     <div class="maskWriteHex"><span><small>ИСХОДНЫЙ ОТВЕТ</small><code>${this.esc(attrs.mask_write_test_current_read_hex || "")}</code></span><span><small>ПАКЕТ ЗАПИСИ</small><code>${this.esc(attrs.mask_write_test_payload_hex || "")}</code></span><span><small>ОЖИДАЕМЫЙ ОТВЕТ</small><code>${this.esc(attrs.mask_write_test_expected_read_hex || "")}</code></span></div>
     <div class="dp38SnapshotState ${tone}" role="status" aria-live="polite"><small>Результат</small><b>${this.esc(this._maskWriteStatusText(status))}</b>${attrs.mask_write_test_detail ? `<span>${this.esc(attrs.mask_write_test_detail)}</span>` : ""}</div>
     <button type="button" class="zone8ProbeButton" data-zone8-mask-write-test ${allowed ? "" : "disabled"}><ha-icon icon="mdi:database-arrow-up-outline"></ha-icon>${this._dp38MaskWriteBusy ? "Проверка…" : "Записать дату 05.09.2026 один раз"}</button>
@@ -7338,7 +7338,7 @@ p.executeZone7Weekly = async function executeZone7WeeklyV0680() {
     const updated = this.attrs(this.entities().zones[7].schedule).zone7_lab_result || {};
     this.notify(exactVerified(updated)
       ? "Weekly mode зоны 7 подтверждён: byte 14 = 00; соседние зоны не изменились"
-      : "Weekly-тест не получил точного подтверждения — повторную запись не выполняйте");
+      : "Weekly-тест ��е получил точного подтверждения — повторную запись не выполняйте");
   } catch (error) {
     await this.refreshNow().catch(() => {});
     this.notify(this.serviceError(error, "Weekly-тест зоны 7 не подтверждён; запись не повторяйте"));
@@ -8059,7 +8059,7 @@ p._zone7ProgramOnCard = function zone7ProgramOnCardV0684(entities) {
     <div class="zone8ProbeHead"><span><small>DP38 · СЛЕДУЮЩИЙ ТЕСТ</small><h3>Зона 7 · Программа Выкл → Вкл</h3></span><b class="${verified ? "ready" : prepared ? "waiting" : "blocked"}">${verified ? "Подтверждено" : prepared ? "Готов к записи" : failed ? "Заблокировано" : "Dry-run"}</b></div>
     <p>Проверяем обратный переход высокого nibble <b>byte 19</b>. Исходный Z7 должен быть Weekly Вт+Чт с флагом <b>00</b>. Цель — <b>10</b>: программа снова включена, а низкий nibble Rain Sensor остаётся 0. Ожидаем только <b>byte 19: 00 → 10</b>.</p>
     ${blocks ? `<div class="maskWriteHex zone7LabHex">${blocks}</div>` : ""}
-    <div class="zone7LabDiff"><small>${verified ? "СВЕРКА READ-BACK" : "ПОБАЙТОВЫЙ DIFF"}</small><pre>${this.esc(diff)}</pre></div>
+    <div class="zone7LabDiff"><small>${verified ? "С��ЕРКА READ-BACK" : "ПОБАЙТОВЫЙ DIFF"}</small><pre>${this.esc(diff)}</pre></div>
     <div class="dp38SnapshotState ${verified ? "ok" : prepared ? "waiting" : ""}"><small>Статус</small><b>${verified ? "Подтверждено полным read-back 1–8" : prepared ? "Dry-run совпал с фиксированным планом" : failed ? "Запись не подтверждена / заблокирована" : "Не подготовлено"}</b><span>Изменённые соседние зоны: ${this.esc(collateral)}</span>${reason ? `<span>${this.esc(reason)}</span>` : ""}</div>
     <div class="zone7LabActions"><button type="button" class="zone8ProbeButton secondary" data-zone7-program-on-prepare ${prepareAvailable ? "" : "disabled"}><ha-icon icon="mdi:database-search-outline"></ha-icon>${this._zone7ProgramOnPrepareBusy ? "Читаю 1–8…" : "1. Подготовить dry-run"}</button><button type="button" class="zone8ProbeButton danger" data-zone7-program-on-execute ${executeAvailable ? "" : "disabled"}><ha-icon icon="mdi:database-arrow-up-outline"></ha-icon>${this._zone7ProgramOnExecuteBusy ? "Проверка…" : "2. Записать один раз"}</button></div>
     <p><b>Важно.</b> Успешный read-back <b>00 → 10</b> подтвердит двустороннее управление флагом включения программы зоны.</p>
