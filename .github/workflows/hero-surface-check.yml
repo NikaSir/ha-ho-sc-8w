@@ -1,17 +1,47 @@
-name: HERO surface regression
+name: Apply approved HERO surface
 on:
   push:
-    branches: [main, codex/uniform-hero-surface]
-  pull_request:
+    branches: [codex/uniform-hero-surface]
+    paths: [.github/workflows/hero-surface-check.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  hero-surface:
+  apply:
+    if: github.repository == 'NikaSir/ha-ho-sc-8w' && github.ref == 'refs/heads/codex/uniform-hero-surface'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Verify source and runtime HERO surfaces
-        run: python3 tests/test_hero_surface.py
+      - name: Change only the systemOverview surface
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js')
+          source = p.read_text(encoding='utf-8')
+          target = 'color-mix(in srgb,var(--card-background-color,#fff) 95%,var(--primary-color,#03a9d9) 5%)'
+          rules = [m for m in re.finditer(r'\.systemOverview\{([^{}]*)\}', source) if 'background:' in m[1]]
+          assert len(rules) == 1, 'Unexpected surface rules'
+          m = rules[0]
+          assert m[1].count('background:var(--card);') == 1
+          body = m[1].replace('background:var(--card);', 'background:' + target + ';', 1)
+          p.write_text(source[:m.start(1)] + body + source[m.end(1):], encoding='utf-8')
+          PY
+      - name: Verify runtime and regression
+        run: |
+          python3 tests/test_hero_surface.py
+          node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js
+          git diff --check
+      - name: Commit only runtime to feature branch
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          assert changed == {'custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js'}, changed
+          PY
+          git diff --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js
+          git commit -m 'fix(ui): use flat five-percent system overview surface'
+          git push origin HEAD:refs/heads/codex/uniform-hero-surface
