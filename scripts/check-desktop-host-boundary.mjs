@@ -136,6 +136,7 @@ try {
       textToken: hostStyle.getPropertyValue("--text").trim(),
       colorScheme: hostStyle.colorScheme,
       overviewBackground: style(".themeRegressionProbe .systemOverview").backgroundColor,
+      overviewBackgroundImage: style(".themeRegressionProbe .systemOverview").backgroundImage,
       overviewText: style(".themeRegressionProbe .systemOverview").color,
       factBackground: style(".themeRegressionProbe .systemCompactItem").backgroundColor,
       activeZoneBackground: style(".themeRegressionProbe .diagramZone.running").backgroundColor,
@@ -144,6 +145,19 @@ try {
       navigationBackground: style(".bottomNav").backgroundColor,
     };
   });
+
+  // Compute the expected 95/5 blend independently of the production CSS string.
+  const verifyOverviewSurface = (theme, card, primary, label) => {
+    const srgb = theme.overviewBackground.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\)$/);
+    const rgb = theme.overviewBackground.match(/^rgb\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*\)$/);
+    assert.ok(srgb || rgb, `${label}: overview must have an opaque sRGB surface`);
+    const channels = srgb ? srgb.slice(1).map((value) => Number(value) * 255) : rgb.slice(1).map(Number);
+    channels.forEach((actual, index) => {
+      const expected = card[index] * 0.95 + primary[index] * 0.05;
+      assert.ok(Math.abs(actual - expected) <= (srgb ? 0.01 : 0.5), `${label}: channel ${index} must be card 95% + primary 5%; got ${actual}, expected ${expected}`);
+    });
+    assert.equal(theme.overviewBackgroundImage, "none", `${label}: overview surface must not retain a gradient`);
+  };
 
   await applyTheme({
     "--primary-background-color": "#10151c",
@@ -158,7 +172,7 @@ try {
   assert.equal(darkTheme.backgroundToken, "#10151c", "Panel token must inherit the active HA dark theme");
   assert.equal(darkTheme.textToken, "#f2f5f7", "Text token must inherit the active HA dark theme");
   assert.equal(darkTheme.colorScheme, "light dark", "Native controls must support both HA color schemes");
-  assert.equal(darkTheme.overviewBackground, "rgb(28, 37, 48)", "Overview must use the HA dark card surface");
+  verifyOverviewSurface(darkTheme, [28, 37, 48], [3, 169, 217], "Dark theme");
   assert.equal(darkTheme.overviewText, "rgb(242, 245, 247)", "Overview must use the HA dark theme text");
   assert.equal(darkTheme.factBackground, "rgb(28, 37, 48)", "System facts must not remain white in dark mode");
   assert.equal(darkTheme.activeZoneText, "rgb(242, 245, 247)", "Active zone text must use the HA dark theme");
@@ -172,7 +186,7 @@ try {
     "--primary-color": "#078fe8",
   });
   const lightTheme = await readTheme();
-  assert.equal(lightTheme.overviewBackground, "rgb(255, 255, 255)", "Overview must return to the HA light card surface live");
+  verifyOverviewSurface(lightTheme, [255, 255, 255], [7, 143, 232], "Light theme");
   assert.equal(lightTheme.overviewText, "rgb(17, 19, 23)", "Overview text must return to the HA light theme live");
   assert.equal(lightTheme.factBackground, "rgb(255, 255, 255)", "System facts must return to the HA light card surface live");
   assert.equal(lightTheme.activeZoneText, "rgb(17, 19, 23)", "Active zone text must return to the HA light theme live");
