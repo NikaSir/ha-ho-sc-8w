@@ -1,0 +1,80 @@
+name: Prepare authorized beta004
+on:
+  push:
+    branches: [release/irrigation-beta004-header]
+    paths: [.github/workflows/prepare-beta004.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.repository == 'NikaSir/ha-ho-sc-8w' && github.actor == 'NikaSir' && github.ref == 'refs/heads/release/irrigation-beta004-header'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Reproduce missing beta suffix, then update exact release metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          source = Path('custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js')
+          assert subprocess.check_output(['git','hash-object',str(source)],text=True).strip() == '1402d89202dca40021cda2a80f988b73d7e016b2', 'Production source changed; re-inspection required'
+          red = subprocess.run(['python3','tests/test_release_version_display.py'],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+          print(red.stdout)
+          assert red.returncode == 1 and 'Header UI version must retain the integration betaNNN suffix' in red.stdout and 'ERROR:' not in red.stdout
+          changes = {
+            'custom_components/nikas_ho_sc_8w/manifest.json': [('1.1.2-beta003','1.1.2-beta004',1)],
+            'custom_components/nikas_ho_sc_8w/const.py': [('1.1.4','1.1.5-beta004',1)],
+            'custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js': [('1.1.4','1.1.5-beta004',3)],
+            '.nikas-ui-standard.json': [('1.1.4','1.1.5-beta004',1)],
+            'panel.json': [('1.1.4','1.1.5-beta004',1)],
+            'panel_manifest.json': [('1.1.4','1.1.5-beta004',1),('1.1.2-beta003','1.1.2-beta004',1)],
+            'scripts/check-control-contract.py': [('1.1.2-beta003','1.1.2-beta004',2),('1.1.4','1.1.5-beta004',2)],
+            'scripts/check-panel-ui-v16.mjs': [('1.1.4','1.1.5-beta004',1)],
+            'scripts/check_nikas_ui_standard.py': [(r're.fullmatch(r"\d+\.\d+\.\d+", ui_version)',r're.fullmatch(r"\d+\.\d+\.\d+(?:-beta\d{3})?", ui_version)',1),('production specialized panel must declare numeric ui_version','production specialized panel must declare X.Y.Z or X.Y.Z-betaNNN ui_version',1)],
+          }
+          for name, replacements in changes.items():
+              p = Path(name)
+              text = p.read_text(encoding='utf-8')
+              for old, new, count in replacements:
+                  assert text.count(old) == count, (name, old, text.count(old), count)
+                  text = text.replace(old, new)
+              p.write_text(text,encoding='utf-8')
+          actual = set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          assert actual == set(changes), actual
+          PY
+      - name: Validate full UI version, production and existing contracts
+        run: |
+          python3 tests/test_release_version_display.py
+          python3 tests/test_hero_surface.py
+          python3 scripts/check_nikas_ui_standard.py
+          python3 scripts/check-control-contract.py
+          python3 -m compileall -q custom_components tests
+          node --check custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js
+          node scripts/check-panel-ui-v16.mjs
+          node scripts/check-refresh-feedback-ui.mjs
+          node tests/test_title_parent.cjs
+          git diff --check
+      - name: Install pinned browser test runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify full header and actual refresh/HERO rendering
+        run: |
+          node scripts/check-header-release-version.mjs
+          node scripts/check-refresh-hero-runtime.mjs
+          node scripts/check-desktop-host-boundary.mjs
+      - name: Commit only verified release metadata, not workflows
+        run: |
+          git diff --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add custom_components/nikas_ho_sc_8w/manifest.json custom_components/nikas_ho_sc_8w/const.py custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js .nikas-ui-standard.json panel.json panel_manifest.json scripts/check-control-contract.py scripts/check-panel-ui-v16.mjs scripts/check_nikas_ui_standard.py
+          git commit -m 'chore(release): 1.1.2-beta004 with visible UI 1.1.5-beta004'
+          git push origin HEAD:refs/heads/release/irrigation-beta004-header
