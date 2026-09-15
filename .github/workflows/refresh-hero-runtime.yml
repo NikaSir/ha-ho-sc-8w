@@ -22,6 +22,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Test live HERO cascade and real refresh activation
         run: |
+          python3 tests/test_release_version_display.py
+          node scripts/check-header-release-version.mjs
           node scripts/check-refresh-hero-runtime.mjs
           node scripts/check-refresh-feedback-ui.mjs
           python3 tests/test_hero_surface.py
