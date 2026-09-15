@@ -10980,7 +10980,8 @@ p._syncActualPressureCardsV0702 = function syncPressureCardsV0709() {
       (node) => (node.textContent || "").trim() === String(status?.title || "").trim(),
     );
     if (!hasStatus) continue;
-    card.style.setProperty("background", "var(--card)", "important");
+    // Normal readiness uses the canonical CSS surface, not a white inline override.
+    card.style.removeProperty("background");
     card.style.setProperty("border-color", "var(--line)", "important");
   }
 };
@@ -11057,7 +11058,7 @@ p.styles = function stylesV0710() {
     /* UI v0.7.10 — unambiguous feedback for the global refresh action. */
     .refreshButton.busy{cursor:wait;background:color-mix(in srgb,var(--a) 11%,var(--card));border-color:color-mix(in srgb,var(--a) 38%,var(--line))}
     .refreshButton.busy ha-icon{animation:nikasRefreshSpin .9s linear infinite;transform-origin:center}
-    .refreshButton.refresh-success{color:#43a047}.refreshButton.refresh-error{color:#e53935}
+    .refreshButton.refresh-success{color:#43a047;background:color-mix(in srgb,#43a047 12%,var(--card));border-color:color-mix(in srgb,#43a047 38%,var(--line))}.refreshButton.refresh-error{color:#e53935;background:color-mix(in srgb,#e53935 12%,var(--card));border-color:color-mix(in srgb,#e53935 38%,var(--line))}
     @keyframes nikasRefreshSpin{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){.refreshButton.busy ha-icon{animation:none;opacity:.45}}
   `;
@@ -11111,7 +11112,7 @@ p._render = function renderV0711() {
       :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size;--a:var(--primary-color,#078fe8);--green:var(--success-color,#08a52b);--orange:var(--warning-color,#e89a12);--danger:var(--error-color,#d84040);--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#f7f8fa);--text:var(--primary-text-color,#111317);--muted:var(--secondary-text-color,#626a73);--line:var(--divider-color,color-mix(in srgb,var(--text) 14%,transparent));--soft:color-mix(in srgb,var(--card) 92%,var(--text) 8%);--surface:var(--card);--diagram:var(--card);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger-soft:color-mix(in srgb,var(--card) 86%,var(--danger) 14%);color-scheme:light dark}
       .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
-      .refreshButton{color:var(--text)!important}
+      .refreshButton:not(.refresh-success):not(.refresh-error){color:var(--text)!important}
       .bottomNav button ha-icon{--mdc-icon-size:26px}
       .systemOverview>.connectionWrap{position:absolute;top:13px;right:13px;width:168px;min-width:168px;max-width:168px}
       .systemOverview .systemConnection{box-sizing:border-box;width:168px;min-width:168px;max-width:168px;height:58px;min-height:58px;padding:11px 12px;border-radius:18px;grid-template-columns:10px minmax(0,1fr);column-gap:9px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
