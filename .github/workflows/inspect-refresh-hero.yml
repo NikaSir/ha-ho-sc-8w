@@ -1,0 +1,33 @@
+name: Inspect refresh and HERO runtime
+on:
+  push:
+    branches: [fix/refresh-hero-runtime]
+    paths: [.github/workflows/inspect-refresh-hero.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Inspect production source and repository instructions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in Path('.').rglob('AGENTS.md'):
+              print(f'--- {p} ---\n{p.read_text()}')
+          p = Path('custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js')
+          for i, line in enumerate(p.read_text().splitlines(), 1):
+              if any(token in line for token in ('systemOverview', 'refreshNow', '_refresh', 'refreshFeedback', 'refresh-feedback', 'refreshing', 'refreshDone')):
+                  print(f'{i}: {line[:2500]}')
+          PY
+      - name: Prepare source snapshot for local verification
+        run: git archive --format=zip -o source-snapshot.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-snapshot
+          path: source-snapshot.zip
+          retention-days: 1
