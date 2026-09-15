@@ -19,7 +19,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Apply only inspected cascade changes
+      - name: Apply inspected source and regression assertions
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -44,11 +44,6 @@ jobs:
           s = p.read_text().replace(old,new)
           s = s.replace('    assert "'+new+'" in PANEL','    assert "'+new+'" in PANEL\n    assert "'+old+'" not in PANEL')
           p.write_text(s)
-          p = Path('.github/workflows/repository-checks.yml')
-          s = p.read_text()
-          old = 'run: node scripts/check-desktop-host-boundary.mjs'
-          assert s.count(old) == 1
-          p.write_text(s.replace(old,'run: |\n          node scripts/check-desktop-host-boundary.mjs\n          node scripts/check-refresh-hero-runtime.mjs'))
           PY
       - name: Verify actual production render and action chain
         run: |
@@ -59,11 +54,11 @@ jobs:
           python3 tests/test_hero_surface.py
           python3 scripts/check_nikas_ui_standard.py
           git diff --check
-      - name: Commit the verified change only to its feature branch
+      - name: Commit verified source and test only
         run: |
           python3 - <<'PY'
           import subprocess
-          paths = ['custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js','tests/test_unified_header_v23.py','.github/workflows/repository-checks.yml']
+          paths = ['custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js','tests/test_unified_header_v23.py']
           changed = set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
           assert changed == set(paths), changed
           subprocess.run(['git','diff','--stat'],check=True)
