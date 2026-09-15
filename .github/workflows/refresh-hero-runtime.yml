@@ -1,0 +1,35 @@
+name: Refresh and HERO runtime
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Install pinned browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Test live HERO cascade and real refresh activation
+        run: |
+          node scripts/check-refresh-hero-runtime.mjs
+          node scripts/check-refresh-feedback-ui.mjs
+          python3 tests/test_hero_surface.py
+          python3 - <<'PY'
+          import runpy
+          tests = runpy.run_path('tests/test_unified_header_v23.py')
+          for name, check in tests.items():
+              if name.startswith('test_') and callable(check):
+                  check()
+                  print('PASS', name)
+          PY
