@@ -1,3 +1,8 @@
+## Repository audit maintenance — 2026-10-17
+
+- Require HERO and refresh/browser regressions through the existing validate gate. Reject failed, skipped, cancelled or missing job results; preserve HACS and Hassfest.
+- Product/UI versions and equipment commands are unchanged; target-device acceptance remains separate.
+
 ## 1.1.1 / UI 1.1.1
 
 - The title returns to `/home/overview`; preserve automatic Home Assistant theme support from 1.1.0.
