@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   repository-checks:
-    runs-on: ubuntu-latest
+    # Playwright 1.55 supports Ubuntu 24.04; ubuntu-latest may move ahead.
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -194,7 +195,8 @@ jobs:
         run: python3 tests/test_hero_surface.py
 
   browser:
-    runs-on: ubuntu-latest
+    # Keep the browser OS compatible with the pinned Playwright runtime.
+    runs-on: ubuntu-24.04
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v7
@@ -211,6 +213,7 @@ jobs:
         run: |
           python3 tests/test_release_version_display.py
           node scripts/check-header-release-version.mjs
+          node scripts/check-compact-status.mjs
           node scripts/check-refresh-hero-runtime.mjs
           node scripts/check-refresh-feedback-ui.mjs
           python3 tests/test_hero_surface.py

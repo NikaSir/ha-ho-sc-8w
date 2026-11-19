@@ -61,6 +61,7 @@ async function theme(page, name) {
     panel.style.setProperty('--card-background-color',`rgb(${t.card.join(',')})`);
     panel.style.setProperty('--primary-color',`rgb(${t.primary.join(',')})`);
     panel.style.setProperty('--primary-text-color',t.text);
+    panel.render();
   }, themes[name]);
   await frame(page);
 }
@@ -110,10 +111,12 @@ test('real refresh: dark idle/busy -> green check and surface -> idle, without r
   try {
     for(const name of ['light','dark']) {
       await theme(page,name);const t=themes[name],idle=await read(page),before=idle.calls.length;
-      assert.equal(idle.color,t.text);mix(idle.buttonBg,t.card,t.primary,0,'Idle surface');
+      const ink = name === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)';
+      const surface = name === 'dark' ? t.card.map(value => value * .08 + 28 * .92) : [255,255,255];
+      assert.equal(idle.color,ink);mix(idle.buttonBg,surface,surface,0,'Idle surface');
       await page.locator('nikas-ho-sc-8w-panel [data-refresh]').click();
-      const busy=await read(page);assert.equal(busy.color,t.text);assert.equal(busy.icon,'mdi:refresh');assert.equal(busy.disabled,true);
-      mix(busy.buttonBg,t.card,t.primary,0.11,'Busy surface');assert.equal(busy.animation,'nikasRefreshSpin');
+      const busy=await read(page);assert.equal(busy.color,ink);assert.equal(busy.icon,'mdi:refresh');assert.equal(busy.disabled,true);
+      mix(busy.buttonBg,surface,surface,0,'Busy surface');assert.equal(busy.animation,'nikasRefreshSpin');
       assert.equal(await page.evaluate(()=>panel.refreshNow()),false);assert.equal((await read(page)).calls.length,before+1);
       assert.deepEqual(busy.calls.at(-1).slice(0,2),['homeassistant','update_entity']);
       await page.evaluate(()=>resolveRefresh());await page.waitForTimeout(100);assert.equal((await read(page)).busy,'true');
@@ -123,7 +126,7 @@ test('real refresh: dark idle/busy -> green check and surface -> idle, without r
       assert.equal(success.disabled,false);assert.equal(success.label,'Запрос обновления выполнен');assert.deepEqual(success.box,idle.box);
       await patch(page);await frame(page);assert.equal((await read(page)).icon,'mdi:check');assert.ok((await read(page)).buttonSame);
       await page.waitForFunction(()=>!buttonRef.classList.contains('refresh-success'));
-      const reset=await read(page);assert.equal(reset.icon,'mdi:refresh');assert.equal(reset.color,t.text);
+      const reset=await read(page);assert.equal(reset.icon,'mdi:refresh');assert.equal(reset.color,ink);
       const times=await page.evaluate(()=>clockStates.slice(-3));
       assert.deepEqual(times.map(x=>x.state),['busy','success','idle']);
       assert.ok(times[1].time-times[0].time>=880,'Busy must last at least 900 ms (20 ms observer tolerance)');

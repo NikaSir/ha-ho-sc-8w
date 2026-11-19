@@ -1,4 +1,4 @@
-const NIKAS_HO_SC_8W_UI_VERSION = "1.1.5-beta004";
+const NIKAS_HO_SC_8W_UI_VERSION = "1.1.5-beta005";
 
 (() => {
   const UI_VERSION = NIKAS_HO_SC_8W_UI_VERSION;
@@ -4438,9 +4438,11 @@ p.statusView = function statusViewV0657(entities) {
     : queued.length ? `Очередь: ${queued.join(" → ")}` : "Зоны 1–6 · по порядку";
   return `<div class="systemCompactScreen">
     <section class="systemOverview ${this.esc(status.tone)}">
+      <div class="systemHeroCopy">
+        <div class="systemHeroHeading"><h2>HO-SC-8W</h2>${this.compactConnectionIcons(entities)}</div>
+        <div class="systemReadiness"><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>
+      </div>
       <button class="systemControllerPhoto"${controllerEntity} aria-label="Контроллер HO-SC-8W"></button>
-      ${this.connectionIndicator(entities)}
-      <div class="systemReadiness"><h1>${this.esc(status.title)}</h1><p>${this.esc(status.sub)}</p></div>
     </section>
     <section class="systemCompactGrid" aria-label="Параметры системы">
       <button class="systemCompactItem"${operationEntity}><ha-icon icon="mdi:autorenew"></ha-icon><span><small>Режим</small><b>${this.esc(this.human("operation", operation))}</b><em>${this.esc(queueText)}</em></span></button>
@@ -11099,16 +11101,73 @@ p._render = function renderV0711() {
 
 // Stable UI release identity and NikaS UI Standard v2.2 geometry.
 {
-  const UI_VERSION = "1.1.5-beta004";
+  const UI_VERSION = "1.1.5-beta005";
   const Panel = customElements.get("nikas-ho-sc-8w-panel");
   if (!Panel) throw new Error("HO-SC-8W production panel is not registered");
   const p = Panel.prototype;
   const previousRenderV1002 = p._render;
   const previousStylesV1002 = p.styles;
+  const previousDiagnosticsV1002 = p.diagnosticsView;
+
+  p.headerVersionLabel = function headerVersionLabel() {
+    const installed = this._panel?.config?.integration_version;
+    const version = typeof installed === "string" && /^\d+\.\d+\.\d+(?:-beta\d{3})?$/.test(installed) ? installed : "—";
+    return `UI v${NIKAS_HO_SC_8W_UI_VERSION} / ${version}`;
+  };
+
+  p.connectionPresentation = function connectionPresentation(e) {
+    const record = this.states()[e.connection];
+    const attrs = record?.attributes || {};
+    const transport = String(record?.state || "").toLowerCase();
+    const knownTransport = ["local", "cloud", "reserve"].includes(transport);
+    const failures = Number(attrs.fail_count);
+    const failed = Number.isFinite(failures) && failures > 0;
+    const lost = this._hass?.connection?.connected === false || attrs.online === false || failed;
+    const connected = knownTransport && attrs.online === true && !lost;
+    const source = { local: "Локально", cloud: "Облако", reserve: "Резерв" }[transport];
+    const channel = lost
+      ? { icon: "mdi:cloud-off-outline", tone: "warning", label: "Связь потеряна" }
+      : connected ? { icon: "mdi:cloud", tone: "good", label: `Связь есть · ${source}` }
+        : { icon: "mdi:cloud-question-outline", tone: "unknown", label: "Связь неизвестна" };
+    // Use the integration's explicit online/failure evidence. HA last_changed is
+    // not a device-sample clock: unchanged readings can stay current for hours.
+    const current = knownTransport && attrs.online === true && failures === 0;
+    const stale = knownTransport && (attrs.online === false || failed);
+    const freshness = current
+      ? { icon: "mdi:check-circle-outline", tone: "good", label: "Данные актуальны" }
+      : stale ? { icon: "mdi:clock-alert-outline", tone: "warning", label: "Данные устарели" }
+        : { icon: "mdi:clock-outline", tone: "unknown", label: "Данных нет или свежесть не подтверждена", question: true };
+    return { channel, freshness };
+  };
+
+  p.compactConnectionIcons = function compactConnectionIcons(e) {
+    const state = this.connectionPresentation(e);
+    return `<span class="systemStatusIcons" aria-label="Связь и свежесть">${["channel", "freshness"].map((kind) => {
+      const value = state[kind];
+      const label = this.esc(value.label);
+      return `<span class="systemStatusIcon ${value.tone}" data-status-icon="${kind}" role="img" aria-label="${label}" title="${label}"><span class="systemStatusGlyph${value.question ? " hasQuestion" : ""}" aria-hidden="true"><ha-icon icon="${value.icon}"></ha-icon></span></span>`;
+    }).join("")}</span>`;
+  };
+
+  p.diagnosticsView = function diagnosticsViewCompactStatus(e) {
+    const state = this.connectionPresentation(e);
+    return `<section class="irrigationSourceDetails detailCard" aria-label="Связь и данные"><h2>Связь и данные</h2><p>${this.esc(state.channel.label)}</p><p>${this.esc(state.freshness.label)}</p></section>${previousDiagnosticsV1002.call(this, e)}`;
+  };
+
+  p._syncHeaderTheme = function syncHeaderTheme() {
+    if (typeof getComputedStyle !== "function") return;
+    const color = getComputedStyle(this).getPropertyValue("--card-background-color").trim();
+    const rgb = /^#([0-9a-f]{6})$/i.exec(color);
+    const channels = rgb ? [0, 2, 4].map((i) => parseInt(rgb[1].slice(i, i + 2), 16)) : color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+    const dark = this._hass?.themes?.darkMode ?? (channels?.length === 3
+      ? channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722 < 128
+      : window.matchMedia?.("(prefers-color-scheme: dark)").matches === true);
+    this.toggleAttribute("data-irrigation-dark", dark);
+  };
 
   p.styles = function stylesV1002() {
     return `${previousStylesV1002.call(this)}
-      /* UI v1.1.5-beta004 — host-bound shell, compact zone facts, artwork and HA theme inheritance. */
+      /* UI v1.1.5-beta005 — host-bound shell, compact zone facts, artwork and HA theme inheritance. */
       :host{display:block;position:relative;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-irrigation-panel / inline-size;--a:var(--primary-color,#078fe8);--green:var(--success-color,#08a52b);--orange:var(--warning-color,#e89a12);--danger:var(--error-color,#d84040);--card:var(--card-background-color,var(--ha-card-background,#fff));--bg:var(--primary-background-color,#f7f8fa);--text:var(--primary-text-color,#111317);--muted:var(--secondary-text-color,#626a73);--line:var(--divider-color,color-mix(in srgb,var(--text) 14%,transparent));--soft:color-mix(in srgb,var(--card) 92%,var(--text) 8%);--surface:var(--card);--diagram:var(--card);--accent-soft:color-mix(in srgb,var(--card) 86%,var(--a) 14%);--green-soft:color-mix(in srgb,var(--card) 86%,var(--green) 14%);--orange-soft:color-mix(in srgb,var(--card) 86%,var(--orange) 14%);--danger-soft:color-mix(in srgb,var(--card) 86%,var(--danger) 14%);color-scheme:light dark}
       .app{position:relative;inset:auto;inline-size:100%;block-size:100%;width:100%;height:100%;min-inline-size:0;min-block-size:0;min-width:0;min-height:0;max-width:1280px;margin:0 auto}
       .headerTitle{min-width:0;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border-radius:16px}
@@ -11143,12 +11202,44 @@ p._render = function renderV0711() {
       .dp38SnapshotState.changed,.dp38SnapshotState.waiting,.dp38DiffResult.changed{background:var(--orange-soft);color:var(--orange)}
       :host([data-zone-artwork-1-none]) .scene1,:host([data-zone-artwork-2-none]) .scene2,:host([data-zone-artwork-3-none]) .scene3,:host([data-zone-artwork-4-none]) .scene4,:host([data-zone-artwork-5-none]) .scene5,:host([data-zone-artwork-6-none]) .scene6,:host([data-zone-artwork-7-none]) .scene7,:host([data-zone-artwork-8-none]) .scene8,.zoneArtworkPreview.empty{background-color:var(--soft)!important}
       .manualTimeButton:disabled{background:var(--soft);color:var(--muted)}
+      /* Approved header and the product-requested compact UPS composition. */
+      :host(:not([data-irrigation-dark])){--nikas-refresh-ink:#000000;--nikas-refresh-surface:#ffffff;--status-green:#237a37;--status-orange:#a84a00;--status-gray:#5f6368}
+      :host([data-irrigation-dark]){--nikas-refresh-ink:#ffffff;--nikas-refresh-surface:color-mix(in srgb,var(--card) 8%,#1c1c1c);--status-green:#73d483;--status-orange:#ffae61;--status-gray:#a6abb1}
+      .appHeader{box-sizing:border-box;grid-template-columns:52px minmax(0,1fr) 52px;gap:0;min-height:calc(60px + env(safe-area-inset-top));height:calc(60px + env(safe-area-inset-top));padding:env(safe-area-inset-top) calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left));background:color-mix(in srgb,var(--bg) 97%,transparent);border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%)}
+      .headerButton{box-sizing:border-box;width:44px;height:44px;border:1px solid color-mix(in srgb,var(--line) 72%,transparent);border-radius:16px;background:var(--card);box-shadow:0 7px 20px rgba(23,45,76,.08)}
+      .headerButton ha-icon{--mdc-icon-size:25px}
+      .headerTitle{box-sizing:border-box;justify-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:min(360px,100%);height:52px;min-height:52px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--a) 12%,var(--line));border-radius:16px;background:color-mix(in srgb,var(--a) 3%,var(--card));box-shadow:0 5px 16px rgba(23,45,76,.06)}
+      .headerTitle strong{font-size:22px;font-weight:700;line-height:24px;white-space:nowrap}
+      .headerTitle small{display:block;flex:none;width:max-content;max-width:none;margin:0;font:500 clamp(11px,3.25cqi,14px)/16px Arial,sans-serif;letter-spacing:-.25px;white-space:nowrap;overflow:visible;text-overflow:clip;color:var(--muted)}
+      .headerTitle:active{background:color-mix(in srgb,var(--a) 13%,var(--card));border-color:color-mix(in srgb,var(--a) 42%,var(--line));box-shadow:0 2px 7px rgba(23,45,76,.05);transform:scale(.985)}
+      .headerTitle:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+      .refreshButton:not(.refresh-success):not(.refresh-error){background:var(--nikas-refresh-surface)!important}
+      .refreshButton:not(.refresh-success):not(.refresh-error){color:var(--nikas-refresh-ink)!important}
+      .systemOverview{grid-template-columns:minmax(0,1fr) minmax(90px,36%);align-items:center;gap:12px}
+      .systemHeroCopy{position:relative;z-index:1;min-width:0}
+      .systemHeroHeading{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+      .systemHeroHeading h2{margin:0;font-size:18px;line-height:22px;color:var(--text)}
+      .systemStatusIcons{display:flex;align-items:center;gap:6px;flex:none}
+      .systemStatusIcon{display:flex;flex:none;color:var(--status-gray)}
+      .systemStatusIcon.good{color:var(--status-green)}
+      .systemStatusIcon.warning{color:var(--status-orange)}
+      .systemStatusGlyph{position:relative;display:grid;width:20px;height:20px}
+      .systemStatusGlyph ha-icon{--mdc-icon-size:20px;color:inherit}
+      .systemStatusGlyph.hasQuestion::after{content:"?";position:absolute;right:0;bottom:0;display:grid;place-items:center;width:9px;height:10px;border-radius:3px;background:var(--card);font:700 10px/1 sans-serif}
+      .systemOverview .systemReadiness{grid-column:auto;padding:0}
+      .systemOverview .systemReadiness h1{font-size:20px;line-height:1.2;overflow-wrap:normal}
+      .systemOverview .systemReadiness p{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+      .systemOverview>.systemControllerPhoto{grid-column:2;grid-row:1;width:100%;min-height:115px;align-self:stretch;background-color:transparent;background-size:contain}
+      .irrigationSourceDetails h2{font-size:18px}.irrigationSourceDetails p{font-size:14px}
+      @container nikas-irrigation-panel (max-width:359px){.appHeader{grid-template-columns:48px minmax(0,1fr) 48px}.headerTitle{width:100%;padding-inline:8px}.headerTitle strong{font-size:20px}.headerTitle small{font-size:11px;letter-spacing:-.45px}.systemHeroHeading{gap:5px}.systemOverview{gap:8px}.systemOverview>.systemControllerPhoto{min-height:105px}}
     `;
   };
 
   p._render = function renderV1002() {
     previousRenderV1002.call(this);
     const versionNode = this.shadowRoot?.querySelector("[data-ui-version]");
-    if (versionNode) versionNode.textContent = `UI v${UI_VERSION}`;
+    const label = this.headerVersionLabel();
+    if (versionNode && versionNode.textContent !== label) versionNode.textContent = label;
+    this._syncHeaderTheme();
   };
 }

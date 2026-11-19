@@ -1,3 +1,10 @@
+## 1.1.2-beta005 / UI 1.1.5-beta005 — 2026-11-19
+
+- Adopt the current NikaS header: complete UI / installed integration versions, canonical geometry, light/dark refresh surfaces and preserved request feedback.
+- Replace the large connection plaque with the approved compact connection and freshness icons beside the controller name. Unknown quality evidence keeps gray question icons; text remains in Diagnostics.
+- Move the controller image to the right of the System card, preserving artwork proportions, stable DOM, pressure indication and device controls.
+- Add required Chromium coverage for status transitions and responsive composition. Zero pressure alone does not declare winter shutdown; record the separate seasonal-setting requirement in the project knowledge base.
+
 ## Repository audit maintenance — 2026-10-17
 
 - Require HERO and refresh/browser regressions through the existing validate gate. Reject failed, skipped, cancelled or missing job results; preserve HACS and Hassfest.
