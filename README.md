@@ -1,6 +1,6 @@
 # HO-SC-8W for Home Assistant
 
-> Beta candidate: **1.1.2-beta002** / UI **1.1.3**. Unified header with a black refresh icon in the light theme (theme-aware in dark mode). Device control behavior is unchanged. Publication is manual as a GitHub pre-release; this notice does not confirm publication.
+> Beta candidate: **1.1.2-beta005** / UI **1.1.5-beta005**. Current NikaS header, compact independent connection/freshness icons, and controller artwork on the right. Publication and acceptance in Home Assistant are separate steps.
 
 <p align="center">
   <img src="custom_components/nikas_ho_sc_8w/brand/icon.png" width="128" height="128" alt="HO-SC-8W Irrigation icon">
@@ -9,6 +9,12 @@
 Custom Home Assistant integration for the **INKBIRD / HiOazo HO-SC-8W** irrigation controller.
 
 ## Status
+
+The header shows `UI v1.1.5-beta005 / <installed integration version>` on one line. The installed version comes from Home Assistant's integration metadata; missing metadata is shown as `—`. The refresh arrow is black on white in the light theme and white on a neutral dark surface in the dark theme, with existing busy/success/error feedback.
+
+The System card uses compact connection and freshness icons beside `HO-SC-8W`, with the controller image on the right. Connection uses confirmed transport/online evidence; freshness uses the integration's explicit online/failure flags, independently of HA's connection. Missing quality evidence stays unknown. Text explanations remain in Diagnostics.
+
+Zero irrigation pressure means **Нет давления**. It does not establish winter shutdown. A confirmed seasonal-disable reason is needed for **Выключен на зиму**; this update does not infer it from pressure, date or controller OFF. See the [project knowledge base](docs/IRRIGATION_PROJECT_KNOWLEDGE_BASE.md).
 
 The panel title opens `/home/overview`, independent of opening source or saved browser state.
 
@@ -62,7 +68,7 @@ Stable route:
 
 Sidebar title: **Автополив**
 Primary UX target: **iPhone Pro Max · portrait · one-handed use**.  
-Current panel version: **1.1.1**.
+Current panel version: **1.1.5-beta005**.
 
 The panel follows **NikaS Specialized Panel UI Standard v2.2** and **NikaS Panel Navigation Contract v1.2**:
 
@@ -79,7 +85,7 @@ The normative declaration, companion contracts and production entrypoint are che
 - Home Assistant telemetry patches existing nodes; Header, viewport, scroll position and Bottom Tab Bar are not reconstructed and do not flicker.
 - previously opened work views are retained in a lazy DOM cache and reattached on return instead of being rebuilt.
 - meaningful interface copy stays in the 12–25 px range; only a redundant schematic wiring caption uses 10 px.
-- the two-level connection/freshness plaque follows the S8 OMNI geometry and state surfaces defined by **NikaS Specialized Panel UI Standard v2.2**.
+- compact independent connection/freshness icons follow the approved NikaS scheme; the former large connection plaque is disabled by the user's decision of 19.11.2026.
 - seasonal correction uses a native fixed-value selector from −90% through +100% in 10% increments; the explicit Apply, confirmation and DP103 read-back contract remains unchanged.
 
 ### Information architecture v0.4
@@ -164,7 +170,7 @@ The production panel follows the mandatory NikaS specialized-panel frontend deli
 ```text
 Home Assistant
       ↓
-/nikas-ho-sc-8w/irrigation-panel.js?v=1.1.1
+/nikas-ho-sc-8w/irrigation-panel.js?v=1.1.5-beta005
       ↓
 <nikas-ho-sc-8w-panel>
 ```

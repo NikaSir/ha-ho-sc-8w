@@ -12,9 +12,9 @@ source = legacy_path.read_text(encoding="utf-8")
 # Keep the historical behavioral contract, but require all active release
 # metadata to agree instead of explicitly accepting obsolete version numbers.
 source = source.replace('EXPECTED_INTEGRATION_VERSION = "1.0.0-b005.87"',
-                        'EXPECTED_INTEGRATION_VERSION = "1.1.2-beta004"')
+                        'EXPECTED_INTEGRATION_VERSION = "1.1.2-beta005"')
 source = source.replace('EXPECTED_PANEL_VERSION = "0.6.66"',
-                        'EXPECTED_PANEL_VERSION = "1.1.5-beta004"')
+                        'EXPECTED_PANEL_VERSION = "1.1.5-beta005"')
 source = source.replace('EXPECTED_PANEL_BUNDLE = "irrigation-panel-v0666.mjs"',
                         'EXPECTED_PANEL_BUNDLE = "irrigation-panel.js"')
 wrapper_tail = '    "irrigation-panel-v0666.mjs",' + chr(10) + ']'
@@ -36,6 +36,22 @@ source = source.replace('assert manifest_manual_meta["readback_dps"] == [107]',
 source = source.replace('"min_height_px": 58,', '"height_px": 58,')
 source = source.replace('"padding_px": [12, 14],', '"padding_px": [11, 12],')
 source = source.replace('"column_gap_px": 11,', '"column_gap_px": 9,')
+# The user replaced the optional large connection plaque with compact icons.
+# Retain all device-command checks, replacing only the retired presentation guard.
+connection_start = source.index('connection_meta = ')
+connection_end = source.index('seasonal_meta = ', connection_start)
+source = source[:connection_start] + '''
+connection_meta = panel["panel"]["system_visualization"]["connection_indicator"]
+manifest_connection_meta = panel_manifest["connection_indicator"]
+assert connection_meta == manifest_connection_meta
+assert connection_meta["two_level_indicator_enabled"] is False
+assert connection_meta["presentation"] == "compact_connection_and_freshness_icons"
+assert connection_meta["glyph_px"] == 20
+assert connection_meta["gap_px"] == 6
+assert connection_meta["independent_states"] is True
+assert connection_meta["stable_dom"] is True
+
+''' + source[connection_end:]
 source = source.replace('assert panel["panel"]["rule_set"] == "1.17"',
                         'assert panel["panel"]["rule_set"] == "2.2"')
 source = source.replace('assert panel_manifest["rule_set"] == "1.17"',
@@ -44,8 +60,8 @@ exec(compile(source, str(legacy_path), "exec"), {"__file__": str(legacy_path), "
 
 manifest = (component / "manifest.json").read_text(encoding="utf-8")
 const = (component / "const.py").read_text(encoding="utf-8")
-assert '"version": "1.1.2-beta004"' in manifest
-assert 'PANEL_VERSION = "1.1.5-beta004"' in const
+assert '"version": "1.1.2-beta005"' in manifest
+assert 'PANEL_VERSION = "1.1.5-beta005"' in const
 assert 'irrigation-panel.js' in const
 
 production_ui = (component / "frontend" / "irrigation-panel.js").read_text(encoding="utf-8")

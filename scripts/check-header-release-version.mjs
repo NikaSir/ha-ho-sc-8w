@@ -23,13 +23,14 @@ try {
     try {
       await page.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,main{margin:0;width:100%;height:100%}</style><main></main>');
       await page.addScriptTag({ path: path.join(root, 'custom_components/nikas_ho_sc_8w/frontend/irrigation-panel.js') });
-      await page.evaluate(() => {
+      await page.evaluate(integration => {
         const panel = document.createElement('nikas-ho-sc-8w-panel');
+        panel.panel = { config: { integration_version: integration } };
         panel.hass = { states: {}, connection: { connected: true }, services: {},
           callService: async () => { throw new Error('Header test must never call device services'); } };
         window.panel = panel;
         document.querySelector('main').append(panel);
-      });
+      }, integration);
       await page.waitForFunction(() => panel.shadowRoot.querySelector('[data-ui-version]'));
       for (const dark of [false, true]) {
         const result = await page.evaluate(async dark => {
@@ -52,7 +53,7 @@ try {
             width: bounds.width, height: bounds.height,
             fits: text.left >= bounds.left && text.right <= bounds.right && text.top >= bounds.top && text.bottom <= bounds.bottom };
         }, dark);
-        assert.equal(result.text, `UI v${ui}`, 'The rendered header must include the complete suffix');
+        assert.equal(result.text, `UI v${ui} / ${integration}`, 'The rendered header must include both complete versions');
         assert.equal(result.same, true, 'Telemetry must not remount the version node');
         assert.equal(result.fits, true, `Full version must fit at ${width}x${height}`);
         assert.ok(result.width > 0 && result.height > 0, 'The header must be visible');

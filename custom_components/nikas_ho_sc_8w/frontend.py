@@ -8,6 +8,7 @@ from pathlib import Path
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
+from homeassistant.loader import async_get_integration
 
 from .const import (
     DOMAIN,
@@ -51,6 +52,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         )
         return
 
+    integration = await async_get_integration(hass, DOMAIN)
     await panel_custom.async_register_panel(
         hass,
         frontend_url_path=PANEL_URL_PATH,
@@ -62,6 +64,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         handle_safe_area=True,
         config={
             "version": PANEL_VERSION,
+            "integration_version": integration.version,
             "rule_set": "1.17",
             "owner": "ha-ho-sc-8w",
             "preferred_view": "status",
@@ -79,10 +82,10 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "header_grid": "52px_minmax_52px_48px_narrow",
                 "header_button_px": 44,
                 "header_icon_px": 25,
-                "header_title_px": 23,
+                "header_title_px": 22,
                 "header_subtitle_px": 14,
-                "header_narrow_title_px": 21,
-                "header_narrow_subtitle_px": 13,
+                "header_narrow_title_px": 20,
+                "header_narrow_subtitle_px": 11,
                 "bottom_tab_min_height_px": 52,
                 "bottom_tab_icon_px": 28,
                 "bottom_tab_label_px": 12,
@@ -187,7 +190,8 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
                 "desktop_max_width_px": 1280,
             },
             "connection_indicator": {
-                "two_level_indicator_enabled": True,
+                "two_level_indicator_enabled": False,
+                "presentation": "compact_connection_and_freshness_icons",
                 "policy": "explicit_product_request",
                 "transport": ["Локально", "Облако", "Резерв", "Нет связи", "Нет данных"],
                 "freshness": ["Данные актуальны", "Данные устарели", "Нет данных"],
